@@ -1,5 +1,5 @@
 import React from 'react';
-import { ContainerDaTela,  BlocoDeDescricao,  Titulo,  Paragrafo,  AgrupadorDeBotoes,  BotaoEstilizado,  TextoDoBotao} from './styles';
+import { ContainerDaTela,  BlocoDeDescricao,  Paragrafo,  AgrupadorDeBotoes,  BotaoEstilizado,  TextoDoBotao} from './styles';
 import { Gamepad2 } from 'lucide-react';
 import { colors } from '../../styles/colors';
 
