@@ -10,6 +10,6 @@ export const GlobalStyle = createGlobalStyle`
 
   body {
     background-color: ${colors.branco};
-    font-family: 'Nunito', sans-serif;
+    font-family: 'Nunito', sans-serif !important;
   }
 `;
