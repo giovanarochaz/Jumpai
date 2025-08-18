@@ -19,8 +19,8 @@ const meteorosParaGerar = [
 
 const MAPA_VELOCIDADE_PLANETAS: Record<VelocidadeGeracao, { min: number; max: number }> = {
   lenta: { min: 7, max: 12 },
-  normal: { min: 5, max: 8 },
-  rapida: { min: 2.5, max: 5 },
+  normal: { min: 5, max: 7 },
+  rapida: { min: 2.5, max: 3.5 },
 };
 
 interface EstadoPlaneta { id: number; nome: string; imagem: string; top: number; duracao: number; tamanho: number; }
@@ -62,7 +62,7 @@ const JogoSistemaSolar: React.FC<JogoSistemaSolarProps> = ({ aoVencer, configura
     musicaFundoRef.current.loop = true;
     musicaFundoRef.current.volume = 0.3;
     somColetaRef.current = new Audio('/assets/sistemaSolar/sounds/coleta.mp3');
-    somColetaRef.current.volume = 0.7;
+    somColetaRef.current.volume = 1;
 
     if (configuracoes.sons) {
       musicaFundoRef.current.play().catch(e => console.error("A reprodução de áudio falhou:", e));
@@ -89,7 +89,7 @@ const JogoSistemaSolar: React.FC<JogoSistemaSolarProps> = ({ aoVencer, configura
       const isMeteoro = corpoAleatorio.nome === 'meteoro';
       let topProposto = 0, posicaoValida = false;
       for (let i = 0; i < 15 && !posicaoValida; i++) {
-        topProposto = Math.random() * 85;
+        topProposto = Math.random() * 75;
         posicaoValida = !planetasVisiveis.some(p => Math.abs(topProposto - p.top) < 20);
       }
 
