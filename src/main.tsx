@@ -8,7 +8,6 @@ import Controle from './pages/controle';
 import Jogo from './pages/jogo';
 import Dificuldade from './pages/dificuldade';
 import SistemaSolar from './jogos/sistemaSolar/app';
-import CorpoHumano from './jogos/corpoHumano/app';
 
 const router = createBrowserRouter([
   {
@@ -30,13 +29,7 @@ const router = createBrowserRouter([
       {
         path: '/sistemaSolar', 
         element: <SistemaSolar />,
-      },
-            {
-        path: '/corpoHumano', 
-        element: <CorpoHumano />,
-      },
-
-
+      }
 
     ],
   },
