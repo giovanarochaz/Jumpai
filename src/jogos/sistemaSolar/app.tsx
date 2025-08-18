@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import { useState } from 'react';
 import type { ConfiguracoesJogo } from './manual';
 import ManualSistemaSolar from './manual';
 import JogoSistemaSolar from './jogo';
