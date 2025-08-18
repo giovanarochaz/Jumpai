@@ -1,9 +1,8 @@
 import styled, { keyframes } from 'styled-components';
 import { colors } from '../../../styles/colors';
 
-// --- ANIMAÇÕES DIVERTIDAS ---
-
-const scaleIn = keyframes`
+// --- ANIMAÇÕES ---
+const aparecer = keyframes`
   from { transform: scale(0.8); opacity: 0; }
   to { transform: scale(1); opacity: 1; }
 `;
@@ -14,15 +13,14 @@ const rotacionarPlaneta = keyframes`
   100% { transform: rotate(360deg) scale(1); }
 `;
 
-const pulse = keyframes`
-  0% { transform: scale(1); box-shadow: 0 0 0 0 rgba(42, 211, 82, 0.7); }
-  70% { transform: scale(1.05); box-shadow: 0 0 0 15px rgba(42, 211, 82, 0); }
-  100% { transform: scale(1); box-shadow: 0 0 0 0 rgba(42, 211, 82, 0); }
+const pulsar = keyframes`
+  0% { transform: scale(1); }
+  70% { transform: scale(1.05); }
+  100% { transform: scale(1); }
 `;
 
-// --- COMPONENTES ESTILIZADOS ---
-
-export const ModalOverlay = styled.div`
+// --- COMPONENTES PRINCIPAIS DO MODAL ---
+export const FundoModal = styled.div`
   position: fixed;
   top: 0;
   left: 0;
@@ -33,10 +31,10 @@ export const ModalOverlay = styled.div`
   justify-content: center;
   align-items: center;
   z-index: 200;
-  animation: ${scaleIn} 0.4s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+  animation: ${aparecer} 0.4s cubic-bezier(0.175, 0.885, 0.32, 1.275);
 `;
 
-export const ModalContent = styled.div`
+export const ConteudoModal = styled.div`
   background-color: ${colors.branco};
   color: ${colors.preto};
   padding: 40px;
@@ -51,13 +49,14 @@ export const ModalContent = styled.div`
   justify-content: space-between;
 `;
 
-export const SlideContainer = styled.div`
+// --- COMPONENTES DOS SLIDES (Planetas e Explicações) ---
+export const ContainerSlide = styled.div`
   display: flex;
   align-items: center;
   gap: 30px;
 `;
 
-export const PlanetaModalAnimado = styled.img`
+export const PlanetaAnimado = styled.img`
   width: 250px;
   height: 250px;
   animation: ${rotacionarPlaneta} 25s linear infinite;
@@ -70,6 +69,7 @@ export const TextoSlide = styled.div`
     margin-bottom: 15px;
     color: ${colors.roxo};
     font-weight: 900;
+    text-align: left;
   }
   p {
     font-size: 1.2rem;
@@ -77,6 +77,133 @@ export const TextoSlide = styled.div`
   }
 `;
 
+export const ContainerExplicacao = styled.div`
+  padding: 10px;
+`;
+
+export const SecaoExplicacao = styled.div`
+  display: flex;
+  align-items: flex-start;
+  gap: 20px;
+  margin-bottom: 25px;
+`;
+
+export const WrapperIcone = styled.div`
+  background-color: ${colors.amarelo};
+  color: ${colors.roxo};
+  border-radius: 50%;
+  width: 60px;
+  height: 60px;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  flex-shrink: 0;
+  border: 3px solid ${colors.preto};
+`;
+
+export const WrapperTexto = styled.div`
+  h3 {
+    margin: 0 0 5px 0;
+    font-size: 1.5rem;
+    color: ${colors.roxo};
+  }
+  p {
+    margin: 0;
+    font-size: 1.1rem;
+    line-height: 1.5;
+  }
+`;
+
+// --- COMPONENTES DA TELA DE CONFIGURAÇÕES ---
+export const ContainerConfiguracoes = styled.div`
+  padding: 10px;
+  display: flex;
+  flex-direction: column;
+  gap: 25px;
+`;
+
+export const LinhaConfiguracao = styled.div`
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  background-color: rgba(0,0,0,0.05);
+  padding: 15px;
+  border-radius: 15px;
+`;
+
+export const RotuloConfiguracao = styled.div`
+  display: flex;
+  align-items: center;
+  gap: 15px;
+
+  h3 {
+    margin: 0;
+    font-size: 1.2rem;
+    color: ${colors.roxo};
+  }
+`;
+
+export const GrupoBotoes = styled.div`
+  display: flex;
+  gap: 10px;
+`;
+
+export const BotaoOpcao = styled.button<{ ativo: boolean }>`
+  background-color: ${({ ativo }) => (ativo ? colors.amarelo : colors.branco)};
+  color: ${colors.preto};
+  border: 3px solid ${({ ativo }) => (ativo ? colors.roxo : colors.preto)};
+  box-shadow: 4px 4px 0px ${({ ativo }) => (ativo ? colors.roxo : colors.preto)};
+  padding: 10px 20px;
+  font-size: 1rem;
+  font-weight: bold;
+  border-radius: 10px;
+  cursor: pointer;
+  transition: all 0.1s ease-in-out;
+`;
+
+export const ContainerInterruptor = styled.label`
+  position: relative;
+  display: inline-block;
+  width: 60px;
+  height: 34px;
+`;
+
+export const InputInterruptor = styled.input`
+  opacity: 0;
+  width: 0;
+  height: 0;
+`;
+
+export const DeslizadorInterruptor = styled.span`
+  position: absolute;
+  cursor: pointer;
+  top: 0; left: 0; right: 0; bottom: 0;
+  background-color: #ccc;
+  transition: .4s;
+  border-radius: 34px;
+
+  &:before {
+    position: absolute;
+    content: "";
+    height: 26px;
+    width: 26px;
+    left: 4px;
+    bottom: 4px;
+    background-color: white;
+    transition: .4s;
+    border-radius: 50%;
+  }
+
+  ${InputInterruptor}:checked + & {
+    background-color: ${colors.verde};
+  }
+
+  ${InputInterruptor}:checked + &:before {
+    transform: translateX(26px);
+  }
+`;
+
+// --- BOTÕES DE NAVEGAÇÃO E AÇÃO ---
 export const NavegacaoCarrossel = styled.div`
   display: flex;
   justify-content: space-between;
@@ -87,7 +214,7 @@ export const NavegacaoCarrossel = styled.div`
 export const BotaoNavegacao = styled.button`
   background-color: ${colors.roxo};
   color: ${colors.branco};
-  border: none; /* A borda agora é a sombra */
+  border: none;
   box-shadow: 6px 6px 0px ${colors.preto};
   padding: 12px 25px;
   font-size: 1.1rem;
@@ -129,7 +256,7 @@ export const BotaoIniciarMissao = styled.button`
   margin: 20px auto 0;
   display: block;
   transition: all 0.1s ease-in-out;
-  animation: ${pulse} 2s infinite;
+  animation: ${pulsar} 2s infinite;
 
   &:hover {
     transform: translate(4px, 4px);
@@ -139,48 +266,6 @@ export const BotaoIniciarMissao = styled.button`
   &:active {
     transform: translate(8px, 8px);
     box-shadow: 0px 0px 0px ${colors.preto};
-    animation: none; /* Pausa a animação de pulso ao clicar */
+    animation: none;
   }
 `;
-
-export const ExplicacaoContainer = styled.div`
-  padding: 10px;
-`;
-
-export const SecaoExplicacao = styled.div`
-  display: flex;
-  align-items: flex-start;
-  gap: 20px;
-  margin-bottom: 25px;
-  
-  &:last-child {
-    margin-bottom: 0;
-  }
-`;
-
-export const IconeWrapper = styled.div`
-  background-color: ${colors.amarelo};
-  color: ${colors.roxo};
-  border-radius: 50%;
-  width: 60px;
-  height: 60px;
-  display: flex;
-  justify-content: center;
-  align-items: center;
-  flex-shrink: 0;
-  border: 3px solid ${colors.preto};
-`;
-
-export const TextoWrapper = styled.div`
-  h3 {
-    margin: 0 0 5px 0;
-    font-size: 1.5rem;
-    color: ${colors.roxo};
-  }
-  p {
-    margin: 0;
-    font-size: 1.1rem;
-    line-height: 1.5;
-  }
-`;
-

@@ -4,82 +4,83 @@ import { Trophy } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
 
 const CORES_FOGOS = ['#FFD700', '#FF4500', '#2AD352', '#00BFFF', '#FF1493', '#ADFF2F'];
-const NUMERO_FOGOS = 50;
+const NUMERO_FOGOS = 15;
 const PARTICULAS_POR_FOGO = 12;
 
-interface FireworkData {
+interface DadosFogos {
   id: number;
   top: string;
   left: string;
-  color: string;
+  cor: string;
   delay: string;
 }
 
 interface TelaVitoriaProps {
-  onRestart: () => void;
+  aoReiniciar: () => void;
 }
 
-const TelaVitoria: React.FC<TelaVitoriaProps> = ({ onRestart }) => {
-  const [fogosData, setFogosData] = useState<FireworkData[]>([]);
+const TelaVitoria: React.FC<TelaVitoriaProps> = ({ aoReiniciar }) => {
+  const [dadosDosFogos, setDadosDosFogos] = useState<DadosFogos[]>([]);
   const navigate = useNavigate();
 
-  // Gera os dados aleatórios para os fogos de artifício apenas uma vez
+  // Gera os dados aleatórios para os fogos de artifício apenas uma vez, quando o componente é montado.
   useEffect(() => {
-    const data: FireworkData[] = [];
+    const dados: DadosFogos[] = [];
     for (let i = 0; i < NUMERO_FOGOS; i++) {
-      data.push({
+      dados.push({
         id: i,
-        top: `${Math.random() * 80 + 10}%`, // Evita as bordas extremas
+        top: `${Math.random() * 80 + 10}%`, // Evita que os fogos estourem muito perto das bordas
         left: `${Math.random() * 80 + 10}%`,
-        color: CORES_FOGOS[Math.floor(Math.random() * CORES_FOGOS.length)],
-        delay: `${Math.random() * 2}s`, // Delay inicial da explosão
+        cor: CORES_FOGOS[Math.floor(Math.random() * CORES_FOGOS.length)],
+        delay: `${Math.random() * 2}s`, // Atraso aleatório para cada explosão
       });
     }
-    setFogosData(data);
+    setDadosDosFogos(dados);
   }, []);
 
-  const handleOutroJogo = () => {
+  const tratarCliqueOutroJogo = () => {
     navigate('/jogos/teclado');
   };
 
   return (
-    <S.VictoryOverlay>
-      {/* Mapeia os dados dos fogos e renderiza CADA EXPLOSÃO na tela cheia */}
-      {fogosData.map(fogo => (
-        <S.FireworkContainer
+    <S.FundoVitoria>
+      {/* Mapeia e renderiza cada explosão de fogos na tela */}
+      {dadosDosFogos.map(fogo => (
+        <S.ContainerFogos
           key={fogo.id}
           style={{
             '--top': fogo.top,
             '--left': fogo.left,
           } as React.CSSProperties}
         >
-          {/* Renderiza as partículas para CADA explosão */}
+          {/* Renderiza as partículas para cada explosão */}
           {Array.from({ length: PARTICULAS_POR_FOGO }).map((_, index) => (
-            <S.FireworkParticle
+            <S.ParticulaFogos
               key={index}
               style={{
-                '--color': fogo.color,
+                '--color': fogo.cor,
                 '--delay': fogo.delay,
               } as React.CSSProperties}
             />
           ))}
-        </S.FireworkContainer>
+        </S.ContainerFogos>
       ))}
 
-      <S.VictoryContent>
-        <S.TrophyIcon>
+      {/* O conteúdo do modal é renderizado depois, ficando por cima dos fogos */}
+      <S.ConteudoVitoria>
+        <S.IconeTrofeu>
           <Trophy size={100} strokeWidth={1.5} />
-        </S.TrophyIcon>
-        <S.VictoryTitle>MISSÃO COMPLETA!</S.VictoryTitle>
-        <S.VictoryMessage>
+        </S.IconeTrofeu>
+        <S.TituloVitoria>MISSÃO COMPLETA!</S.TituloVitoria>
+        <S.MensagemVitoria>
           Parabéns, explorador espacial! Você catalogou todos os planetas na ordem correta e se tornou um mestre do Sistema Solar!
-        </S.VictoryMessage>
-        <S.ButtonContainer>
-          <S.VictoryButton onClick={onRestart}>Jogar Novamente</S.VictoryButton>
-          <S.VictoryButton onClick={handleOutroJogo}>Outro Jogo</S.VictoryButton>
-        </S.ButtonContainer>
-      </S.VictoryContent>
-    </S.VictoryOverlay>
+        </S.MensagemVitoria>
+        <S.ContainerBotoes>
+          <S.BotaoVitoria onClick={aoReiniciar}>Jogar Novamente</S.BotaoVitoria>
+          <S.BotaoVitoria onClick={tratarCliqueOutroJogo}>Outro Jogo</S.BotaoVitoria>
+        </S.ContainerBotoes>
+      </S.ConteudoVitoria>
+    </S.FundoVitoria>
   );
 };
 
