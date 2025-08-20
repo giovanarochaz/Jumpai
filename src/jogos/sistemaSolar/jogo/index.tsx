@@ -98,10 +98,19 @@ const JogoSistemaSolar: React.FC<JogoSistemaSolarProps> = ({ aoVencer, configura
         const duracaoAnimacao = Math.random() * (velocidadeConfig.max - velocidadeConfig.min) + velocidadeConfig.min;
         const duracaoFinal = isMeteoro ? duracaoAnimacao * 0.7 : duracaoAnimacao;
 
+        const largura = window.innerWidth;
+        const altura = window.innerHeight;
+
+        // Cálculo proporcional à média das dimensões da tela
+        const baseProporcional = (largura + altura) / 2;
+
+        // Exemplo: meteoro = 2% a 4%, planeta = 5% a 8%
+        const tamanho = isMeteoro ? baseProporcional * (Math.random() * 0.02 + 0.02)  : baseProporcional * (Math.random() * 0.03 + 0.05); 
+
         setPlanetasVisiveis(atuais => [...atuais, {
           id: proximoIdRef.current++, nome: corpoAleatorio.nome, imagem: corpoAleatorio.imagem, top: topProposto,
           duracao: duracaoFinal,
-          tamanho: isMeteoro ? Math.random() * 45 + 30 : Math.random() * 100 + 70,
+          tamanho: tamanho
         }]);
         ultimoGeradoRef.current = corpoAleatorio.nome;
       }

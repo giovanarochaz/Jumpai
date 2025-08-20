@@ -69,7 +69,7 @@ const ManualSistemaSolar: React.FC<ManualSistemaSolarProps> = ({ aoIniciarMissao
               <S.WrapperIcone><Gamepad2 size={32} strokeWidth={2.5} /></S.WrapperIcone>
               <S.WrapperTexto>
                 <h3>Controles Simples</h3>
-                <p>Use as teclas <ArrowUp size={18} /> <strong>SETA PARA CIMA</strong> e <ArrowDown size={18} /> <strong>SETA PARA BAIXO</strong> para mover seu astronauta.</p>
+                <p>Use as teclas <strong>SETA PARA CIMA</strong> e  <strong>SETA PARA BAIXO</strong> para mover seu astronauta.</p>
               </S.WrapperTexto>
             </S.SecaoExplicacao>
             <S.SecaoExplicacao>

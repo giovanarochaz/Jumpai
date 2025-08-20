@@ -8,7 +8,8 @@ export const ContainerTela = styled.div`
   justify-content: center;
   align-items: center;
   width: 100vw;
-  height: 100vh;
+  height: auto;
+  min-height: 100vh;
   padding: 2rem 0; /* Remove padding lateral para o carrossel ir até a borda */
   gap: 3rem;
   background-color: ${colors.roxo};
@@ -47,21 +48,26 @@ export const CarrosselViewport = styled.div`
   padding: 2rem 0;
 `;
 
-export const CarrosselTrilha = styled.div<{ indiceAtual: number; }>`
+export const CarrosselTrilha = styled.div<{ indiceAtual: number }>`
   display: flex;
   align-items: center;
   gap: 40px;
-  
   transition: transform 0.6s ease-in-out;
-  
-  transform: translateX(calc(50% - 200px - (${props => props.indiceAtual} * (500px + 50px))));
+
+  /* Calcula o deslocamento horizontal com base na largura real do card (responsivo) */
+  transform: translateX(
+    calc(
+      50% - min(90vw, 500px) / 2 - (${props => props.indiceAtual} * (min(90vw, 500px) + 40px))
+    )
+  );
 `;
 
-// NOVO: Componente para estilizar a imagem dentro do card
+
 export const ImagemCard = styled.img`
   width: 100%;
-  height: 200px; /* Altura fixa para a área da imagem */
-  object-fit: cover; /* Garante que a imagem cubra a área sem distorcer */
+  height: auto;
+  max-height: 220px;
+  object-fit: cover;
   border-radius: 10px;
   margin-bottom: 1rem;
 `;
@@ -70,29 +76,27 @@ export const CardJogo = styled.div<{ isActive: boolean }>`
   display: flex;
   flex-direction: column;
   align-items: center;
-  justify-content: flex-start; /* Alinha o conteúdo ao topo */
   text-align: center;
   padding: 1.5rem;
   gap: 1rem;
-  
+
   flex-shrink: 0;
-  width: 500px;
-  height: 520px; /* Altura total do card */
+  width: min(90vw, 500px);
+  height: auto;
 
   background-color: ${colors.branco};
   color: ${colors.roxo};
   border: 4px solid ${colors.preto};
   border-radius: 20px;
   box-shadow: 6px 6px 0px ${colors.preto};
-  
+
   transition: all 0.4s ease-in-out;
   cursor: pointer;
 
   transform: scale(${props => (props.isActive ? 1 : 0.8)});
   opacity: ${props => (props.isActive ? 1 : 0.5)};
-  
+
   &:hover {
-    /* Aumentamos um pouco a escala no hover para ficar mais visível */
     transform: scale(${props => (props.isActive ? 1.05 : 0.85)});
     opacity: ${props => (props.isActive ? 1 : 0.7)};
   }
@@ -104,34 +108,34 @@ export const TextoCard = styled.p`
   line-height: 1.4;
   max-width: 95%;
 `;
+
 export const BotaoNavegacao = styled.button<{ direcao: 'esquerda' | 'direita' }>`
   position: absolute;
   top: 50%;
   transform: translateY(-50%);
-  z-index: 10; // Garante que fique acima dos outros elementos
+  z-index: 10;
 
-  left: ${props => props.direcao === 'esquerda' ? 'calc(50% - 400px)' : 'auto'};
-  right: ${props => props.direcao === 'direita' ? 'calc(50% - 400px)' : 'auto'};
-  
+  left: ${props => props.direcao === 'esquerda' ? '5%' : 'auto'};
+  right: ${props => props.direcao === 'direita' ? '5%' : 'auto'};
+
   background: transparent;
   border: none;
   padding: 0.5rem;
   cursor: pointer;
   color: ${colors.branco};
-  
+
   transition: transform 0.2s ease, color 0.2s ease;
 
   &:hover {
     transform: translateY(-50%) scale(1.15);
-    color: ${colors.amarelo}; // Cor de destaque no hover
+    color: ${colors.amarelo};
   }
 
   &:active {
     transform: translateY(-50%) scale(1.05);
   }
 
-  /* Media query para telas menores */
-  @media (max-width: 900px) {
+  @media (max-width: 600px) {
     left: ${props => props.direcao === 'esquerda' ? '10px' : 'auto'};
     right: ${props => props.direcao === 'direita' ? '10px' : 'auto'};
   }
