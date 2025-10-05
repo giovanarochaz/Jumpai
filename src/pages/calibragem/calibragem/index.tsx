@@ -22,16 +22,16 @@ import {
   BolinhaDeFoco,
   Flash,
   GlobalStyle
-} from './styles'; // Assumindo que os estilos estão em './estilos.ts'
+} from './styles';
 import { olhoStore } from '../../../interface/olho';
-
-
+import { useIluminacaoAutomatica } from '../../../hooks/useIluminacaoAutomatica';
+import { iluminacaoStore } from '../../../interface/iluminacaoStore';
 import ModalGenerico from '../../../components/modal';
 
-const LIMIAR_LUMINOSIDADE = 70;
-const TEMPO_SEM_ROSTO_PARA_AVISO = 3000; // 3 segundos até avisar que não há rosto
 
-// Interface para definir a estrutura do estado do nosso modal
+
+const TEMPO_SEM_ROSTO_PARA_AVISO = 3000;
+
 interface EstadoModal {
   estaAberto: boolean;
   imagemSrc: string;
@@ -48,8 +48,11 @@ const CalibragemOcular: React.FC = () => {
   const faceLandmarkerRef = useRef<FaceLandmarker | null>(null);
   const isCalibrandoRef = useRef(false);
   const alturasOlhoRef = useRef<number[]>([]);
-  // Novo Ref: Usado para controlar o temporizador que verifica a ausência de rosto
   const temporizadorSemRostoRef = useRef<number | null>(null);
+
+  // MUDANÇA: Usando nosso Hook para automatizar a iluminação!
+  // Esta linha substitui toda a lógica manual anterior.
+  useIluminacaoAutomatica(videoRef);
 
   // Estados
   const [carregando, setCarregando] = useState(true);
@@ -58,9 +61,6 @@ const CalibragemOcular: React.FC = () => {
   const [contagem, setContagem] = useState<number | null>(null);
   const [mostrarBolinha, setMostrarBolinha] = useState(false);
   const [mostrarFlashDeEfeito, setMostrarFlashDeEfeito] = useState(false);
-  const [usarFlashDeTela, setUsarFlashDeTela] = useState(false);
-
-  // Novo Estado: Controla o conteúdo e a visibilidade do modal
   const [estadoDoModal, setEstadoDoModal] = useState<EstadoModal>({
     estaAberto: false,
     imagemSrc: '',
@@ -68,26 +68,27 @@ const CalibragemOcular: React.FC = () => {
     descricao: '',
   });
 
-  // Função centralizada para exibir o modal com diferentes conteúdos
   const exibirModal = (tipo: 'semRosto' | 'permissaoCamera') => {
+    let dadosModal = { imagemSrc: '', titulo: '', descricao: '' };
     if (tipo === 'semRosto') {
-      setEstadoDoModal({
-        estaAberto: true,
+      dadosModal = {
         imagemSrc: '../../../../public/assets/modal/aviso.png',
         titulo: 'Rosto não Detectado',
-        descricao: 'Por favor, posicione seu rosto no centro da câmera para que possamos detectá-lo.',
-      });
+        descricao: 'Por favor, posicione seu rosto no centro da câmera.',
+      };
     } else if (tipo === 'permissaoCamera') {
-      setEstadoDoModal({
-        estaAberto: true,
+      dadosModal = {
         imagemSrc: '../../../../public/assets/modal/camera.png',
         titulo: 'Acesso à Câmera Necessário',
         descricao: 'Você precisa permitir o acesso à câmera no seu navegador para continuar.',
-      });
+      };
     }
+    setEstadoDoModal({ ...dadosModal, estaAberto: true });
   };
 
   useEffect(() => {
+    // MUDANÇA: O useEffect agora foca apenas em iniciar a câmera e o MediaPipe.
+    // A lógica de iluminação foi movida para o Hook.
     const iniciarMediaPipe = async () => {
       try {
         const filesetResolver = await FilesetResolver.forVisionTasks("https://cdn.jsdelivr.net/npm/@mediapipe/tasks-vision/wasm");
@@ -99,7 +100,7 @@ const CalibragemOcular: React.FC = () => {
         setCarregando(false);
       } catch (err) {
         console.error("Erro ao inicializar MediaPipe:", err);
-        setErro("Não foi possível carregar o sistema de detecção. Tente recarregar a página.");
+        setErro("Não foi possível carregar o sistema de detecção.");
       }
     };
 
@@ -109,18 +110,20 @@ const CalibragemOcular: React.FC = () => {
         const stream = await navigator.mediaDevices.getUserMedia({ video: { width: 640, height: 480 } });
         videoRef.current.srcObject = stream;
         videoRef.current.onloadeddata = () => {
+          // O evento 'playing' que o nosso Hook escuta será disparado aqui
           videoRef.current?.play();
           requestAnimationFrame(detectar);
         };
       } catch (err) {
         console.error("Erro ao acessar câmera:", err);
-        setErro("Você precisa permitir o acesso à câmera para continuar.");
-        // Se der erro ao pedir permissão, exibe o modal específico
+        setErro("Você precisa permitir o acesso à câmera.");
         exibirModal('permissaoCamera');
       }
     };
 
     iniciarMediaPipe();
+    
+    // MUDANÇA: A função de limpeza do useEffect foi movida para dentro do Hook.
   }, []);
 
   const detectar = () => {
@@ -145,9 +148,7 @@ const CalibragemOcular: React.FC = () => {
     ctx.drawImage(video, -canvas.width, 0, canvas.width, canvas.height);
     ctx.restore();
 
-    // Lógica para o aviso de "nenhum rosto detectado"
     if (resultado.faceLandmarks.length > 0) {
-      // Se um rosto foi detectado, nós cancelamos qualquer aviso pendente.
       if (temporizadorSemRostoRef.current) {
         clearTimeout(temporizadorSemRostoRef.current);
         temporizadorSemRostoRef.current = null;
@@ -175,70 +176,15 @@ const CalibragemOcular: React.FC = () => {
         }
       }
     } else {
-      // Nenhum rosto foi detectado no frame atual.
-      // Se já não houver um temporizador rodando e não estivermos no meio da calibragem, iniciamos um.
       if (!temporizadorSemRostoRef.current && !isCalibrandoRef.current) {
         temporizadorSemRostoRef.current = window.setTimeout(() => {
           exibirModal('semRosto');
-          temporizadorSemRostoRef.current = null; // Reseta para que possa ser ativado novamente
+          temporizadorSemRostoRef.current = null;
         }, TEMPO_SEM_ROSTO_PARA_AVISO);
       }
     }
 
     requestAnimationFrame(detectar);
-  };
-
-  const ajustarIluminacao = async () => {
-    const video = videoRef.current;
-    if (!video) return;
-
-    const canvas = document.createElement('canvas');
-    canvas.width = video.videoWidth;
-    canvas.height = video.videoHeight;
-    const ctx = canvas.getContext('2d', { willReadFrequently: true });
-    if (!ctx) return;
-    ctx.drawImage(video, 0, 0, canvas.width, canvas.height);
-    const imageData = ctx.getImageData(0, 0, canvas.width, canvas.height);
-    const data = imageData.data;
-    let somaLuminosidade = 0;
-
-    for (let i = 0; i < data.length; i += 400) {
-        somaLuminosidade += (data[i] + data[i + 1] + data[i + 2]) / 3;
-    }
-    const mediaLuminosidade = somaLuminosidade / (data.length / 400);
-
-    if (mediaLuminosidade < LIMIAR_LUMINOSIDADE) {
-      const stream = video.srcObject as MediaStream;
-      const track = stream.getVideoTracks()[0];
-      const capabilities = track.getCapabilities();
-
-      if (capabilities.torch) {
-        try {
-          await track.applyConstraints({ advanced: [{ torch: true }] });
-          console.log("[Iluminação] Flash de hardware (torch) ativado.");
-        } catch (err) {
-          console.error("[Iluminação] Erro ao tentar ativar o torch, usando flash de tela.", err);
-          setUsarFlashDeTela(true);
-        }
-      } else {
-        console.warn("[Iluminação] Dispositivo não suporta torch. Usando flash de tela.");
-        setUsarFlashDeTela(true);
-      }
-    }
-  };
-
-  const desligarIluminacao = async () => {
-      setUsarFlashDeTela(false);
-      const video = videoRef.current;
-      if (!video || !video.srcObject) return;
-      const stream = video.srcObject as MediaStream;
-      const track = stream.getVideoTracks()[0];
-      if (track.getCapabilities().torch) {
-          try {
-              await track.applyConstraints({ advanced: [{ torch: false }] });
-              console.log("[Iluminação] Flash de hardware (torch) desligado.");
-          } catch(err) { /* Ignora erros ao desligar */ }
-      }
   };
 
   const finalizarCalibragem = () => {
@@ -249,7 +195,10 @@ const CalibragemOcular: React.FC = () => {
     alturasOlhoRef.current = []; 
     setIsCalibrando(false); 
     setMostrarBolinha(false); 
-    desligarIluminacao();
+    
+    // Comanda o desligamento explícito da iluminação ao terminar a calibragem
+    iluminacaoStore.getState().desligarIluminacao();
+    
     navigate("/calibragem-teste"); 
   };
 
@@ -268,7 +217,10 @@ const CalibragemOcular: React.FC = () => {
           setTimeout(() => setMostrarFlashDeEfeito(false), 300);
           isCalibrandoRef.current = true;
           setIsCalibrando(true);
-          ajustarIluminacao();
+          
+          // MUDANÇA: Não precisamos mais chamar a verificação aqui, pois o Hook já fez isso
+          // automaticamente quando a câmera ligou.
+          
           return null;
         }
         return prev - 1;
@@ -282,7 +234,6 @@ const CalibragemOcular: React.FC = () => {
     <>
       <GlobalStyle />
       
-      {/* O Modal Genérico é renderizado aqui, no topo da árvore de elementos */}
       <ModalGenerico
         estaAberto={estadoDoModal.estaAberto}
         aoFechar={() => setEstadoDoModal(prev => ({ ...prev, estaAberto: false }))}
@@ -315,8 +266,7 @@ const CalibragemOcular: React.FC = () => {
         )}
 
         {mostrarBolinha && <BolinhaDeFoco />}
-        
-        {(mostrarFlashDeEfeito || usarFlashDeTela) && <Flash />}
+        {mostrarFlashDeEfeito && <Flash />}
 
         <BotaoCalibrar onClick={handleCalibrar} disabled={estaProcessando}>
           {isCalibrando ? "Calibrando..." : "Calibrar Altura do Olho"}

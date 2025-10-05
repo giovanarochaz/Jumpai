@@ -1,7 +1,8 @@
 import styled, { createGlobalStyle, keyframes } from 'styled-components';
 import { colors } from '../../../styles/colors';
 
-const flashAnim = keyframes`
+// Esta animação permanece, pois é usada para o efeito visual rápido
+const animacaoDeFlash = keyframes`
   0% { opacity: 0; }
   50% { opacity: 0.9; }
   100% { opacity: 0; }
@@ -101,7 +102,6 @@ export const BotaoCalibrar = styled.button`
   }
 `;
 
-// Overlays (para contagem, bolinha e flash)
 export const Overlay = styled.div`
   position: fixed;
   top: 0;
@@ -139,6 +139,7 @@ export const BolinhaDeFoco = styled.div`
   box-shadow: 0 0 15px 5px rgba(255, 255, 255, 0.7);
 `;
 
+// O componente Flash agora é usado apenas para o efeito visual rápido
 export const Flash = styled.div`
   position: fixed;
   top: 0;
@@ -148,5 +149,5 @@ export const Flash = styled.div`
   background-color: ${colors.branco};
   z-index: 1001;
   pointer-events: none;
-  animation: ${flashAnim} 0.3s ease-in-out;
+  animation: ${animacaoDeFlash} 0.3s ease-in-out;
 `;
