@@ -53,7 +53,7 @@ const CountdownTimer: React.FC<{ duration: number }> = ({ duration }) => (
 const CalibragemTeste: React.FC = () => {
   const navigate = useNavigate();
 
-  // Refs
+  // Cada tela tem seu próprio video/canvas
   const videoRef = useRef<HTMLVideoElement>(null);
   const canvasRef = useRef<HTMLCanvasElement>(null);
   const faceLandmarkerRef = useRef<FaceLandmarker | null>(null);
@@ -117,7 +117,7 @@ const CalibragemTeste: React.FC = () => {
     const iniciarCamera = async () => {
       if (!videoRef.current) return;
       try {
-        const stream = await navigator.mediaDevices.getUserMedia({ video: { width: 640, height: 480 } });
+        const stream = await navigator.mediaDevices.getUserMedia({ video: { width: 640, height: 480  } });
         videoRef.current.srcObject = stream;
         videoRef.current.onloadeddata = () => {
           videoRef.current?.play();
@@ -131,7 +131,10 @@ const CalibragemTeste: React.FC = () => {
     iniciarMediaPipe();
     return () => {
       if (timerRef.current) clearTimeout(timerRef.current);
-      videoRef.current?.srcObject && (videoRef.current.srcObject as MediaStream).getTracks().forEach(track => track.stop());
+      if (videoRef.current?.srcObject) {
+        (videoRef.current.srcObject as MediaStream).getTracks().forEach(track => track.stop());
+        videoRef.current.srcObject = null;
+      }
     };
   }, [alturaMediaDoOlho, navigate]);
 
@@ -149,8 +152,8 @@ const CalibragemTeste: React.FC = () => {
   }, [indiceTentativaAtual]);
 
   const detectar = () => {
-    const { current: canvas } = canvasRef;
-    const { current: video } = videoRef;
+  const { current: canvas } = canvasRef;
+  const video = videoRef.current;
     const { current: faceLandmarker } = faceLandmarkerRef;
     if (!canvas || !faceLandmarker || !video || video.readyState < 2) {
       requestAnimationFrame(detectar);
@@ -177,8 +180,14 @@ const CalibragemTeste: React.FC = () => {
         temporizadorSemRostoRef.current = null;
       }
       const pontos = resultado.faceLandmarks[0];
+      // Olho esquerdo
       const olhoEsquerdoTopo = pontos[159];
       const olhoEsquerdoBase = pontos[145];
+      // Olho direito
+      const olhoDireitoTopo = pontos[386];
+      const olhoDireitoBase = pontos[374];
+
+      // Desenhar traço nos dois olhos
       if (olhoEsquerdoTopo && olhoEsquerdoBase) {
         ctx.beginPath();
         ctx.strokeStyle = "lime";
@@ -186,14 +195,34 @@ const CalibragemTeste: React.FC = () => {
         ctx.moveTo(canvas.width - olhoEsquerdoTopo.x * canvas.width, olhoEsquerdoTopo.y * canvas.height);
         ctx.lineTo(canvas.width - olhoEsquerdoBase.x * canvas.width, olhoEsquerdoBase.y * canvas.height);
         ctx.stroke();
-        const alturaAtual = Math.abs(olhoEsquerdoBase.y - olhoEsquerdoTopo.y);
-        const piscou = alturaAtual < alturaMediaDoOlho * LIMIAR_PISCADA;
-        if (piscou && !isPiscandoRef.current) {
-          isPiscandoRef.current = true;
-        } else if (!piscou && isPiscandoRef.current) {
-          isPiscandoRef.current = false;
-          registrarPiscada();
-        }
+      }
+      if (olhoDireitoTopo && olhoDireitoBase) {
+        ctx.beginPath();
+        ctx.strokeStyle = "cyan";
+        ctx.lineWidth = 2;
+        ctx.moveTo(canvas.width - olhoDireitoTopo.x * canvas.width, olhoDireitoTopo.y * canvas.height);
+        ctx.lineTo(canvas.width - olhoDireitoBase.x * canvas.width, olhoDireitoBase.y * canvas.height);
+        ctx.stroke();
+      }
+
+      // Registrar pontos dos dois olhos no estado global
+      lojaOlho.getState().setPontosDoOlho({
+        topoEsquerdo: olhoEsquerdoTopo,
+        baseEsquerdo: olhoEsquerdoBase,
+        topoDireito: olhoDireitoTopo,
+        baseDireito: olhoDireitoBase
+      });
+
+      // Calcular piscada usando média dos dois olhos
+      let alturaEsquerdo = olhoEsquerdoBase && olhoEsquerdoTopo ? Math.abs(olhoEsquerdoBase.y - olhoEsquerdoTopo.y) : 0;
+      let alturaDireito = olhoDireitoBase && olhoDireitoTopo ? Math.abs(olhoDireitoBase.y - olhoDireitoTopo.y) : 0;
+      const alturaMediaAtual = (alturaEsquerdo + alturaDireito) / 2;
+      const piscou = alturaMediaAtual < alturaMediaDoOlho * LIMIAR_PISCADA;
+      if (piscou && !isPiscandoRef.current) {
+        isPiscandoRef.current = true;
+      } else if (!piscou && isPiscandoRef.current) {
+        isPiscandoRef.current = false;
+        registrarPiscada();
       }
     } else {
       if (!temporizadorSemRostoRef.current && statusDoTesteRef.current === 'testando') {
@@ -245,6 +274,8 @@ const CalibragemTeste: React.FC = () => {
     statusDoTesteRef.current = 'finalizado';
     const sucessos = tentativas.filter(t => t === 'success').length;
     if (sucessos >= 2) {
+      // Ativa CameraFlutuante, desativa teste
+      lojaOlho.getState().setMostrarCameraFlutuante(true);
       exibirModal('sucesso', () => navigate('/jogos/ocular'));
     } else {
       exibirModal('falha', handleReiniciarTeste);
@@ -267,10 +298,10 @@ const CalibragemTeste: React.FC = () => {
           {statusDoTesteRef.current === 'finalizado' && <Paragrafo>Verificando resultados...</Paragrafo>}
         </BlocoDeDescricao>
         
-        <ContainerVideo>
-            <VideoCam ref={videoRef} autoPlay playsInline muted />
-            <CanvasSobreposicao ref={canvasRef} />
-        </ContainerVideo>
+    <ContainerVideo>
+      <VideoCam ref={videoRef} autoPlay playsInline muted />
+      <CanvasSobreposicao ref={canvasRef} />
+    </ContainerVideo>
 
         <ContainerBolinhas>
           {tentativas.map((status, index) => (

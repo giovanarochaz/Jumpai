@@ -72,7 +72,7 @@ export const ImagemCard = styled.img`
   margin-bottom: 1rem;
 `;
 
-export const CardJogo = styled.div<{ isActive: boolean }>`
+export const CardJogo = styled.div<{ $isActive: boolean }>`
   display: flex;
   flex-direction: column;
   align-items: center;
@@ -93,12 +93,12 @@ export const CardJogo = styled.div<{ isActive: boolean }>`
   transition: all 0.4s ease-in-out;
   cursor: pointer;
 
-  transform: scale(${props => (props.isActive ? 1 : 0.8)});
-  opacity: ${props => (props.isActive ? 1 : 0.5)};
+  transform: scale(${props => (props.$isActive ? 1 : 0.8)});
+  opacity: ${props => (props.$isActive ? 1 : 0.5)};
 
   &:hover {
-    transform: scale(${props => (props.isActive ? 1.05 : 0.85)});
-    opacity: ${props => (props.isActive ? 1 : 0.7)};
+  transform: scale(${props => (props.$isActive ? 1.05 : 0.85)});
+  opacity: ${props => (props.$isActive ? 1 : 0.7)};
   }
 
   @media (max-width: 600px) {

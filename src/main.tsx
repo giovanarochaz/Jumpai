@@ -6,7 +6,6 @@ import { EstiloGlobal } from './estilos/global';
 
 import Controle from './pages/controle';
 import Jogo from './pages/jogo';
-import Dificuldade from './pages/dificuldade';
 import SistemaSolar from './jogos/sistemaSolar/app';
 import CalibragemOcular from './pages/calibragem/calibragem';
 import CalibragemTeste from './pages/calibragem/teste';
@@ -23,10 +22,6 @@ const router = createBrowserRouter([
       {
         path: '/jogos/:controle',
         element: <Jogo />,
-      },
-      {
-        path: '/dificuldade', 
-        element: <Dificuldade />,
       },
       {
         path: '/sistemaSolar', 

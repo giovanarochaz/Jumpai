@@ -41,7 +41,7 @@ interface EstadoModal {
 const CalibragemOcular: React.FC = () => {
   const navigate = useNavigate();
 
-  // Refs
+  // Cada tela tem seu próprio video/canvas
   const videoRef = useRef<HTMLVideoElement>(null);
   const canvasRef = useRef<HTMLCanvasElement>(null);
   const faceLandmarkerRef = useRef<FaceLandmarker | null>(null);
@@ -116,12 +116,18 @@ const CalibragemOcular: React.FC = () => {
     };
 
     iniciarMediaPipe();
+    return () => {
+      if (videoRef.current?.srcObject) {
+        (videoRef.current.srcObject as MediaStream).getTracks().forEach(track => track.stop());
+        videoRef.current.srcObject = null;
+      }
+    };
   }, []);
 
   const detectar = () => {
-    const { current: faceLandmarker } = faceLandmarkerRef;
-    const { current: video } = videoRef;
-    const { current: canvas } = canvasRef;
+  const { current: faceLandmarker } = faceLandmarkerRef;
+  const video = videoRef.current;
+  const { current: canvas } = canvasRef;
 
     if (!faceLandmarker || !video || !canvas || video.readyState < 2) {
       requestAnimationFrame(detectar);
@@ -192,7 +198,7 @@ const CalibragemOcular: React.FC = () => {
   
   const finalizarCalibragem = () => {
     isCalibrandoRef.current = false;
-  
+
     if (alturasOlhoRef.current.length > 0) {
       // **MELHORIA: Calcular a mediana em vez da média**
       const alturasOrdenadas = [...alturasOlhoRef.current].sort((a, b) => a - b);
@@ -200,16 +206,18 @@ const CalibragemOcular: React.FC = () => {
       const mediana = alturasOrdenadas.length % 2 !== 0
         ? alturasOrdenadas[meio]
         : (alturasOrdenadas[meio - 1] + alturasOrdenadas[meio]) / 2;
-  
+
       lojaOlho.getState().setAlturaMedia(mediana);
     }
-  
+
     alturasOlhoRef.current = [];
     setIsCalibrando(false);
     setMostrarBolinha(false); // Esconde a bolinha
-  
+
     lojaIluminacao.getState().desligarIluminacao();
-    
+
+    // Ativa tela de teste, desativa calibragem
+    lojaOlho.getState().setMostrarCameraFlutuante(false);
     navigate("/calibragem-teste");
   };
 

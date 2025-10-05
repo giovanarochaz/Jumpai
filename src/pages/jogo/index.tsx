@@ -138,7 +138,7 @@ const Jogo: React.FC = () => {
             {fasesDoJogo.map((fase, index) => (
               <CardJogo
                 key={`${fase.id}-${index}`}
-                isActive={index === indiceAtivo}
+                $isActive={index === indiceAtivo}
                 onClick={() => handleCardClick(index)}
               >
                 <TextoCard>{fase.titulo}</TextoCard>
