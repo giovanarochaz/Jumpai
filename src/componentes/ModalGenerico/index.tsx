@@ -5,17 +5,16 @@ import {
   ImagemDoModal,
   TituloDoModal,
   DescricaoDoModal
-} from './styles';
+} from './estilos';
 
-// ATUALIZADO: Definindo as novas propriedades que o modal aceitará
 interface ModalGenericoProps {
   estaAberto: boolean;
   aoFechar: () => void;
   imagemSrc: string;
   titulo: string;
   descricao: string;
-  duracaoEmSegundos?: number; // NOVO: Duração opcional, em segundos
-  acaoAposFechar?: () => void; // NOVO: Ação a ser executada quando o modal terminar de fechar
+  duracaoEmSegundos?: number;
+  acaoAposFechar?: () => void;
 }
 
 const ModalGenerico: React.FC<ModalGenericoProps> = ({
@@ -24,23 +23,17 @@ const ModalGenerico: React.FC<ModalGenericoProps> = ({
   imagemSrc,
   titulo,
   descricao,
-  duracaoEmSegundos = 5, // Valor padrão de 5 segundos
+  duracaoEmSegundos = 5,
   acaoAposFechar,
 }) => {
-
-  // ATUALIZADO: O efeito agora também executa a 'acaoAposFechar'
   useEffect(() => {
     if (estaAberto) {
       const temporizador = setTimeout(() => {
-        // Primeiro, chama a função para fechar o modal (esconder da tela)
         aoFechar();
-        
-        // Em seguida, se uma ação foi fornecida, ela é executada.
         if (acaoAposFechar) {
           acaoAposFechar();
         }
-      }, duracaoEmSegundos * 1000); // Usa a duração fornecida
-
+      }, duracaoEmSegundos * 1000);
       return () => clearTimeout(temporizador);
     }
   }, [estaAberto, aoFechar, acaoAposFechar, duracaoEmSegundos]);

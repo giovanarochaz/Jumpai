@@ -23,10 +23,10 @@ import {
   Flash,
   GlobalStyle
 } from './styles';
-import { olhoStore } from '../../../interface/olho';
+import { lojaOlho } from '../../../lojas/lojaOlho';
 import { useIluminacaoAutomatica } from '../../../hooks/useIluminacaoAutomatica';
-import { iluminacaoStore } from '../../../interface/iluminacaoStore';
-import ModalGenerico from '../../../components/modal';
+import { lojaIluminacao } from '../../../lojas/lojaIluminacao';
+import ModalGenerico from '../../../componentes/ModalGenerico';
 
 
 
@@ -50,8 +50,6 @@ const CalibragemOcular: React.FC = () => {
   const alturasOlhoRef = useRef<number[]>([]);
   const temporizadorSemRostoRef = useRef<number | null>(null);
 
-  // MUDANÇA: Usando nosso Hook para automatizar a iluminação!
-  // Esta linha substitui toda a lógica manual anterior.
   useIluminacaoAutomatica(videoRef);
 
   // Estados
@@ -87,8 +85,7 @@ const CalibragemOcular: React.FC = () => {
   };
 
   useEffect(() => {
-    // MUDANÇA: O useEffect agora foca apenas em iniciar a câmera e o MediaPipe.
-    // A lógica de iluminação foi movida para o Hook.
+  // Inicia câmera e MediaPipe
     const iniciarMediaPipe = async () => {
       try {
         const filesetResolver = await FilesetResolver.forVisionTasks("https://cdn.jsdelivr.net/npm/@mediapipe/tasks-vision/wasm");
@@ -123,7 +120,7 @@ const CalibragemOcular: React.FC = () => {
 
     iniciarMediaPipe();
     
-    // MUDANÇA: A função de limpeza do useEffect foi movida para dentro do Hook.
+  // Limpeza do useEffect está no Hook
   }, []);
 
   const detectar = () => {
@@ -191,13 +188,13 @@ const CalibragemOcular: React.FC = () => {
     isCalibrandoRef.current = false; 
     const soma = alturasOlhoRef.current.reduce((acc, val) => acc + val, 0); 
     const media = soma / alturasOlhoRef.current.length; 
-    olhoStore.getState().setAlturaMedia(media); 
+  lojaOlho.getState().setAlturaMedia(media); 
     alturasOlhoRef.current = []; 
     setIsCalibrando(false); 
     setMostrarBolinha(false); 
     
     // Comanda o desligamento explícito da iluminação ao terminar a calibragem
-    iluminacaoStore.getState().desligarIluminacao();
+  lojaIluminacao.getState().desligarIluminacao();
     
     navigate("/calibragem-teste"); 
   };
@@ -218,8 +215,7 @@ const CalibragemOcular: React.FC = () => {
           isCalibrandoRef.current = true;
           setIsCalibrando(true);
           
-          // MUDANÇA: Não precisamos mais chamar a verificação aqui, pois o Hook já fez isso
-          // automaticamente quando a câmera ligou.
+          // O Hook já faz a verificação automaticamente
           
           return null;
         }

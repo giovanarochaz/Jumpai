@@ -1,5 +1,5 @@
 import styled, { createGlobalStyle, keyframes } from 'styled-components';
-import { colors } from '../../../styles/colors';
+import { cores } from '../../../estilos/cores';
 
 export const GlobalStyle = createGlobalStyle`
   body { margin: 0; padding: 0; box-sizing: border-box; }
@@ -12,7 +12,7 @@ export const ContainerDaTela = styled.div`
   justify-content: center;
   min-height: 100vh;
   width: 100vw;
-  background-color: ${colors.roxo};
+  background-color: ${cores.roxo};
   padding: 20px;
   box-sizing: border-box;
   font-family: sans-serif;
@@ -26,13 +26,13 @@ export const BlocoDeDescricao = styled.div`
 
 export const Titulo = styled.h1`
   font-size: 2.5rem;
-  color: ${colors.branco};
+  color: ${cores.branco};
   margin-bottom: 10px;
 `;
 
 export const Paragrafo = styled.p`
   font-size: 1.1rem;
-  color: ${colors.branco};
+  color: ${cores.branco};
   line-height: 1.6;
 `;
 
@@ -40,7 +40,7 @@ export const ContainerVideo = styled.div`
   position: relative;
   width: clamp(300px, 50%, 640px);
   aspect-ratio: 4 / 3;
-  border: 5px solid ${colors.branco};
+  border: 5px solid ${cores.branco};
   border-radius: 8px;
   overflow: hidden;
   margin-bottom: 20px;
@@ -62,8 +62,8 @@ export const CanvasSobreposicao = styled.canvas`
 export const BotaoNavegacao = styled.button`
   padding: 15px 30px;
   font-size: 1.2rem;
-  background-color: ${colors.branco};
-  color: ${colors.roxo};
+  background-color: ${cores.branco};
+  color: ${cores.roxo};
   border: none;
   font-weight: bold;
   border-radius: 8px;
@@ -121,15 +121,15 @@ export const BolinhaTeste = styled.div<{ status: BolinhaStatus }>`
   transition: background-color 0.3s, transform 0.3s;
   
   background-color: ${({ status }) => {
-    if (status === 'success') return colors.verde;
-    if (status === 'fail') return colors.vermelho;
+    if (status === 'success') return cores.verde;
+    if (status === 'fail') return cores.vermelho;
     return 'rgba(255, 255, 255, 0.2)';
   }};
   
   animation: ${({ status }) => (status === 'active' ? pulseScaleAnim : 'none')} 1s ease-in-out infinite;
 
   &::before {
-    color: ${colors.branco};
+    color: ${cores.branco};
     content: '${({ status }) => {
       if (status === 'success') return '✓';
       if (status === 'fail') return '✗';
@@ -149,7 +149,7 @@ export const CountdownSVG = styled.svg`
 `;
 
 export const CountdownCircle = styled.circle<{ duration: number }>`
-  stroke: ${colors.branco};
+  stroke: ${cores.branco};
   stroke-width: 5;
   fill: transparent;
   r: 40;

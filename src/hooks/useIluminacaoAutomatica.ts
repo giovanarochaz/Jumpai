@@ -1,5 +1,5 @@
 import React, { useEffect } from 'react';
-import { iluminacaoStore } from '../interface/iluminacaoStore';
+import { lojaIluminacao } from '../lojas/lojaIluminacao';
 
 /**
  * Um Hook customizado que gerencia automaticamente a iluminação da tela
@@ -8,9 +8,9 @@ import { iluminacaoStore } from '../interface/iluminacaoStore';
  */
 export const useIluminacaoAutomatica = (videoRef: React.RefObject<HTMLVideoElement | null>) => {
   // Acessando as ações do nosso estado global de iluminação
-  const setVideoRef = iluminacaoStore((estado) => estado.setVideoRef);
-  const verificarLuminosidade = iluminacaoStore((estado) => estado.verificarLuminosidade);
-  const desligarIluminacao = iluminacaoStore((estado) => estado.desligarIluminacao);
+  const setVideoRef = lojaIluminacao((estado) => estado.setVideoRef);
+  const verificarLuminosidade = lojaIluminacao((estado) => estado.verificarLuminosidade);
+  const desligarIluminacao = lojaIluminacao((estado) => estado.desligarIluminacao);
 
   useEffect(() => {
     const elementoDeVideo = videoRef.current;

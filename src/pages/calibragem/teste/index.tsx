@@ -23,8 +23,8 @@ import {
   CountdownSVG,
   CountdownCircle
 } from './styles';
-import { olhoStore } from '../../../interface/olho';
-import ModalGenerico from '../../../components/modal';
+import { lojaOlho } from '../../../lojas/lojaOlho';
+import ModalGenerico from '../../../componentes/ModalGenerico';
 
 // Constantes
 const LIMIAR_PISCADA = 0.5;
@@ -75,7 +75,7 @@ const CalibragemTeste: React.FC = () => {
   // NOVO ESTADO: Controla qual tentativa está em andamento.
   const [indiceTentativaAtual, setIndiceTentativaAtual] = useState<number | null>(null);
 
-  const alturaMediaDoOlho = olhoStore.getState().alturaMedia;
+  const alturaMediaDoOlho = lojaOlho.getState().alturaMedia;
 
   const exibirModal = (tipo: 'semRosto' | 'erroRecalibrar' | 'sucesso' | 'falha', acao?: () => void) => {
     let dadosModal = { imagemSrc: '', titulo: '', descricao: '' };

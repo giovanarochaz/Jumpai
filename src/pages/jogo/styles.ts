@@ -1,6 +1,6 @@
 // src/pages/Jogo/styles.ts
 import styled from 'styled-components';
-import { colors } from '../../styles/colors'; // Verifique o caminho das suas cores
+import { cores } from '../../estilos/cores';
 
 export const ContainerTela = styled.div`
   display: flex;
@@ -12,7 +12,7 @@ export const ContainerTela = styled.div`
   min-height: 100vh;
   padding: 2rem 0; /* Remove padding lateral para o carrossel ir até a borda */
   gap: 3rem;
-  background-color: ${colors.roxo};
+  background-color: ${cores.roxo};
 `;
 
 export const BlocoDescricao = styled.div`
@@ -25,7 +25,7 @@ export const Paragrafo = styled.p`
   font-size: 1.5rem;
   line-height: 1.6;
   font-weight: 400;
-  color: ${colors.branco};
+  color: ${cores.branco};
   text-shadow: 1px 1px 2px rgba(0, 0, 0, 0.5);
 `;
 
@@ -84,11 +84,11 @@ export const CardJogo = styled.div<{ isActive: boolean }>`
   width: min(90vw, 500px);
   height: auto;
 
-  background-color: ${colors.branco};
-  color: ${colors.roxo};
-  border: 4px solid ${colors.preto};
+  background-color: ${cores.branco};
+  color: ${cores.roxo};
+  border: 4px solid ${cores.preto};
   border-radius: 20px;
-  box-shadow: 6px 6px 0px ${colors.preto};
+  box-shadow: 6px 6px 0px ${cores.preto};
 
   transition: all 0.4s ease-in-out;
   cursor: pointer;
@@ -122,13 +122,13 @@ export const BotaoNavegacao = styled.button<{ direcao: 'esquerda' | 'direita' }>
   border: none;
   padding: 0.5rem;
   cursor: pointer;
-  color: ${colors.branco};
+  color: ${cores.branco};
 
   transition: transform 0.2s ease, color 0.2s ease;
 
   &:hover {
     transform: translateY(-50%) scale(1.15);
-    color: ${colors.amarelo};
+    color: ${cores.amarelo};
   }
 
   &:active {

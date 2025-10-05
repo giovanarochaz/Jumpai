@@ -1,7 +1,7 @@
 import React from 'react';
 import { ContainerDaTela,  BlocoDeDescricao,  Paragrafo,  AgrupadorDeBotoes,  BotaoEstilizado,  TextoDoBotao} from './styles';
 import { Gamepad2 } from 'lucide-react';
-import { colors } from '../../styles/colors';
+import { cores } from '../../estilos/cores';
 
 const Dificuldade: React.FC = () => {
     
@@ -23,23 +23,23 @@ const Dificuldade: React.FC = () => {
 
       <AgrupadorDeBotoes>
         <BotaoEstilizado onClick={iniciarJogo}>
-          <Gamepad2 size={64} color={colors.verde}/>
+          <Gamepad2 size={64} color={cores.verde}/>
           <TextoDoBotao>Facil</TextoDoBotao>
         </BotaoEstilizado>
 
         <BotaoEstilizado onClick={abrirOpcoes}>
-          <Gamepad2 size={64} color={colors.amarelo} />
+          <Gamepad2 size={64} color={cores.amarelo} />
           <TextoDoBotao>Medio</TextoDoBotao>
         </BotaoEstilizado>
 
         <BotaoEstilizado onClick={abrirOpcoes}>
-          <Gamepad2 size={64} color={colors.vermelho} />
+          <Gamepad2 size={64} color={cores.vermelho} />
           <TextoDoBotao>Dificil</TextoDoBotao>
         </BotaoEstilizado>
 
 
         <BotaoEstilizado onClick={abrirOpcoes}>
-          <Gamepad2 size={64} color={colors.roxo} />
+          <Gamepad2 size={64} color={cores.roxo} />
           <TextoDoBotao>Desafio</TextoDoBotao>
         </BotaoEstilizado>
 

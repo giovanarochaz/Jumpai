@@ -1,5 +1,5 @@
 import styled from 'styled-components';
-import { colors } from '../../styles/colors';
+import { cores } from '../../estilos/cores';
 
 export const ContainerDaTela = styled.div`
   display: flex;
@@ -10,7 +10,7 @@ export const ContainerDaTela = styled.div`
   height: 100vh;
   padding: 2rem;
   gap: 3rem;
-  background-color: ${colors.roxo};
+  background-color: ${cores.roxo};
 `;
 
 export const BlocoDeDescricao = styled.div`
@@ -21,8 +21,8 @@ export const BlocoDeDescricao = styled.div`
 export const Titulo = styled.h1`
   font-size: 4rem;
   font-weight: 900; 
-  color: ${colors.amarelo};
-  text-shadow: 4px 4px 0px ${colors.preto}; 
+  color: ${cores.amarelo};
+  text-shadow: 4px 4px 0px ${cores.preto};
   margin-bottom: 1rem;
 
   @media (max-width: 768px) {
@@ -34,7 +34,7 @@ export const Paragrafo = styled.p`
   font-size: 1.5rem;
   line-height: 1.6;
   font-weight: 400;
-  color: ${colors.branco};
+  color: ${cores.branco};
   text-shadow: 1px 1px 2px rgba(0, 0, 0, 0.5); 
 `;
 
@@ -56,24 +56,24 @@ export const BotaoEstilizado = styled.button`
   gap: 0.5rem;
   width: 300px;
   height: 260px;
-  background-color: ${colors.branco};
-  border: 4px solid ${colors.preto};
+  background-color: ${cores.branco};
+  border: 4px solid ${cores.preto};
   border-radius: 20px;
   cursor: pointer;
-  box-shadow: 6px 6px 0px ${colors.preto};
+  box-shadow: 6px 6px 0px ${cores.preto};
   
   transition: all 0.15s ease-out;
 
   &:hover {
-    background-color: ${colors.amarelo};
+    background-color: ${cores.amarelo};
     transform: translate(3px, 3px);
-    box-shadow: 3px 3px 0px ${colors.preto};
-    color: ${colors.preto};
+    box-shadow: 3px 3px 0px ${cores.preto};
+    color: ${cores.preto};
   }
 
   &:active {
     transform: translate(6px, 6px); 
-    box-shadow: 0px 0px 0px ${colors.preto};
+    box-shadow: 0px 0px 0px ${cores.preto};
   }
 `;
 

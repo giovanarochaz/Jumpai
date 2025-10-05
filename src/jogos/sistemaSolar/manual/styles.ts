@@ -1,5 +1,5 @@
 import styled, { keyframes } from 'styled-components';
-import { colors } from '../../../styles/colors';
+import { cores } from '../../../estilos/cores';
 
 // --- ANIMAÇÕES ---
 const aparecer = keyframes`
@@ -35,15 +35,15 @@ export const FundoModal = styled.div`
 `;
 
 export const ConteudoModal = styled.div`
-  background-color: ${colors.branco};
-  color: ${colors.preto};
+  background-color: ${cores.branco};
+  color: ${cores.preto};
   padding: 40px;
-  border: 5px solid ${colors.roxo};
+  border: 5px solid ${cores.roxo};
   border-radius: 30px;
   width: 90%;
   max-width: 800px;
   min-height: 500px;
-  box-shadow: 6px 6px 0px ${colors.preto};
+  box-shadow: 6px 6px 0px ${cores.preto};
   display: flex;
   flex-direction: column;
   justify-content: space-between;
@@ -67,7 +67,7 @@ export const TextoSlide = styled.div`
   h2 {
     font-size: 3rem;
     margin-bottom: 15px;
-    color: ${colors.roxo};
+    color: ${cores.roxo};
     font-weight: 900;
     text-align: left;
   }
@@ -89,8 +89,8 @@ export const SecaoExplicacao = styled.div`
 `;
 
 export const WrapperIcone = styled.div`
-  background-color: ${colors.amarelo};
-  color: ${colors.roxo};
+  background-color: ${cores.amarelo};
+  color: ${cores.roxo};
   border-radius: 50%;
   width: 60px;
   height: 60px;
@@ -98,14 +98,14 @@ export const WrapperIcone = styled.div`
   justify-content: center;
   align-items: center;
   flex-shrink: 0;
-  border: 3px solid ${colors.preto};
+  border: 3px solid ${cores.preto};
 `;
 
 export const WrapperTexto = styled.div`
   h3 {
     margin: 0 0 5px 0;
     font-size: 1.5rem;
-    color: ${colors.roxo};
+    color: ${cores.roxo};
   }
   p {
     margin: 0;
@@ -139,7 +139,7 @@ export const RotuloConfiguracao = styled.div`
   h3 {
     margin: 0;
     font-size: 1.2rem;
-    color: ${colors.roxo};
+    color: ${cores.roxo};
   }
 `;
 
@@ -149,10 +149,10 @@ export const GrupoBotoes = styled.div`
 `;
 
 export const BotaoOpcao = styled.button<{ ativo: boolean }>`
-  background-color: ${({ ativo }) => (ativo ? colors.amarelo : colors.branco)};
-  color: ${colors.preto};
-  border: 3px solid ${({ ativo }) => (ativo ? colors.roxo : colors.preto)};
-  box-shadow: 4px 4px 0px ${({ ativo }) => (ativo ? colors.roxo : colors.preto)};
+  background-color: ${({ ativo }) => (ativo ? cores.amarelo : cores.branco)};
+  color: ${cores.preto};
+  border: 3px solid ${({ ativo }) => (ativo ? cores.roxo : cores.preto)};
+  box-shadow: 4px 4px 0px ${({ ativo }) => (ativo ? cores.roxo : cores.preto)};
   padding: 10px 20px;
   font-size: 1rem;
   font-weight: bold;
@@ -195,7 +195,7 @@ export const DeslizadorInterruptor = styled.span`
   }
 
   ${InputInterruptor}:checked + & {
-    background-color: ${colors.verde};
+    background-color: ${cores.verde};
   }
 
   ${InputInterruptor}:checked + &:before {
@@ -212,10 +212,10 @@ export const NavegacaoCarrossel = styled.div`
 `;
 
 export const BotaoNavegacao = styled.button`
-  background-color: ${colors.roxo};
-  color: ${colors.branco};
+  background-color: ${cores.roxo};
+  color: ${cores.branco};
   border: none;
-  box-shadow: 6px 6px 0px ${colors.preto};
+  box-shadow: 6px 6px 0px ${cores.preto};
   padding: 12px 25px;
   font-size: 1.1rem;
   font-weight: bold;
@@ -224,15 +224,15 @@ export const BotaoNavegacao = styled.button`
   transition: all 0.1s ease-in-out;
 
   &:hover:not(:disabled) {
-    background-color: ${colors.amarelo};
-    color: ${colors.preto};
+    background-color: ${cores.amarelo};
+    color: ${cores.preto};
     transform: translate(3px, 3px);
-    box-shadow: 3px 3px 0px ${colors.preto};
+    box-shadow: 3px 3px 0px ${cores.preto};
   }
 
   &:active:not(:disabled) {
     transform: translate(6px, 6px);
-    box-shadow: 0px 0px 0px ${colors.preto};
+    box-shadow: 0px 0px 0px ${cores.preto};
   }
     
   &:disabled {
@@ -243,10 +243,10 @@ export const BotaoNavegacao = styled.button`
 `;
 
 export const BotaoIniciarMissao = styled.button`
-  background-color: ${colors.verde};
-  color: ${colors.branco};
+  background-color: ${cores.verde};
+  color: ${cores.branco};
   border: none;
-  box-shadow: 8px 8px 0px ${colors.preto};
+  box-shadow: 8px 8px 0px ${cores.preto};
   padding: 20px 40px;
   font-size: 1.5rem;
   font-weight: bold;
@@ -260,12 +260,12 @@ export const BotaoIniciarMissao = styled.button`
 
   &:hover {
     transform: translate(4px, 4px);
-    box-shadow: 4px 4px 0px ${colors.preto};
+    box-shadow: 4px 4px 0px ${cores.preto};
   }
   
   &:active {
     transform: translate(8px, 8px);
-    box-shadow: 0px 0px 0px ${colors.preto};
+    box-shadow: 0px 0px 0px ${cores.preto};
     animation: none;
   }
 `;

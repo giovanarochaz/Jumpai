@@ -2,7 +2,7 @@ import { StrictMode } from 'react';
 import { createRoot } from 'react-dom/client';
 import { createBrowserRouter, RouterProvider } from 'react-router-dom';
 import App from './App';
-import { GlobalStyle } from './styles/global';
+import { EstiloGlobal } from './estilos/global';
 
 import Controle from './pages/controle';
 import Jogo from './pages/jogo';
@@ -48,7 +48,7 @@ const root = createRoot(document.getElementById('root')!);
 
 root.render(
   <StrictMode>
-    <GlobalStyle />
+    <EstiloGlobal />
     <RouterProvider router={router} />
-  </StrictMode>,
+  </StrictMode>
 );

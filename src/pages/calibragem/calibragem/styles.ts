@@ -1,5 +1,5 @@
 import styled, { createGlobalStyle, keyframes } from 'styled-components';
-import { colors } from '../../../styles/colors';
+import { cores } from '../../../estilos/cores';
 
 // Esta animação permanece, pois é usada para o efeito visual rápido
 const animacaoDeFlash = keyframes`
@@ -24,7 +24,7 @@ export const ContainerDaTela = styled.div`
   justify-content: center;
   min-height: 100vh;
   width: 100vw;
-  background-color: ${colors.roxo};
+  background-color: ${cores.roxo};
   padding: 20px;
   box-sizing: border-box;
   position: relative;
@@ -39,18 +39,18 @@ export const BlocoDeDescricao = styled.div`
 
 export const Titulo = styled.h1`
   font-size: 2.5rem;
-  color: ${colors.branco};
+  color: ${cores.branco};
   margin-bottom: 10px;
 `;
 
 export const Paragrafo = styled.p`
   font-size: 1.1rem;
-  color: ${colors.branco};
+  color: ${cores.branco};
   line-height: 1.6;
 `;
 
 export const MensagemDeErro = styled.p`
-  color: ${colors.vermelho};
+  color: ${cores.vermelho};
   font-weight: bold;
   margin-top: 10px;
 `;
@@ -59,7 +59,7 @@ export const ContainerVideo = styled.div`
   position: relative;
   width: clamp(300px, 50%, 640px);
   aspect-ratio: 4 / 3;
-  border: 5px solid ${colors.branco};
+  border: 5px solid ${cores.branco};
   border-radius: 8px;
   overflow: hidden;
   margin-bottom: 20px;
@@ -87,8 +87,8 @@ export const CanvasSobreposicao = styled.canvas`
 export const BotaoCalibrar = styled.button`
   padding: 15px 30px;
   font-size: 1.2rem;
-  background-color: ${colors.branco};
-  color: ${colors.roxo};
+  background-color: ${cores.branco};
+  color: ${cores.roxo};
   border: none;
   font-weight: bold;
   border-radius: 8px;
@@ -116,13 +116,13 @@ export const Overlay = styled.div`
 `;
 
 export const OverlayContagem = styled(Overlay)`
-  background-color: ${colors.preto};
+  background-color: ${cores.preto};
 `;
 
 export const TextoContagem = styled.span`
   font-size: 12rem;
   font-weight: bold;
-  color: ${colors.branco};
+  color: ${cores.branco};
   user-select: none;
 `;
 
@@ -132,7 +132,7 @@ export const BolinhaDeFoco = styled.div`
   left: 50%;
   width: 25px;
   height: 25px;
-  background-color: ${colors.branco};
+  background-color: ${cores.branco};
   border-radius: 50%;
   transform: translate(-50%, -50%);
   z-index: 999;
@@ -146,7 +146,7 @@ export const Flash = styled.div`
   left: 0;
   width: 100vw;
   height: 100vh;
-  background-color: ${colors.branco};
+  background-color: ${cores.branco};
   z-index: 1001;
   pointer-events: none;
   animation: ${animacaoDeFlash} 0.3s ease-in-out;

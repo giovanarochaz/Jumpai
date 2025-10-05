@@ -1,7 +1,6 @@
 import styled, { keyframes } from 'styled-components';
-import { colors } from '../../styles/colors'; // Ajuste o caminho se for diferente no seu projeto
+import { cores } from '../../estilos/cores';
 
-// Animação para o modal surgir suavemente
 const surgir = keyframes`
   from {
     opacity: 0;
@@ -13,7 +12,6 @@ const surgir = keyframes`
   }
 `;
 
-// Camada de fundo que cobre a tela inteira
 export const FundoDoModal = styled.div`
   position: fixed;
   top: 0;
@@ -24,14 +22,13 @@ export const FundoDoModal = styled.div`
   display: flex;
   justify-content: center;
   align-items: center;
-  z-index: 2000; // Z-index alto para garantir que fique sobre todo o conteúdo
+  z-index: 2000;
   padding: 20px;
   box-sizing: border-box;
 `;
 
-// A caixa de conteúdo do modal
 export const ConteudoDoModal = styled.div`
-  background-color: ${colors.branco};
+  background-color: ${cores.branco};
   padding: 30px 40px;
   border-radius: 12px;
   box-shadow: 0 10px 30px rgba(0, 0, 0, 0.2);
@@ -45,21 +42,18 @@ export const ConteudoDoModal = styled.div`
   animation: ${surgir} 0.3s ease-out forwards;
 `;
 
-// Estilo para a imagem/ícone do modal
 export const ImagemDoModal = styled.img`
   width: 80px;
   height: 80px;
   margin-bottom: 20px;
 `;
 
-// Estilo para o título do modal
 export const TituloDoModal = styled.h2`
   font-size: 1.8rem;
   color: #333;
   margin: 0 0 10px 0;
 `;
 
-// Estilo para o parágrafo de descrição do modal
 export const DescricaoDoModal = styled.p`
   font-size: 1rem;
   color: #666;
