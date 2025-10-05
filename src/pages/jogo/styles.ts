@@ -26,7 +26,7 @@ export const Paragrafo = styled.p`
   line-height: 1.6;
   font-weight: 400;
   color: ${cores.branco};
-  text-shadow: 1px 1px 2px rgba(0, 0, 0, 0.5);
+  text-shadow: 1px 1px 2px ${cores.preto};
 `;
 
 // --- ESTRUTURA DO CARROSSEL ---

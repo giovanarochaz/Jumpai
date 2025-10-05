@@ -55,14 +55,14 @@ export const ImagemDoModal = styled.img`
 // Estilo para o título do modal
 export const TituloDoModal = styled.h2`
   font-size: 1.8rem;
-  color: #333;
+  color: ${cores.preto};
   margin: 0 0 10px 0;
 `;
 
 // Estilo para o parágrafo de descrição do modal
 export const DescricaoDoModal = styled.p`
   font-size: 1rem;
-  color: #666;
+  color: ${cores.cinza};
   line-height: 1.5;
   margin: 0;
 `;

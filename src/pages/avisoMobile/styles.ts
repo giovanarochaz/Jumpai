@@ -18,7 +18,7 @@ export const TituloAviso = styled.h1`
   font-size: 2.5rem;
   font-weight: 900;
   color: ${cores.amarelo};
-  text-shadow: 3px 3px 0px rgba(0, 0, 0, 0.5);
+  text-shadow: 3px 3px 0px ${cores.preto};
 `;
 
 export const MensagemAviso = styled.p`
@@ -26,5 +26,5 @@ export const MensagemAviso = styled.p`
   max-width: 400px;
   line-height: 1.6;
   color: ${cores.branco};
-  text-shadow: 1px 1px 2px rgba(0, 0, 0, 0.5);
+  text-shadow: 1px 1px 2px ${cores.preto};
 `;

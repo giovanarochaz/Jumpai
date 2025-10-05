@@ -63,7 +63,7 @@ export const ContainerVideo = styled.div`
   border-radius: 8px;
   overflow: hidden;
   margin-bottom: 20px;
-  background-color: #000;
+  background-color: ${cores.preto};
 `;
 
 export const VideoCam = styled.video`

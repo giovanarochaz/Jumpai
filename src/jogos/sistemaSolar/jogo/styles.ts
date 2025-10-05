@@ -1,4 +1,6 @@
+
 import styled, { keyframes, css } from 'styled-components';
+import { cores } from '../../../estilos/cores';
 
 const gerarEstrelas = (quantidade: number) => {
   let boxShadow = '';
@@ -15,7 +17,7 @@ const aparecerSumir = keyframes`0% { transform: translate(-50%, -50%) scale(0.5)
 
 export const FundoEspacial = styled.div`
   position: fixed; top: 0; left: 0; width: 100vw; height: 100vh;
-  background: linear-gradient(to bottom, #0a1c3c, #132b62);
+  background: linear-gradient(to bottom, ${cores.preto}, ${cores.roxo});
   overflow: hidden;
 `;
 
@@ -80,7 +82,7 @@ export const ContainerFaiscas = styled.div<{ top: number; left: number }>`
 `;
 
 export const Faisca = styled.div`
-  position: absolute; width: 10px; height: 10px; background: #ffeb3b; border-radius: 50%;
+  position: absolute; width: 10px; height: 10px; background: ${cores.amarelo}; border-radius: 50%;
   animation: ${faisca} 0.6s ease-out forwards;
   &:nth-child(1) { transform: translate(15px, -15px); }
   &:nth-child(2) { transform: translate(-15px, 15px); }
@@ -93,9 +95,9 @@ export const Faisca = styled.div`
 export const NomePlanetaAnuncio = styled.div`
   position: fixed; top: 50%; left: 50%;
   transform: translate(-50%, -50%);
-  color: white; font-size: 4rem; font-weight: bold;
+  color: ${cores.branco}; font-size: 4rem; font-weight: bold;
   text-transform: uppercase;
-  text-shadow: 0 0 15px rgba(255, 255, 255, 0.8), 0 0 20px #4B27AF;
+  text-shadow: 0 0 15px ${cores.branco}, 0 0 20px ${cores.roxo};
   z-index: 150; pointer-events: none;
   animation: ${aparecerSumir} 1.5s ease-in-out forwards;
 `;
