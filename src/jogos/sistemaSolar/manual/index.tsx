@@ -1,6 +1,6 @@
 import React, { useState } from 'react';
 import * as S from './styles';
-import { ArrowUp, ArrowDown, Gamepad2, AlertTriangle, Trophy, Badge, Zap, Music, ShieldOff } from 'lucide-react';
+import { Gamepad2, AlertTriangle, Trophy, Badge, Zap, Music, ShieldOff } from 'lucide-react';
 
 const planetasInfo = [
     { nome: 'Mercúrio', imagem: '/assets/sistemaSolar/mercurio.png', descricao: "Sou o menor planeta e o mais próximo do Sol! Um dia aqui é super quente, mas a noite é congelante. Sou um planeta rochoso, cheio de crateras." },
