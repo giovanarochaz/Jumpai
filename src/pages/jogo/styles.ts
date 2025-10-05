@@ -114,29 +114,37 @@ export const BotaoNavegacao = styled.button<{ direcao: 'esquerda' | 'direita' }>
   top: 50%;
   transform: translateY(-50%);
   z-index: 10;
-
   left: ${props => props.direcao === 'esquerda' ? '5%' : 'auto'};
   right: ${props => props.direcao === 'direita' ? '5%' : 'auto'};
-
-  background: transparent;
-  border: none;
-  padding: 0.5rem;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 70px;
+  height: 70px;
+  background-color: ${cores.branco};
+  border: 4px solid ${cores.preto};
+  border-radius: 20px;
   cursor: pointer;
-  color: ${cores.branco};
-
-  transition: transform 0.2s ease, color 0.2s ease;
+  box-shadow: 6px 6px 0px ${cores.preto};
+  color: ${cores.preto};
+  transition: all 0.15s ease-out;
 
   &:hover {
-    transform: translateY(-50%) scale(1.15);
-    color: ${cores.amarelo};
+    background-color: ${cores.amarelo};
+    transform: translateY(-50%) translate(3px, 3px);
+    box-shadow: 3px 3px 0px ${cores.preto};
+    color: ${cores.preto};
   }
 
   &:active {
-    transform: translateY(-50%) scale(1.05);
+    transform: translateY(-50%) translate(6px, 6px);
+    box-shadow: 0px 0px 0px ${cores.preto};
   }
 
   @media (max-width: 600px) {
     left: ${props => props.direcao === 'esquerda' ? '10px' : 'auto'};
     right: ${props => props.direcao === 'direita' ? '10px' : 'auto'};
+    width: 50px;
+    height: 50px;
   }
 `;

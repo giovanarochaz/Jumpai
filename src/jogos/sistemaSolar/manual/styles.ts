@@ -149,16 +149,21 @@ export const GrupoBotoes = styled.div`
 `;
 
 export const BotaoOpcao = styled.button<{ ativo: boolean }>`
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 0.5rem;
+  min-width: 100px;
+  min-height: 40px;
   background-color: ${({ ativo }) => (ativo ? cores.amarelo : cores.branco)};
   color: ${cores.preto};
-  border: 3px solid ${({ ativo }) => (ativo ? cores.roxo : cores.preto)};
-  box-shadow: 4px 4px 0px ${({ ativo }) => (ativo ? cores.roxo : cores.preto)};
-  padding: 10px 20px;
+  border: 4px solid ${({ ativo }) => (ativo ? cores.roxo : cores.preto)};
+  border-radius: 20px;
+  cursor: pointer;
+  box-shadow: 6px 6px 0px ${({ ativo }) => (ativo ? cores.roxo : cores.preto)};
   font-size: 1rem;
   font-weight: bold;
-  border-radius: 10px;
-  cursor: pointer;
-  transition: all 0.1s ease-in-out;
+  transition: all 0.15s ease-out;
 `;
 
 export const ContainerInterruptor = styled.label`
@@ -212,16 +217,21 @@ export const NavegacaoCarrossel = styled.div`
 `;
 
 export const BotaoNavegacao = styled.button`
-  background-color: ${cores.roxo};
-  color: ${cores.branco};
-  border: none;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 0.5rem;
+  min-width: 180px;
+  min-height: 60px;
+  background-color: ${cores.branco};
+  color: ${cores.preto};
+  border: 4px solid ${cores.preto};
+  border-radius: 20px;
+  cursor: pointer;
   box-shadow: 6px 6px 0px ${cores.preto};
-  padding: 12px 25px;
   font-size: 1.1rem;
   font-weight: bold;
-  border-radius: 15px;
-  cursor: pointer;
-  transition: all 0.1s ease-in-out;
+  transition: all 0.15s ease-out;
 
   &:hover:not(:disabled) {
     background-color: ${cores.amarelo};
@@ -234,7 +244,7 @@ export const BotaoNavegacao = styled.button`
     transform: translate(6px, 6px);
     box-shadow: 0px 0px 0px ${cores.preto};
   }
-    
+
   &:disabled {
     background-color: #ccc;
     box-shadow: 6px 6px 0px #999;
@@ -243,19 +253,23 @@ export const BotaoNavegacao = styled.button`
 `;
 
 export const BotaoIniciarMissao = styled.button`
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 0.5rem;
+  min-width: 220px;
+  min-height: 60px;
   background-color: ${cores.verde};
   color: ${cores.branco};
-  border: none;
+  border: 4px solid ${cores.preto};
+  border-radius: 30px;
+  cursor: pointer;
   box-shadow: 8px 8px 0px ${cores.preto};
-  padding: 20px 40px;
   font-size: 1.5rem;
   font-weight: bold;
   text-shadow: 2px 2px 0 rgba(0,0,0,0.2);
-  border-radius: 50px;
-  cursor: pointer;
   margin: 20px auto 0;
-  display: block;
-  transition: all 0.1s ease-in-out;
+  transition: all 0.15s ease-out;
   animation: ${pulsar} 2s infinite;
 
   &:hover {

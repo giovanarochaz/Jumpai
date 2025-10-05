@@ -57,12 +57,10 @@ export const BotaoEstilizado = styled.button`
   width: 300px;
   height: 260px;
   background-color: ${cores.branco};
-  color: ${cores.preto};
   border: 4px solid ${cores.preto};
   border-radius: 20px;
   cursor: pointer;
   box-shadow: 6px 6px 0px ${cores.preto};
-  
   transition: all 0.15s ease-out;
 
   &:hover {

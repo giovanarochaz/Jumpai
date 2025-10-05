@@ -84,20 +84,38 @@ export const CanvasSobreposicao = styled.canvas`
 `;
 
 export const BotaoCalibrar = styled.button`
-  padding: 15px 30px;
-  font-size: 1.2rem;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 0.5rem;
+  width: 220px;
+  height: 60px;
   background-color: ${cores.branco};
-  color: ${cores.roxo};
-  border: none;
-  font-weight: bold;
-  border-radius: 8px;
+  border: 4px solid ${cores.preto};
+  border-radius: 20px;
   cursor: pointer;
-  transition: background-color 0.2s, color 0.2s;
+  box-shadow: 6px 6px 0px ${cores.preto};
+  font-size: 1.2rem;
+  font-weight: bold;
+  transition: all 0.15s ease-out;
+
+  &:hover:not(:disabled) {
+    background-color: ${cores.amarelo};
+    transform: translate(3px, 3px);
+    box-shadow: 3px 3px 0px ${cores.preto};
+    color: ${cores.preto};
+  }
+
+  &:active:not(:disabled) {
+    transform: translate(6px, 6px);
+    box-shadow: 0px 0px 0px ${cores.preto};
+  }
 
   &:disabled {
     background-color: #ccc;
     color: #666;
     cursor: not-allowed;
+    box-shadow: 6px 6px 0px #999;
   }
 `;
 

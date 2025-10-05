@@ -76,16 +76,21 @@ export const ContainerBotoes = styled.div`
 `;
 
 export const BotaoVitoria = styled.button`
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 0.5rem;
+  min-width: 180px;
+  min-height: 60px;
   background-color: #f1f1f1;
   color: #4B27AF;
-  border: 3px solid #111;
+  border: 4px solid #111;
+  border-radius: 20px;
+  cursor: pointer;
   box-shadow: 6px 6px 0px #111;
-  padding: 12px 25px;
   font-size: 1.1rem;
   font-weight: bold;
-  border-radius: 15px;
-  cursor: pointer;
-  transition: all 0.1s ease-in-out;
+  transition: all 0.15s ease-out;
 
   &:hover {
     background-color: #FDBF5C;
