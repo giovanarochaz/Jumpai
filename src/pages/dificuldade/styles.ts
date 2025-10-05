@@ -7,9 +7,9 @@ export const ContainerDaTela = styled.div`
   justify-content: center;
   align-items: center;
   width: 100vw;
-  height: 100vh;
-  padding: 2rem;
-  gap: 3rem;
+  min-height: 100vh;
+  padding: clamp(1rem, 4vw, 2rem);
+  gap: clamp(1.5rem, 5vw, 3rem);
   background-color: ${cores.roxo};
 `;
 
@@ -40,11 +40,14 @@ export const Paragrafo = styled.p`
 
 export const AgrupadorDeBotoes = styled.div`
   display: flex;
-  gap: 2.5rem; /* Aumenta o espaço */
+  gap: clamp(1rem, 4vw, 2.5rem);
+  flex-wrap: wrap;
+  justify-content: center;
 
-  @media (max-width: 768px) {
+  @media (max-width: 900px) {
     flex-direction: column;
-    gap: 1.5rem;
+    gap: 1.2rem;
+    align-items: center;
   }
 `;
 
@@ -54,8 +57,8 @@ export const BotaoEstilizado = styled.button`
   align-items: center;
   justify-content: center;
   gap: 0.5rem;
-  width: 300px;
-  height: 260px;
+  width: clamp(180px, 30vw, 300px);
+  height: clamp(120px, 20vw, 260px);
   background-color: ${cores.branco};
   border: 4px solid ${cores.preto};
   border-radius: 20px;
@@ -73,6 +76,12 @@ export const BotaoEstilizado = styled.button`
   &:active {
     transform: translate(6px, 6px); 
     box-shadow: 0px 0px 0px ${cores.preto};
+  }
+
+  @media (max-width: 600px) {
+    width: 90vw;
+    height: 100px;
+    font-size: 1rem;
   }
 `;
 

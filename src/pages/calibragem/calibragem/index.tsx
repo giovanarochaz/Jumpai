@@ -28,9 +28,8 @@ import { useIluminacaoAutomatica } from '../../../hooks/useIluminacaoAutomatica'
 import { lojaIluminacao } from '../../../lojas/lojaIluminacao';
 import ModalGenerico from '../../../componentes/ModalGenerico';
 
-
-
 const TEMPO_SEM_ROSTO_PARA_AVISO = 3000;
+const TOTAL_AMOSTRAS_CALIBRAGEM = 150; // Aumentado para mais dados
 
 interface EstadoModal {
   estaAberto: boolean;
@@ -85,7 +84,6 @@ const CalibragemOcular: React.FC = () => {
   };
 
   useEffect(() => {
-  // Inicia câmera e MediaPipe
     const iniciarMediaPipe = async () => {
       try {
         const filesetResolver = await FilesetResolver.forVisionTasks("https://cdn.jsdelivr.net/npm/@mediapipe/tasks-vision/wasm");
@@ -107,7 +105,6 @@ const CalibragemOcular: React.FC = () => {
         const stream = await navigator.mediaDevices.getUserMedia({ video: { width: 640, height: 480 } });
         videoRef.current.srcObject = stream;
         videoRef.current.onloadeddata = () => {
-          // O evento 'playing' que o nosso Hook escuta será disparado aqui
           videoRef.current?.play();
           requestAnimationFrame(detectar);
         };
@@ -119,8 +116,6 @@ const CalibragemOcular: React.FC = () => {
     };
 
     iniciarMediaPipe();
-    
-  // Limpeza do useEffect está no Hook
   }, []);
 
   const detectar = () => {
@@ -139,6 +134,7 @@ const CalibragemOcular: React.FC = () => {
     canvas.width = video.videoWidth;
     canvas.height = video.videoHeight;
     const resultado: FaceLandmarkerResult = faceLandmarker.detectForVideo(video, performance.now());
+    
     ctx.clearRect(0, 0, canvas.width, canvas.height);
     ctx.save();
     ctx.scale(-1, 1);
@@ -152,22 +148,32 @@ const CalibragemOcular: React.FC = () => {
       }
 
       const pontos = resultado.faceLandmarks[0];
+      // Pontos para o olho esquerdo (do ponto de vista do usuário)
       const olhoEsquerdoTopo = pontos[159];
       const olhoEsquerdoBase = pontos[145];
+      // Pontos para o olho direito
+      const olhoDireitoTopo = pontos[386];
+      const olhoDireitoBase = pontos[374];
 
-      if (olhoEsquerdoTopo && olhoEsquerdoBase) {
+      if (olhoEsquerdoTopo && olhoEsquerdoBase && olhoDireitoTopo && olhoDireitoBase) {
         ctx.beginPath();
-        ctx.strokeStyle = "yellow";
+        ctx.strokeStyle = "lime";
         ctx.lineWidth = 2;
+        // Desenha linha no olho esquerdo
         ctx.moveTo(canvas.width - olhoEsquerdoTopo.x * canvas.width, olhoEsquerdoTopo.y * canvas.height);
         ctx.lineTo(canvas.width - olhoEsquerdoBase.x * canvas.width, olhoEsquerdoBase.y * canvas.height);
+        // Desenha linha no olho direito
+        ctx.moveTo(canvas.width - olhoDireitoTopo.x * canvas.width, olhoDireitoTopo.y * canvas.height);
+        ctx.lineTo(canvas.width - olhoDireitoBase.x * canvas.width, olhoDireitoBase.y * canvas.height);
         ctx.stroke();
         
-        const alturaAtual = Math.abs(olhoEsquerdoBase.y - olhoEsquerdoTopo.y);
+        const alturaOlhoEsquerdo = Math.abs(olhoEsquerdoBase.y - olhoEsquerdoTopo.y);
+        const alturaOlhoDireito = Math.abs(olhoDireitoBase.y - olhoDireitoTopo.y);
+        const alturaMediaAtual = (alturaOlhoEsquerdo + alturaOlhoDireito) / 2.0;
 
-        if (isCalibrandoRef.current && alturasOlhoRef.current.length < 100) {
-          alturasOlhoRef.current.push(alturaAtual);
-          if (alturasOlhoRef.current.length === 100) {
+        if (isCalibrandoRef.current && alturasOlhoRef.current.length < TOTAL_AMOSTRAS_CALIBRAGEM) {
+          alturasOlhoRef.current.push(alturaMediaAtual);
+          if (alturasOlhoRef.current.length >= TOTAL_AMOSTRAS_CALIBRAGEM) {
             finalizarCalibragem();
           }
         }
@@ -183,25 +189,33 @@ const CalibragemOcular: React.FC = () => {
 
     requestAnimationFrame(detectar);
   };
-
+  
   const finalizarCalibragem = () => {
-    isCalibrandoRef.current = false; 
-    const soma = alturasOlhoRef.current.reduce((acc, val) => acc + val, 0); 
-    const media = soma / alturasOlhoRef.current.length; 
-  lojaOlho.getState().setAlturaMedia(media); 
-    alturasOlhoRef.current = []; 
-    setIsCalibrando(false); 
-    setMostrarBolinha(false); 
+    isCalibrandoRef.current = false;
+  
+    if (alturasOlhoRef.current.length > 0) {
+      // **MELHORIA: Calcular a mediana em vez da média**
+      const alturasOrdenadas = [...alturasOlhoRef.current].sort((a, b) => a - b);
+      const meio = Math.floor(alturasOrdenadas.length / 2);
+      const mediana = alturasOrdenadas.length % 2 !== 0
+        ? alturasOrdenadas[meio]
+        : (alturasOrdenadas[meio - 1] + alturasOrdenadas[meio]) / 2;
+  
+      lojaOlho.getState().setAlturaMedia(mediana);
+    }
+  
+    alturasOlhoRef.current = [];
+    setIsCalibrando(false);
+    setMostrarBolinha(false); // Esconde a bolinha
+  
+    lojaIluminacao.getState().desligarIluminacao();
     
-    // Comanda o desligamento explícito da iluminação ao terminar a calibragem
-  lojaIluminacao.getState().desligarIluminacao();
-    
-    navigate("/calibragem-teste"); 
+    navigate("/calibragem-teste");
   };
 
   const handleCalibrar = () => {
     setContagem(3);
-    setMostrarBolinha(true); 
+    setMostrarBolinha(true); // **MELHORIA: Mostra a bolinha no início**
     alturasOlhoRef.current = [];
     setIsCalibrando(false);
 
@@ -214,9 +228,6 @@ const CalibragemOcular: React.FC = () => {
           setTimeout(() => setMostrarFlashDeEfeito(false), 300);
           isCalibrandoRef.current = true;
           setIsCalibrando(true);
-          
-          // O Hook já faz a verificação automaticamente
-          
           return null;
         }
         return prev - 1;
@@ -244,7 +255,7 @@ const CalibragemOcular: React.FC = () => {
           <Paragrafo>
             Vamos ajustar o sensor para o seu piscar. Clique no botão abaixo,
             e quando a contagem terminar, olhe fixamente para a bolinha branca que aparecerá na tela.
-            Mantenha o olho aberto normalmente.
+            Mantenha os olhos abertos normalmente.
           </Paragrafo>
         </BlocoDeDescricao>
 
@@ -253,6 +264,8 @@ const CalibragemOcular: React.FC = () => {
         <ContainerVideo>
           <VideoCam ref={videoRef} autoPlay playsInline muted />
           <CanvasSobreposicao ref={canvasRef} />
+          {/* **MELHORIA: Renderiza a bolinha de foco durante a calibragem** */}
+          {mostrarBolinha && <BolinhaDeFoco />}
         </ContainerVideo>
 
         {contagem !== null && contagem > 0 && (
@@ -260,8 +273,7 @@ const CalibragemOcular: React.FC = () => {
             <TextoContagem>{contagem}</TextoContagem>
           </OverlayContagem>
         )}
-
-        {mostrarBolinha && <BolinhaDeFoco />}
+        
         {mostrarFlashDeEfeito && <Flash />}
 
         <BotaoCalibrar onClick={handleCalibrar} disabled={estaProcessando}>

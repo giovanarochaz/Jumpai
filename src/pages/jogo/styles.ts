@@ -77,11 +77,11 @@ export const CardJogo = styled.div<{ isActive: boolean }>`
   flex-direction: column;
   align-items: center;
   text-align: center;
-  padding: 1.5rem;
-  gap: 1rem;
+  padding: clamp(1rem, 3vw, 1.5rem);
+  gap: clamp(0.5rem, 2vw, 1rem);
 
   flex-shrink: 0;
-  width: min(90vw, 500px);
+  width: clamp(220px, 70vw, 500px);
   height: auto;
 
   background-color: ${cores.branco};
@@ -99,6 +99,12 @@ export const CardJogo = styled.div<{ isActive: boolean }>`
   &:hover {
     transform: scale(${props => (props.isActive ? 1.05 : 0.85)});
     opacity: ${props => (props.isActive ? 1 : 0.7)};
+  }
+
+  @media (max-width: 600px) {
+    width: 95vw;
+    padding: 0.7rem;
+    font-size: 1rem;
   }
 `;
 
@@ -119,8 +125,8 @@ export const BotaoNavegacao = styled.button<{ direcao: 'esquerda' | 'direita' }>
   display: flex;
   align-items: center;
   justify-content: center;
-  width: 70px;
-  height: 70px;
+  width: clamp(40px, 7vw, 70px);
+  height: clamp(40px, 7vw, 70px);
   background-color: ${cores.branco};
   border: 4px solid ${cores.preto};
   border-radius: 20px;
@@ -144,7 +150,7 @@ export const BotaoNavegacao = styled.button<{ direcao: 'esquerda' | 'direita' }>
   @media (max-width: 600px) {
     left: ${props => props.direcao === 'esquerda' ? '10px' : 'auto'};
     right: ${props => props.direcao === 'direita' ? '10px' : 'auto'};
-    width: 50px;
-    height: 50px;
+    width: 40px;
+    height: 40px;
   }
 `;

@@ -7,11 +7,11 @@ export const ContainerAviso = styled.div`
   justify-content: center;
   align-items: center;
   text-align: center;
-  width: 100%;
-  height: 100%;
+  width: 100vw;
+  min-height: 100vh;
   background-color: ${cores.roxo};
-  padding: 2rem;
-  gap: 1.5rem;
+  padding: clamp(1rem, 4vw, 2rem);
+  gap: clamp(1rem, 4vw, 1.5rem);
 `;
 
 export const TituloAviso = styled.h1`

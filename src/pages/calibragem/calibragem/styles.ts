@@ -1,7 +1,6 @@
 import styled, { createGlobalStyle, keyframes } from 'styled-components';
 import { cores } from '../../../estilos/cores';
 
-// Esta animação permanece, pois é usada para o efeito visual rápido
 const animacaoDeFlash = keyframes`
   0% { opacity: 0; }
   50% { opacity: 0.9; }
@@ -16,7 +15,6 @@ export const GlobalStyle = createGlobalStyle`
   }
 `;
 
-// Componentes estilizados
 export const ContainerDaTela = styled.div`
   display: flex;
   flex-direction: column;
@@ -88,14 +86,14 @@ export const BotaoCalibrar = styled.button`
   align-items: center;
   justify-content: center;
   gap: 0.5rem;
-  width: 220px;
-  height: 60px;
+  width: clamp(140px, 30vw, 220px);
+  height: clamp(40px, 7vw, 60px);
   background-color: ${cores.branco};
   border: 4px solid ${cores.preto};
   border-radius: 20px;
   cursor: pointer;
   box-shadow: 6px 6px 0px ${cores.preto};
-  font-size: 1.2rem;
+  font-size: clamp(1rem, 2vw, 1.2rem);
   font-weight: bold;
   transition: all 0.15s ease-out;
 
@@ -116,6 +114,12 @@ export const BotaoCalibrar = styled.button`
     color: #666;
     cursor: not-allowed;
     box-shadow: 6px 6px 0px #999;
+  }
+
+  @media (max-width: 600px) {
+    width: 90vw;
+    height: 48px;
+    font-size: 1rem;
   }
 `;
 
@@ -144,7 +148,7 @@ export const TextoContagem = styled.span`
 `;
 
 export const BolinhaDeFoco = styled.div`
-  position: fixed;
+  position: absolute; /* Mudado para absolute para se posicionar dentro do ContainerVideo */
   top: 50%;
   left: 50%;
   width: 25px;
@@ -156,7 +160,6 @@ export const BolinhaDeFoco = styled.div`
   box-shadow: 0 0 15px 5px rgba(255, 255, 255, 0.7);
 `;
 
-// O componente Flash agora é usado apenas para o efeito visual rápido
 export const Flash = styled.div`
   position: fixed;
   top: 0;

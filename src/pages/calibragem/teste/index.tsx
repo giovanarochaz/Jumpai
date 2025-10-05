@@ -43,9 +43,9 @@ interface EstadoModal {
   acaoAposFechar?: () => void;
 }
 
-// Componente visual para o relógio
+// Componente visual para o relógio (com viewBox atualizado)
 const CountdownTimer: React.FC<{ duration: number }> = ({ duration }) => (
-  <CountdownSVG viewBox="0 0 70 70">
+  <CountdownSVG viewBox="0 0 90 90">
     <CountdownCircle duration={duration} />
   </CountdownSVG>
 );
@@ -72,7 +72,6 @@ const CalibragemTeste: React.FC = () => {
     descricao: '',
     acaoAposFechar: undefined,
   });
-  // NOVO ESTADO: Controla qual tentativa está em andamento.
   const [indiceTentativaAtual, setIndiceTentativaAtual] = useState<number | null>(null);
 
   const alturaMediaDoOlho = lojaOlho.getState().alturaMedia;
@@ -136,27 +135,16 @@ const CalibragemTeste: React.FC = () => {
     };
   }, [alturaMediaDoOlho, navigate]);
 
-  // *** LÓGICA CENTRAL CORRIGIDA ***
-  // Este useEffect é o motor do teste. Ele é acionado sempre que 'indiceTentativaAtual' muda.
   useEffect(() => {
-    // Não faz nada se o teste não começou (índice é nulo)
-    if (indiceTentativaAtual === null) {
-      return;
-    }
-
-    // Se o índice alcançou o total de tentativas, o teste acabou.
+    if (indiceTentativaAtual === null) return;
     if (indiceTentativaAtual >= TENTATIVAS_TOTAIS) {
       finalizarTeste();
       return;
     }
-
-    // Prepara e inicia a tentativa específica do índice atual
-    const delay = indiceTentativaAtual > 0 ? DELAY_ENTRE_TENTATIVAS : 100; // Delay maior entre as tentativas
+    const delay = indiceTentativaAtual > 0 ? DELAY_ENTRE_TENTATIVAS : 100;
     const inicioTimer = setTimeout(() => {
       executarTentativa(indiceTentativaAtual);
     }, delay);
-
-    // Função de limpeza para evitar execuções indesejadas
     return () => clearTimeout(inicioTimer);
   }, [indiceTentativaAtual]);
 
@@ -193,7 +181,7 @@ const CalibragemTeste: React.FC = () => {
       const olhoEsquerdoBase = pontos[145];
       if (olhoEsquerdoTopo && olhoEsquerdoBase) {
         ctx.beginPath();
-        ctx.strokeStyle = "yellow";
+        ctx.strokeStyle = "lime";
         ctx.lineWidth = 2;
         ctx.moveTo(canvas.width - olhoEsquerdoTopo.x * canvas.width, olhoEsquerdoTopo.y * canvas.height);
         ctx.lineTo(canvas.width - olhoEsquerdoBase.x * canvas.width, olhoEsquerdoBase.y * canvas.height);
@@ -225,7 +213,6 @@ const CalibragemTeste: React.FC = () => {
       novoArray[index] = 'active';
       return novoArray;
     });
-    // Inicia o timer de falha para a tentativa atual
     timerRef.current = window.setTimeout(() => {
       setTentativas(prev => {
         const novoArray = [...prev];
@@ -234,7 +221,6 @@ const CalibragemTeste: React.FC = () => {
         }
         return novoArray;
       });
-      // Avança para a próxima tentativa
       setIndiceTentativaAtual(prev => (prev !== null ? prev + 1 : 0));
     }, TEMPO_POR_PISCADA);
   };
@@ -245,14 +231,12 @@ const CalibragemTeste: React.FC = () => {
       timerRef.current = null;
       setTentativas(prev => {
         const novoArray = [...prev];
-        // Encontra o índice da tentativa que está ativa no momento
         const indexAtivo = novoArray.findIndex(s => s === 'active');
         if (indexAtivo !== -1) {
           novoArray[indexAtivo] = 'success';
         }
         return novoArray;
       });
-      // Avança para a próxima tentativa
       setIndiceTentativaAtual(prev => (prev !== null ? prev + 1 : 0));
     }
   };
@@ -270,7 +254,6 @@ const CalibragemTeste: React.FC = () => {
   const handleReiniciarTeste = () => {
     statusDoTesteRef.current = 'testando';
     setTentativas(Array(TENTATIVAS_TOTAIS).fill('pending'));
-    // Apenas define o índice inicial. O useEffect fará o resto.
     setIndiceTentativaAtual(0);
   };
   
