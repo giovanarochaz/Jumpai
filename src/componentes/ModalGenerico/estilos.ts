@@ -38,7 +38,6 @@ export const ConteudoDoModal = styled.div`
   flex-direction: column;
   align-items: center;
   text-align: center;
-  font-family: sans-serif;
   animation: ${surgir} 0.3s ease-out forwards;
 `;
 

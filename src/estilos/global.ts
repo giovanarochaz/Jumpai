@@ -8,13 +8,13 @@ export const EstiloGlobal = createGlobalStyle`
     padding: 0;
   }
   html, body {
-    height: 100%;
-    width: 100%;
-    font-family: 'Nunito', sans-serif;
-    background-color: ${cores.roxo};
-    -webkit-font-smoothing: antialiased;
-    -moz-osx-font-smoothing: grayscale;
-  }
+      height: 100%;
+      width: 100%;
+      font-family: 'Nunito', Nunito, sans-serif;
+      background-color: ${cores.roxo};
+      -webkit-font-smoothing: antialiased;
+      -moz-osx-font-smoothing: grayscale;
+    }
   body {
     line-height: 1.5;
     overflow-x: hidden;

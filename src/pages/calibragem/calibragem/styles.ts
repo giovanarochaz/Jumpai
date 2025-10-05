@@ -28,7 +28,6 @@ export const ContainerDaTela = styled.div`
   padding: 20px;
   box-sizing: border-box;
   position: relative;
-  font-family: sans-serif;
 `;
 
 export const BlocoDeDescricao = styled.div`

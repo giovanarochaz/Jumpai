@@ -15,7 +15,6 @@ export const ContainerDaTela = styled.div`
   background-color: ${cores.roxo};
   padding: 20px;
   box-sizing: border-box;
-  font-family: sans-serif;
 `;
 
 export const BlocoDeDescricao = styled.div`
