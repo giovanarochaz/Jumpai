@@ -8,7 +8,7 @@ const Controle: React.FC = () => {
   const navigate = useNavigate();
   
   const controleOcular = () => {
-    navigate('/jogos/olho') 
+    navigate('/calibragemOcular') 
   };
 
   const controleTeclado = () => {
