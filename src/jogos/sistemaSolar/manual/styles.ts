@@ -1,7 +1,7 @@
-import styled, { keyframes } from 'styled-components';
+import styled, { keyframes, css } from 'styled-components'; // Adicione 'css'
 import { cores } from '../../../estilos/cores';
 
-// --- ANIMAÇÕES ---
+// (Animações aparecer, rotacionarPlaneta, pulsar continuam as mesmas)
 const aparecer = keyframes`
   from { transform: scale(0.8); opacity: 0; }
   to { transform: scale(1); opacity: 1; }
@@ -19,7 +19,14 @@ const pulsar = keyframes`
   100% { transform: scale(1); }
 `;
 
-// --- COMPONENTES PRINCIPAIS DO MODAL ---
+// --- NOVA ANIMAÇÃO DE FOCO ---
+const focoPulsante = keyframes`
+  0% { box-shadow: 0 0 0 0px ${cores.amarelo}; }
+  100% { box-shadow: 0 0 0 10px rgba(255, 203, 5, 0); }
+`;
+
+
+// --- COMPONENTES PRINCIPAIS (FundoModal, ConteudoModal) - sem alterações ---
 export const FundoModal = styled.div`
   position: fixed;
   top: 0;
@@ -49,7 +56,7 @@ export const ConteudoModal = styled.div`
   justify-content: space-between;
 `;
 
-// --- COMPONENTES DOS SLIDES (Planetas e Explicações) ---
+// --- COMPONENTES DOS SLIDES (ContainerSlide, etc) - sem alterações ---
 export const ContainerSlide = styled.div`
   display: flex;
   align-items: center;
@@ -114,7 +121,7 @@ export const WrapperTexto = styled.div`
   }
 `;
 
-// --- COMPONENTES DA TELA DE CONFIGURAÇÕES ---
+// --- COMPONENTES DA TELA DE CONFIGURAÇÕES - COM ALTERAÇÕES ---
 export const ContainerConfiguracoes = styled.div`
   padding: 10px;
   display: flex;
@@ -122,13 +129,20 @@ export const ContainerConfiguracoes = styled.div`
   gap: 25px;
 `;
 
-export const LinhaConfiguracao = styled.div`
+export const LinhaConfiguracao = styled.div<{ $isFocused?: boolean }>`
   display: flex;
   align-items: center;
   justify-content: space-between;
   background-color: rgba(0,0,0,0.05);
   padding: 15px;
   border-radius: 15px;
+  transition: all 0.3s ease;
+  border: 3px solid transparent;
+
+  ${({ $isFocused }) => $isFocused && css`
+    border-color: ${cores.amarelo};
+    transform: scale(1.02);
+  `}
 `;
 
 export const RotuloConfiguracao = styled.div`
@@ -148,7 +162,7 @@ export const GrupoBotoes = styled.div`
   gap: 10px;
 `;
 
-export const BotaoOpcao = styled.button<{ ativo: boolean }>`
+export const BotaoOpcao = styled.button<{ ativo: boolean; $isFocused?: boolean }>`
   display: flex;
   align-items: center;
   justify-content: center;
@@ -164,6 +178,11 @@ export const BotaoOpcao = styled.button<{ ativo: boolean }>`
   font-size: 1rem;
   font-weight: bold;
   transition: all 0.15s ease-out;
+
+  ${({ $isFocused }) => $isFocused && css`
+    animation: ${focoPulsante} 1s infinite;
+    transform: scale(1.1);
+  `}
 `;
 
 export const ContainerInterruptor = styled.label`
@@ -208,7 +227,7 @@ export const DeslizadorInterruptor = styled.span`
   }
 `;
 
-// --- BOTÕES DE NAVEGAÇÃO E AÇÃO ---
+// --- BOTÕES DE NAVEGAÇÃO E AÇÃO - COM ALTERAÇÕES ---
 export const NavegacaoCarrossel = styled.div`
   display: flex;
   justify-content: space-between;
@@ -252,7 +271,7 @@ export const BotaoNavegacao = styled.button`
   }
 `;
 
-export const BotaoIniciarMissao = styled.button`
+export const BotaoIniciarMissao = styled.button<{ $isFocused?: boolean }>`
   display: flex;
   align-items: center;
   justify-content: center;
@@ -282,4 +301,9 @@ export const BotaoIniciarMissao = styled.button`
     box-shadow: 0px 0px 0px ${cores.preto};
     animation: none;
   }
+  
+  ${({ $isFocused }) => $isFocused && css`
+    animation: ${pulsar} 1.5s infinite, ${focoPulsante} 1.5s infinite;
+    transform: scale(1.05);
+  `}
 `;

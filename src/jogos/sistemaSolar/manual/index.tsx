@@ -1,7 +1,10 @@
-import React, { useState } from 'react';
+import { useState, useEffect, useRef } from 'react';
 import * as S from './styles';
 import { Gamepad2, AlertTriangle, Trophy, Badge, Zap, Music, ShieldOff } from 'lucide-react';
+import { useStore } from 'zustand';
+import { lojaOlho } from '../../../lojas/lojaOlho'; // Ajuste o caminho se necessário
 
+// (O array planetasInfo continua o mesmo)
 const planetasInfo = [
     { nome: 'Mercúrio', imagem: '/assets/sistemaSolar/mercurio.png', descricao: "Sou o menor planeta e o mais próximo do Sol! Um dia aqui é super quente, mas a noite é congelante. Sou um planeta rochoso, cheio de crateras." },
     { nome: 'Vênus', imagem: '/assets/sistemaSolar/venus.png', descricao: "Me chamam de 'gêmeo' da Terra, mas sou o planeta mais quente de todos! Minha atmosfera densa cria um efeito estufa extremo." },
@@ -12,6 +15,7 @@ const planetasInfo = [
     { nome: 'Urano', imagem: '/assets/sistemaSolar/urano.png', descricao: "Sou um gigante de gelo e tenho uma característica engraçada: eu giro deitado! É como se eu rolasse pelo espaço." },
     { nome: 'Netuno', imagem: '/assets/sistemaSolar/netuno.png', descricao: "Eu sou o planeta mais distante do Sol, um mundo azul escuro, frio e com os ventos mais rápidos do Sistema Solar!" },
 ];
+
 
 export type VelocidadeGeracao = 'lenta' | 'normal' | 'rapida';
 export interface ConfiguracoesJogo {
@@ -24,6 +28,10 @@ interface ManualSistemaSolarProps {
   aoIniciarMissao: (configuracoes: ConfiguracoesJogo) => void;
 }
 
+// --- NOVOS TIPOS PARA CONTROLE OCULAR ---
+type FocoConfig = 'velocidade' | 'penalidade' | 'sons' | 'iniciar';
+const VELOCIDADES: VelocidadeGeracao[] = ['lenta', 'normal', 'rapida'];
+
 const ManualSistemaSolar: React.FC<ManualSistemaSolarProps> = ({ aoIniciarMissao }) => {
   const [tela, setTela] = useState<'planetas' | 'comoJogar' | 'perigos' | 'configuracoes'>('planetas');
   const [slideAtual, setSlideAtual] = useState(0);
@@ -34,11 +42,98 @@ const ManualSistemaSolar: React.FC<ManualSistemaSolarProps> = ({ aoIniciarMissao
     sons: true,
   });
 
+  // --- ESTADOS PARA CONTROLE OCULAR ---
+  const { mostrarCameraFlutuante, estaPiscando, piscadaDireita, piscadaEsquerda } = useStore(lojaOlho);
+  const [focoConfig, setFocoConfig] = useState<FocoConfig>('velocidade');
+  const [opcaoVelocidadeAtiva, setOpcaoVelocidadeAtiva] = useState<VelocidadeGeracao>('normal');
+  const [opcaoPenalidadeAtiva, setOpcaoPenalidadeAtiva] = useState<boolean>(true);
+  const [opcaoSonsAtiva, setOpcaoSonsAtiva] = useState<boolean>(true);
+  const timerRef = useRef<ReturnType<typeof setInterval> | null>(null);
+
   const conteudoAtual = planetasInfo[slideAtual];
-  
-  const proximoSlide = () => { if (slideAtual < planetasInfo.length - 1) setSlideAtual(slideAtual + 1); };
-  const slideAnterior = () => { if (slideAtual > 0) setSlideAtual(slideAtual - 1); };
-  
+
+  // --- FUNÇÕES DE NAVEGAÇÃO ---
+  const proximoSlide = () => { if (slideAtual < planetasInfo.length - 1) setSlideAtual(s => s + 1); };
+  const slideAnterior = () => { if (slideAtual > 0) setSlideAtual(s => s - 1); };
+
+  const avancarTela = () => {
+    if (tela === 'planetas') {
+      if (slideAtual === planetasInfo.length - 1) setTela('comoJogar');
+      else proximoSlide();
+    } else if (tela === 'comoJogar') {
+      setTela('perigos');
+    } else if (tela === 'perigos') {
+      setTela('configuracoes');
+    }
+  };
+
+  const voltarTela = () => {
+    if (tela === 'planetas') slideAnterior();
+    // Adicionada lógica para voltar das outras telas
+    else if (tela === 'comoJogar') setTela('planetas');
+    else if (tela === 'perigos') setTela('comoJogar');
+  };
+
+  // --- EFEITO PARA NAVEGAÇÃO COM PISCADAS DIRECIONAIS ---
+  useEffect(() => {
+    if (!mostrarCameraFlutuante) return;
+    if (piscadaDireita) avancarTela();
+    if (piscadaEsquerda) voltarTela();
+  }, [piscadaDireita, piscadaEsquerda, mostrarCameraFlutuante]);
+
+  // --- EFEITO PARA O CICLO DE SELEÇÃO NA TELA DE CONFIGS ---
+  useEffect(() => {
+    if (tela !== 'configuracoes' || !mostrarCameraFlutuante) {
+      if (timerRef.current) clearInterval(timerRef.current);
+      return;
+    }
+
+    timerRef.current = setInterval(() => {
+      switch (focoConfig) {
+        case 'velocidade':
+          const currentIndex = VELOCIDADES.indexOf(opcaoVelocidadeAtiva);
+          const nextIndex = (currentIndex + 1) % VELOCIDADES.length;
+          setOpcaoVelocidadeAtiva(VELOCIDADES[nextIndex]);
+          break;
+        case 'penalidade':
+          setOpcaoPenalidadeAtiva(p => !p);
+          break;
+        case 'sons':
+          setOpcaoSonsAtiva(s => !s);
+          break;
+        case 'iniciar': // Não faz nada, apenas espera a confirmação
+          break;
+      }
+    }, 1500); // Muda a opção a cada 1.5 segundos
+
+    return () => {
+      if (timerRef.current) clearInterval(timerRef.current);
+    };
+  }, [tela, focoConfig, opcaoVelocidadeAtiva, mostrarCameraFlutuante]);
+
+  // --- EFEITO PARA CONFIRMAR SELEÇÃO COM PISCADA ---
+  useEffect(() => {
+    if (tela !== 'configuracoes' || !estaPiscando || !mostrarCameraFlutuante) return;
+
+    switch (focoConfig) {
+      case 'velocidade':
+        setConfiguracoes(c => ({ ...c, velocidade: opcaoVelocidadeAtiva }));
+        setFocoConfig('penalidade');
+        break;
+      case 'penalidade':
+        setConfiguracoes(c => ({ ...c, penalidade: opcaoPenalidadeAtiva }));
+        setFocoConfig('sons');
+        break;
+      case 'sons':
+        setConfiguracoes(c => ({ ...c, sons: opcaoSonsAtiva }));
+        setFocoConfig('iniciar');
+        break;
+      case 'iniciar':
+        aoIniciarMissao(configuracoes);
+        break;
+    }
+  }, [estaPiscando, mostrarCameraFlutuante]);
+
   const renderizarTela = () => {
     switch (tela) {
       case 'planetas':
@@ -52,9 +147,9 @@ const ManualSistemaSolar: React.FC<ManualSistemaSolarProps> = ({ aoIniciarMissao
               </S.TextoSlide>
             </S.ContainerSlide>
             <S.NavegacaoCarrossel>
-              <S.BotaoNavegacao onClick={slideAnterior} disabled={slideAtual === 0}>Voltar</S.BotaoNavegacao>
+              <S.BotaoNavegacao onClick={voltarTela} disabled={slideAtual === 0}>Voltar</S.BotaoNavegacao>
               <span>{slideAtual + 1} / {planetasInfo.length}</span>
-              <S.BotaoNavegacao onClick={slideAtual === planetasInfo.length - 1 ? () => setTela('comoJogar') : proximoSlide}>
+              <S.BotaoNavegacao onClick={avancarTela}>
                 {slideAtual === planetasInfo.length - 1 ? 'Como Jogar?' : 'Próximo'}
               </S.BotaoNavegacao>
             </S.NavegacaoCarrossel>
@@ -65,7 +160,7 @@ const ManualSistemaSolar: React.FC<ManualSistemaSolarProps> = ({ aoIniciarMissao
         return (
           <S.ContainerExplicacao>
             <S.TextoSlide><h2>Como Jogar</h2></S.TextoSlide>
-            <S.SecaoExplicacao>
+             <S.SecaoExplicacao>
               <S.WrapperIcone><Gamepad2 size={32} strokeWidth={2.5} /></S.WrapperIcone>
               <S.WrapperTexto>
                 <h3>Controles Simples</h3>
@@ -79,9 +174,10 @@ const ManualSistemaSolar: React.FC<ManualSistemaSolarProps> = ({ aoIniciarMissao
                 <p>Seu objetivo é coletar os planetas na ordem certa do Sistema Solar. Cada acerto acenderá o planeta na barra superior!</p>
               </S.WrapperTexto>
             </S.SecaoExplicacao>
-            <S.BotaoNavegacao style={{ margin: '30px auto 0' }} onClick={() => setTela('perigos')}>
-              Entendi! E os perigos?
-            </S.BotaoNavegacao>
+            <S.NavegacaoCarrossel>
+                 <S.BotaoNavegacao onClick={voltarTela}>Voltar</S.BotaoNavegacao>
+                 <S.BotaoNavegacao onClick={avancarTela}>Entendi! E os perigos?</S.BotaoNavegacao>
+            </S.NavegacaoCarrossel>
           </S.ContainerExplicacao>
         );
         
@@ -103,9 +199,10 @@ const ManualSistemaSolar: React.FC<ManualSistemaSolarProps> = ({ aoIniciarMissao
                 <p>A ordem é TUDO! Coletar um planeta fora da sequência correta também reinicia sua missão. Fique atento!</p>
               </S.WrapperTexto>
             </S.SecaoExplicacao>
-            <S.BotaoNavegacao style={{ margin: '30px auto 0' }} onClick={() => setTela('configuracoes')}>
-              Ajustar Jogo
-            </S.BotaoNavegacao>
+            <S.NavegacaoCarrossel>
+                <S.BotaoNavegacao onClick={voltarTela}>Voltar</S.BotaoNavegacao>
+                <S.BotaoNavegacao onClick={avancarTela}>Ajustar Jogo</S.BotaoNavegacao>
+            </S.NavegacaoCarrossel>
           </S.ContainerExplicacao>
         );
       
@@ -114,32 +211,49 @@ const ManualSistemaSolar: React.FC<ManualSistemaSolarProps> = ({ aoIniciarMissao
           <S.ContainerConfiguracoes>
             <S.TextoSlide><h2>Controles do Jogo</h2></S.TextoSlide>
 
-            <S.LinhaConfiguracao>
+            <S.LinhaConfiguracao $isFocused={focoConfig === 'velocidade'}>
               <S.RotuloConfiguracao><Zap size={32} /><h3>Velocidade</h3></S.RotuloConfiguracao>
               <S.GrupoBotoes>
-                <S.BotaoOpcao ativo={configuracoes.velocidade === 'lenta'} onClick={() => setConfiguracoes(c => ({...c, velocidade: 'lenta'}))}>Lenta</S.BotaoOpcao>
-                <S.BotaoOpcao ativo={configuracoes.velocidade === 'normal'} onClick={() => setConfiguracoes(c => ({...c, velocidade: 'normal'}))}>Normal</S.BotaoOpcao>
-                <S.BotaoOpcao ativo={configuracoes.velocidade === 'rapida'} onClick={() => setConfiguracoes(c => ({...c, velocidade: 'rapida'}))}>Rápida</S.BotaoOpcao>
+                <S.BotaoOpcao 
+                  ativo={configuracoes.velocidade === 'lenta'} 
+                  $isFocused={mostrarCameraFlutuante && focoConfig === 'velocidade' && opcaoVelocidadeAtiva === 'lenta'}
+                  onClick={() => setConfiguracoes(c => ({...c, velocidade: 'lenta'}))}>Lenta</S.BotaoOpcao>
+                <S.BotaoOpcao 
+                  ativo={configuracoes.velocidade === 'normal'} 
+                  $isFocused={mostrarCameraFlutuante && focoConfig === 'velocidade' && opcaoVelocidadeAtiva === 'normal'}
+                  onClick={() => setConfiguracoes(c => ({...c, velocidade: 'normal'}))}>Normal</S.BotaoOpcao>
+                <S.BotaoOpcao 
+                  ativo={configuracoes.velocidade === 'rapida'}
+                  $isFocused={mostrarCameraFlutuante && focoConfig === 'velocidade' && opcaoVelocidadeAtiva === 'rapida'}
+                  onClick={() => setConfiguracoes(c => ({...c, velocidade: 'rapida'}))}>Rápida</S.BotaoOpcao>
               </S.GrupoBotoes>
             </S.LinhaConfiguracao>
 
-            <S.LinhaConfiguracao>
+            <S.LinhaConfiguracao $isFocused={focoConfig === 'penalidade'}>
               <S.RotuloConfiguracao><ShieldOff size={32} /><h3>Erro na Ordem Reseta?</h3></S.RotuloConfiguracao>
               <S.ContainerInterruptor>
-                <S.InputInterruptor type="checkbox" checked={configuracoes.penalidade} onChange={e => setConfiguracoes(c => ({...c, penalidade: e.target.checked}))} />
+                <S.InputInterruptor type="checkbox" 
+                  checked={mostrarCameraFlutuante && focoConfig === 'penalidade' ? opcaoPenalidadeAtiva : configuracoes.penalidade} 
+                  onChange={e => setConfiguracoes(c => ({...c, penalidade: e.target.checked}))} />
                 <S.DeslizadorInterruptor />
               </S.ContainerInterruptor>
             </S.LinhaConfiguracao>
 
-            <S.LinhaConfiguracao>
+            <S.LinhaConfiguracao $isFocused={focoConfig === 'sons'}>
               <S.RotuloConfiguracao><Music size={32} /><h3>Efeitos Sonoros</h3></S.RotuloConfiguracao>
               <S.ContainerInterruptor>
-                <S.InputInterruptor type="checkbox" checked={configuracoes.sons} onChange={e => setConfiguracoes(c => ({...c, sons: e.target.checked}))} />
+                <S.InputInterruptor type="checkbox" 
+                  checked={mostrarCameraFlutuante && focoConfig === 'sons' ? opcaoSonsAtiva : configuracoes.sons}
+                  onChange={e => setConfiguracoes(c => ({...c, sons: e.target.checked}))} />
                 <S.DeslizadorInterruptor />
               </S.ContainerInterruptor>
             </S.LinhaConfiguracao>
             
-            <S.BotaoIniciarMissao onClick={() => aoIniciarMissao(configuracoes)}>COMEÇAR MISSÃO!</S.BotaoIniciarMissao>
+            <S.BotaoIniciarMissao 
+              $isFocused={focoConfig === 'iniciar'}
+              onClick={() => aoIniciarMissao(configuracoes)}>
+                COMEÇAR MISSÃO!
+            </S.BotaoIniciarMissao>
           </S.ContainerConfiguracoes>
         );
     }

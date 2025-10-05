@@ -101,6 +101,7 @@ export const CardJogo = styled.div<{ $isActive: boolean }>`
   opacity: ${props => (props.$isActive ? 1 : 0.7)};
   }
 
+
   @media (max-width: 600px) {
     width: 95vw;
     padding: 0.7rem;

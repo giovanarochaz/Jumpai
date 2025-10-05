@@ -4,6 +4,8 @@ import { Paragrafo, CarrosselViewport, CarrosselTrilha, TextoCard, CardJogo, Ima
 import { BlocoDeDescricao, ContainerDaTela } from '../controle/styles';
 import { ArrowLeftCircle, ArrowRightCircle } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
+import { useStore } from 'zustand'; // Importa useStore
+import { lojaOlho } from '../../lojas/lojaOlho'; // Importa sua loja global
 
 const fasesDoJogo = [
   {
@@ -20,63 +22,7 @@ const fasesDoJogo = [
   //   texto: "Explore o corpo humano! Navegue pela corrente sanguínea e aprenda sobre as células.",
   //   rota: "/corpoHumano",
   // },
-
-  // {
-  //   id: 2,
-  //   titulo: 'Corrida de Obstáculos',
-  //   imagem: '/assets/jogo-obstaculos.png',
-  //   texto: "Desafio de reflexos! Pule e desvie de obstáculos na velocidade da luz para alcançar a maior pontuação.",
-  //   rota: "/sistemaSolar",
-  // },
-  // {
-  //   id: 3,
-  //   titulo: 'Labirinto da Memória',
-  //   imagem: '/assets/jogo-memoria.png',
-  //   texto: "Teste sua memória e lógica. Resolva quebra-cabeças que usam suas piscadas para combinar padrões e cores.",
-  //   rota: "/sistemaSolar",
-  // },
-  // {
-  //   id: 5,
-  //   titulo: 'Caça às Constelações',
-  //   imagem: '/assets/jogo-constelacoes.png',
-  //   texto: "Use suas piscadas para conectar as estrelas e formar figuras no céu noturno.",
-  //   rota: "/sistemaSolar",
-  // },
-  // {
-  //   id: 6,
-  //   titulo: 'Escalada Radical',
-  //   imagem: '/assets/jogo-escalada.png',
-  //   texto: "Escale a montanha mais alta do mundo! Escolha o caminho certo para chegar ao topo com segurança.",
-  //   rota: "/sistemaSolar",
-  // },
-  // {
-  //   id: 7,
-  //   titulo: 'Patrulha da Reciclagem',
-  //   imagem: '/assets/jogo-reciclagem.png',
-  //   texto: "Salve o planeta! Separe o lixo corretamente e limpe os oceanos neste desafio ecológico.",
-  //   rota: "/sistemaSolar",
-  // },
-  // {
-  //   id: 8,
-  //   titulo: 'Maestro Musical',
-  //   imagem: '/assets/jogo-musical.png',
-  //   texto: "Repita as sequências de notas musicais que ficam cada vez mais difíceis e crie sua própria melodia.",
-  //   rota: "/sistemaSolar",
-  // },
-  // {
-  //   id: 9,
-  //   titulo: 'Ateliê de Pintura',
-  //   imagem: '/assets/jogo-pintura.png',
-  //   texto: "Misture as cores primárias para criar as cores secundárias pedidas no desafio e pinte belos quadros.",
-  //   rota: "/sistemaSolar",
-  // },
-  // {
-  //   id: 10,
-  //   titulo: 'Cozinha Maluca',
-  //   imagem: '/assets/jogo-culinaria.png',
-  //   texto: "Siga a receita e monte os lanches na ordem correta antes que o tempo acabe!",
-  //   rota: "/sistemaSolar",
-  // },
+  // Os outros jogos comentados no código original podem ser descomentados aqui.
 ];
 
 const Jogo: React.FC = () => {
@@ -85,7 +31,11 @@ const Jogo: React.FC = () => {
 
   const navigate = useNavigate();
 
-  // 3. Funções para navegação manual
+  // 1. Acessa o estado de controle ocular e de piscada da loja global
+  const mostrarCameraFlutuante = useStore(lojaOlho, (state) => state.mostrarCameraFlutuante);
+  const estaPiscando = useStore(lojaOlho, (state) => state.estaPiscando);
+
+  // Funções para navegação manual
   const irParaProximo = () => {
     setIndiceAtivo((indiceAnterior) => (indiceAnterior + 1) % fasesDoJogo.length);
   };
@@ -96,12 +46,12 @@ const Jogo: React.FC = () => {
     );
   };
 
+  // Efeito para a rolagem automática do carrossel
   useEffect(() => {
-    // Esta função já reinicia o timer a cada 3s a partir do novo card selecionado.
-    // Não precisamos mudar nada aqui!
     if (timerRef.current) {
       clearInterval(timerRef.current);
     }
+    // A rolagem automática deve sempre ocorrer para "pré-selecionar" os jogos
     timerRef.current = setInterval(irParaProximo, 3000);
 
     return () => {
@@ -109,14 +59,43 @@ const Jogo: React.FC = () => {
         clearInterval(timerRef.current);
       }
     };
-    // A dependência [indiceAtivo] é a chave. Toda vez que ele muda, o timer é resetado.
+    // Dependência [indiceAtivo] garante que o timer seja resetado a cada mudança de card
   }, [indiceAtivo]); 
 
+  // 2. Novo efeito para detecção de piscada e confirmação
+  useEffect(() => {
+    if (mostrarCameraFlutuante && estaPiscando) {
+      console.log('Piscada detectada, confirmando seleção:', fasesDoJogo[indiceAtivo].titulo);
+      // Para a rolagem automática imediatamente após a confirmação
+      if (timerRef.current) {
+        clearInterval(timerRef.current);
+        timerRef.current = null; // Garante que o timer seja explicitamente null
+      }
+      navigate(fasesDoJogo[indiceAtivo].rota);
+      // A lojaOlho já cuida de setar estaPiscando para false após um curto período,
+      // evitando múltiplas navegações com uma única piscada.
+    }
+  }, [estaPiscando, mostrarCameraFlutuante, indiceAtivo, navigate]);
+
+
+  // 3. Lógica condicional para o clique no card
   const handleCardClick = (index: number) => {
-    if (index === indiceAtivo) {
-      navigate(fasesDoJogo[index].rota);
+    if (mostrarCameraFlutuante) {
+      // Se o controle ocular estiver ativo, o clique apenas seleciona o card
+      // A navegação ocorre APENAS com a piscada.
+      if (index === indiceAtivo) {
+        console.log("Controle Ocular Ativado: pisque para confirmar o jogo.");
+        // Opcionalmente, adicione um feedback visual aqui.
+      } else {
+        setIndiceAtivo(index); // Permite a pré-seleção manual do card
+      }
     } else {
-      setIndiceAtivo(index); // Clicar em um card inativo agora apenas o seleciona
+      // Comportamento original: clica para navegar
+      if (index === indiceAtivo) {
+        navigate(fasesDoJogo[index].rota);
+      } else {
+        setIndiceAtivo(index);
+      }
     }
   };
 
@@ -125,11 +104,16 @@ const Jogo: React.FC = () => {
       <BlocoDeDescricao>
         <Paragrafo>
           Selecione um tipo de Jogo e comece a explorar um universo de possibilidades!
+          {/* 5. Mensagem informativa */}
+          {mostrarCameraFlutuante && (
+            <span> (Controle Ocular Ativado: o jogo muda automaticamente, pisque para confirmar!)</span>
+          )}
         </Paragrafo>
       </BlocoDeDescricao>
 
       <CarrosselContainer>
-        <BotaoNavegacao direcao="esquerda" onClick={irParaAnterior}>
+        {/* 4. Desativa os botões de navegação manual quando o controle ocular está ativo */}
+        <BotaoNavegacao direcao="esquerda" onClick={irParaAnterior} disabled={mostrarCameraFlutuante}>
           <ArrowLeftCircle size={50} />
         </BotaoNavegacao>
 
@@ -149,8 +133,8 @@ const Jogo: React.FC = () => {
           </CarrosselTrilha>
         </CarrosselViewport>
 
-        {/* Botão de avançar */}
-        <BotaoNavegacao direcao="direita" onClick={irParaProximo}>
+        {/* 4. Desativa os botões de navegação manual quando o controle ocular está ativo */}
+        <BotaoNavegacao direcao="direita" onClick={irParaProximo} disabled={mostrarCameraFlutuante}>
           <ArrowRightCircle size={50} />
         </BotaoNavegacao>
       </CarrosselContainer>
