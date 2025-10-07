@@ -54,10 +54,10 @@ const CalibragemTeste: React.FC = () => {
   const navigate = useNavigate();
 
   const IMAGENS_MODAL = {
-  semRosto: '../../../../public/assets/modal/aviso.png',
-  erroRecalibrar: '../../../../public/assets/modal/camera.png',
-  sucesso: '../../../../public/assets/modal/sucesso.png',
-  falha: '../../../../public/assets/modal/erro.png',
+  semRosto: '/assets/modal/aviso.png',
+  erroRecalibrar: '/assets/modal/camera.png',
+  sucesso: '/assets/modal/sucesso.png',
+  falha: '/assets/modal/erro.png',
 };
 
 
