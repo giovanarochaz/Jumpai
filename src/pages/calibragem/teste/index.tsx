@@ -53,6 +53,14 @@ const CountdownTimer: React.FC<{ duration: number }> = ({ duration }) => (
 const CalibragemTeste: React.FC = () => {
   const navigate = useNavigate();
 
+  const IMAGENS_MODAL = {
+  semRosto: '../../../../public/assets/modal/aviso.png',
+  erroRecalibrar: '../../../../public/assets/modal/camera.png',
+  sucesso: '../../../../public/assets/modal/sucesso.png',
+  falha: '../../../../public/assets/modal/erro.png',
+};
+
+
   // Cada tela tem seu próprio video/canvas
   const videoRef = useRef<HTMLVideoElement>(null);
   const canvasRef = useRef<HTMLCanvasElement>(null);
@@ -78,23 +86,24 @@ const CalibragemTeste: React.FC = () => {
 
   const exibirModal = (tipo: 'semRosto' | 'erroRecalibrar' | 'sucesso' | 'falha', acao?: () => void) => {
     let dadosModal = { imagemSrc: '', titulo: '', descricao: '' };
+    
     switch (tipo) {
       case 'semRosto':
-        dadosModal = { imagemSrc: '../../../../public/assets/modal/aviso.png', titulo: 'Rosto não Detectado', descricao: 'Não conseguimos ver seu rosto. Por favor, posicione-se no centro da câmera.' };
+        dadosModal = { imagemSrc: IMAGENS_MODAL.semRosto, titulo: 'Rosto não Detectado', descricao: 'Não conseguimos ver seu rosto. Por favor, posicione-se no centro da câmera.' };
         break;
       case 'erroRecalibrar':
-        dadosModal = { imagemSrc: '../../../../public/assets/modal/camera.png', titulo: 'Erro na Calibragem', descricao: 'Algo deu errado. Vamos tentar calibrar novamente do início.' };
+        dadosModal = { imagemSrc: IMAGENS_MODAL.erroRecalibrar, titulo: 'Erro na Calibragem', descricao: 'Algo deu errado. Vamos tentar calibrar novamente do início.' };
         break;
       case 'sucesso':
-        dadosModal = { imagemSrc: '../../../../public/assets/modal/sucesso.png', titulo: 'Tudo Certo!', descricao: 'Sua calibragem foi um sucesso. Preparando para iniciar os jogos...' };
+        dadosModal = { imagemSrc: IMAGENS_MODAL.sucesso, titulo: 'Tudo Certo!', descricao: 'Sua calibragem foi um sucesso. Preparando para iniciar os jogos...' };
         break;
       case 'falha':
-        dadosModal = { imagemSrc: '../../../../public/assets/modal/erro.png', titulo: 'Falha no Teste', descricao: 'Não conseguimos validar suas piscadas. O teste será reiniciado.' };
+        dadosModal = { imagemSrc: IMAGENS_MODAL.falha, titulo: 'Falha no Teste', descricao: 'Não conseguimos validar suas piscadas. O teste será reiniciado.' };
         break;
     }
+    
     setEstadoDoModal({ estaAberto: true, ...dadosModal, acaoAposFechar: acao });
   };
-
   useEffect(() => {
     if (alturaMediaDoOlho === 0) {
       exibirModal('erroRecalibrar', () => navigate('/calibragem-ocular'));

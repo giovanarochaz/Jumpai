@@ -39,6 +39,12 @@ interface EstadoModal {
 }
 
 const CalibragemOcular: React.FC = () => {
+
+  const imagens = {
+    semRosto: '/assets/modal/aviso.png',
+    permissaoCamera: '/assets/modal/camera.png'
+  };
+
   const navigate = useNavigate();
 
   const videoRef = useRef<HTMLVideoElement>(null);
@@ -69,13 +75,13 @@ const CalibragemOcular: React.FC = () => {
     let dadosModal = { imagemSrc: '', titulo: '', descricao: '' };
     if (tipo === 'semRosto') {
       dadosModal = {
-        imagemSrc: '../../../../public/assets/modal/aviso.png',
+        imagemSrc: imagens.semRosto,
         titulo: 'Rosto não Detectado',
         descricao: 'Por favor, posicione seu rosto no centro da câmera.',
       };
     } else if (tipo === 'permissaoCamera') {
       dadosModal = {
-        imagemSrc: '../../../../public/assets/modal/camera.png',
+        imagemSrc: imagens.permissaoCamera,
         titulo: 'Acesso à Câmera Necessário',
         descricao: 'Você precisa permitir o acesso à câmera no seu navegador para continuar.',
       };
