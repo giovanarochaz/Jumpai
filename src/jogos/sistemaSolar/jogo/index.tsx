@@ -43,12 +43,12 @@ const criarEstadoInicialColeta = () => {
 const JogoSistemaSolar: React.FC<JogoSistemaSolarProps> = ({ aoVencer, configuracoes }) => {
  // CONTROLE OCULAR
  const { estaPiscando } = useStore(lojaOlho); 
- // REMOVIDO: const [bloquearPiscada, setBloquearPiscada] = useState(false);
+ // REMOVIDA: const [bloquearPiscada, setBloquearPiscada] = useState(false);
   
  const [planetasVisiveis, setPlanetasVisiveis] = useState<EstadoPlaneta[]>([]);
  
   // POSIÇÃO
- const [posicaoAtual, setPosicaoAtual] = useState<'cima' | 'baixo'>('baixo'); 
+ // 'posicaoAtual' FOI REMOVIDA. Agora a posição é inferida diretamente do CSS/posicaoAstronauta.
  const [posicaoAstronauta, setPosicaoAstronauta] = useState(POSICAO_BASE); 
  
  const [estaColidindo, setEstaColidindo] = useState(false);
@@ -63,16 +63,14 @@ const JogoSistemaSolar: React.FC<JogoSistemaSolarProps> = ({ aoVencer, configura
  const ultimoGeradoRef = useRef<string | null>(null);
  const musicaFundoRef = useRef<HTMLAudioElement | null>(null);
  const somColetaRef = useRef<HTMLAudioElement | null>(null);
- // REMOVIDO/IGNORADO: const cooldownTimerRef = useRef<number | null>(null); 
- const cooldownTimerRef = useRef<any>(null); // Mantido apenas para evitar erro de tipo na função resetarProgresso (embora ela não precise mais limpar o timer)
-
+ // 'cooldownTimerRef' FOI REMOVIDO, pois não há mais cooldown.
+ 
  const removerPlaneta = useCallback((id: number) => { setPlanetasVisiveis(p => p.filter(planeta => planeta.id !== id)); }, []);
  
- // **LÓGICA DE RESET AJUSTADA**: Apenas limpa o progresso, não mais o bloqueio de piscada.
+ // LÓGICA DE RESET SIMPLIFICADA
  const resetarProgresso = useCallback(() => { 
     setPlanetasColetados(criarEstadoInicialColeta()); 
     setProximoPlanetaIndex(0); 
-    // REMOVIDO: Lógica para limpar bloqueio de piscada e timer
     console.warn("[Reset] Progresso resetado.");
 
 }, [setPlanetasColetados, setProximoPlanetaIndex]); 
@@ -145,7 +143,7 @@ const JogoSistemaSolar: React.FC<JogoSistemaSolarProps> = ({ aoVencer, configura
   return () => clearInterval(intervalo);
  }, [proximoPlanetaIndex, planetasVisiveis, configuracoes.velocidade]);
 
- // EFEITO 4: Movimento por Piscada (AGORA SEM COOLDOWN)
+ // EFEITO 4: Movimento por Piscada (INSTANTÂNEO)
  useEffect(() => {
     // Console para rastrear o estado de entrada
     console.log(`[Efeito Piscada/START] Piscando=${estaPiscando}`);
@@ -158,34 +156,30 @@ const JogoSistemaSolar: React.FC<JogoSistemaSolarProps> = ({ aoVencer, configura
     console.log("[Efeito Piscada/FINAL] *** MOVIMENTO AUTORIZADO INSTANTÂNEO! ***");
     
     // Alterna a posição
-    setPosicaoAtual(p => {
-        const novaPosicaoStr = p === 'baixo' ? POSICAO_TOPO : POSICAO_BASE;
-        const novaP = p === 'baixo' ? 'cima' : 'baixo';
-        setPosicaoAstronauta(novaPosicaoStr); // Move o elemento visual
-        console.log(`[Efeito Piscada/FINAL] Movendo para: ${novaP}`);
-        return novaP;
+    setPosicaoAstronauta(p => {
+        // Alterna entre POSICAO_BASE e POSICAO_TOPO
+        return p === POSICAO_BASE ? POSICAO_TOPO : POSICAO_BASE;
     });
 
-    // Não há lógica de bloqueio ou timer para limpar/agendar.
+    console.log("[Efeito Piscada/FINAL] Posição alternada.");
+
     return () => {
-        console.log("[Efeito Piscada/FINAL] Efeito limpo (sem timer para cancelar).");
+        console.log("[Efeito Piscada/FINAL] Efeito limpo.");
     };
 
 // DEPENDÊNCIA: Reage apenas à mudança de estaPiscando.
-}, [estaPiscando, setPosicaoAtual, setPosicaoAstronauta]); 
+}, [estaPiscando, setPosicaoAstronauta]); 
 
  // EFEITO 5: Movimento por Teclado (Com Sincronização de Estado)
  useEffect(() => {
   const tratarTeclaPressionada = (evento: KeyboardEvent) => {
    if (evento.key === 'ArrowUp') {
-    // Move para cima e sincroniza o estado
+    // Move para cima
     setPosicaoAstronauta(POSICAO_TOPO);
-    setPosicaoAtual('cima');
      console.log("[Efeito Teclado] Posição alterada para CIMA.");
    } else if (evento.key === 'ArrowDown') {
-    // Move para baixo e sincroniza o estado
+    // Move para baixo
     setPosicaoAstronauta(POSICAO_BASE);
-    setPosicaoAtual('baixo');
      console.log("[Efeito Teclado] Posição alterada para BAIXO.");
    }
   };
