@@ -15,6 +15,13 @@ const fasesDoJogo = [
     texto: "Prepare-se para uma aventura espacial educativa! Assuma o controle de um corajoso astronauta, desvie de chuvas de meteoros perigosas e colete os planetas do nosso Sistema Solar na ordem correta. Um erro pode custar toda a sua missão! Com controles simples e um desafio crescente, aprenda sobre astronomia da forma mais divertida possível. Você consegue completar a coleção?",
     rota: "/sistemaSolar",
   },
+  {
+    id: 2,
+    titulo: 'Piramide do Sabor',
+    imagem: '/assets/jogos/capa_piramide_do_sabor.png', 
+    texto: "Prepare-se para uma aventura deliciosa! Assuma o controle de um chef e crie pratos incríveis enquanto aprende sobre nutrição e ingredientes saudáveis. Um erro pode custar toda a sua missão! Com controles simples e um desafio crescente, aprenda sobre culinária da forma mais divertida possível. Você consegue completar a coleção?",
+    rota: "/piramideDoSabor",
+  },
   // {
   //   id: 4,
   //   titulo: 'Missão Corpo Humano',

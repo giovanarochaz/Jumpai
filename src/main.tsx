@@ -9,6 +9,7 @@ import Jogo from './pages/jogo';
 import SistemaSolar from './jogos/sistemaSolar/app';
 import CalibragemOcular from './pages/calibragem/calibragem';
 import CalibragemTeste from './pages/calibragem/teste';
+import PiramideDoSabor from './jogos/piramideSabor/app';
 
 const router = createBrowserRouter([
   {
@@ -26,6 +27,10 @@ const router = createBrowserRouter([
       {
         path: '/sistemaSolar', 
         element: <SistemaSolar />,
+      },
+      {
+        path: '/piramideDoSabor', 
+        element: <PiramideDoSabor />,
       },
       {
         path: '/calibragemOcular',

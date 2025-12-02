@@ -73,7 +73,7 @@ export const HudContainer = styled.div`
 // Corrigido: coletado agora é prop transiente ($)
 export const HudPlanetaImagem = styled.img<{ $coletado: boolean }>`
  height: 50px;
- opacity: ${({ $coletado }) => ($coletado ? 1 : 0.3)};
+ opacity: 1;
  filter: ${({ $coletado }) => ($coletado ? 'none' : 'grayscale(80%)')};
  transition: opacity 0.5s ease, filter 0.5s ease;
 `;

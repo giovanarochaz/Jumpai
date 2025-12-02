@@ -43,23 +43,22 @@ interface EstadoModal {
   acaoAposFechar?: () => void;
 }
 
-// Componente visual para o relógio (com viewBox atualizado)
-const CountdownTimer: React.FC<{ duration: number }> = ({ duration }) => (
-  <CountdownSVG viewBox="0 0 90 90">
-    <CountdownCircle duration={duration} />
-  </CountdownSVG>
-);
+  // Componente visual para o relógio (com viewBox atualizado)
+  const CountdownTimer: React.FC<{ duration: number }> = ({ duration }) => (
+    <CountdownSVG viewBox="0 0 90 90">
+      <CountdownCircle duration={duration} />
+    </CountdownSVG>
+  );
 
-const CalibragemTeste: React.FC = () => {
-  const navigate = useNavigate();
+  const CalibragemTeste: React.FC = () => {
+    const navigate = useNavigate();
 
-  const IMAGENS_MODAL = {
-  semRosto: '/assets/modal/aviso.png',
-  erroRecalibrar: '/assets/modal/camera.png',
-  sucesso: '/assets/modal/sucesso.png',
-  falha: '/assets/modal/erro.png',
-};
-
+    const IMAGENS_MODAL = {
+    semRosto: '/assets/modal/aviso.png',
+    erroRecalibrar: '/assets/modal/camera.png',
+    sucesso: '/assets/modal/sucesso.png',
+    falha: '/assets/modal/erro.png',
+  }
 
   // Cada tela tem seu próprio video/canvas
   const videoRef = useRef<HTMLVideoElement>(null);

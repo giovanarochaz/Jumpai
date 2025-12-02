@@ -1,12 +1,13 @@
 import React, { useState, useEffect, useRef } from 'react';
 import * as S from './styles';
-import { Trophy } from 'lucide-react';
+import { Medal, Rocket } from 'lucide-react'; // Ícones temáticos
 import { useNavigate } from 'react-router-dom';
 import { useStore } from 'zustand'; 
 import { lojaOlho } from '../../../lojas/lojaOlho';
 
-const CORES_FOGOS = ['#FFD700', '#FF4500', '#2AD352', '#00BFFF', '#FF1493', '#ADFF2F'];
-const NUMERO_FOGOS = 15;
+// Cores mais vibrantes e neon para o espaço
+const CORES_FOGOS = ['#fbbf24', '#a855f7', '#3b82f6', '#ec4899', '#ffffff'];
+const NUMERO_FOGOS = 12;
 const PARTICULAS_POR_FOGO = 12;
 
 interface DadosFogos {
@@ -23,20 +24,19 @@ interface TelaVitoriaProps {
 
 type BotaoFoco = 'reiniciar' | 'outroJogo' | null;
 const BOTOES_ORDEM: BotaoFoco[] = ['reiniciar', 'outroJogo'];
-const TEMPO_FOCO_MS = 1500; // 1.5 segundos
-const COOLDOWN_CLIQUE_MS = 800; // Cooldown após a piscada/clique
+const TEMPO_FOCO_MS = 1500;
+const COOLDOWN_CLIQUE_MS = 800;
 
 const TelaVitoria: React.FC<TelaVitoriaProps> = ({ aoReiniciar }) => {
   const { estaPiscando } = useStore(lojaOlho);
   const [dadosDosFogos, setDadosDosFogos] = useState<DadosFogos[]>([]);
   const [botaoFocado, setBotaoFocado] = useState<BotaoFoco>('reiniciar');
-  const [bloquearClique, setBloquearClique] = useState(false); // Mudado de 'bloquearPiscada' para 'bloquearClique'
+  const [bloquearClique, setBloquearClique] = useState(false);
   
-  const cooldownTimerRef = useRef<number | null>(null);
-  const focoTimerRef = useRef<number | null>(null); // Novo Ref para o timer de foco
+  const focoTimerRef = useRef<number | null>(null);
   const navigate = useNavigate();
 
-  // --- LÓGICA DE NAVEGAÇÃO E AÇÃO (Função que executa o clique) ---
+  // --- LÓGICA DE AÇÃO ---
   const executarAcaoFocada = () => {
     if (botaoFocado === 'reiniciar') {
       aoReiniciar();
@@ -45,140 +45,106 @@ const TelaVitoria: React.FC<TelaVitoriaProps> = ({ aoReiniciar }) => {
     }
   };
 
-  // --- EFEITO 1: Geração de Fogos de Artifício (Inalterado) ---
+  // --- EFEITO 1: Geração de Fogos ---
   useEffect(() => {
     const dados: DadosFogos[] = [];
     for (let i = 0; i < NUMERO_FOGOS; i++) {
       dados.push({
         id: i,
-        top: `${Math.random() * 80 + 10}%`,
-        left: `${Math.random() * 80 + 10}%`,
+        top: `${Math.random() * 90 + 5}%`,
+        left: `${Math.random() * 90 + 5}%`,
         cor: CORES_FOGOS[Math.floor(Math.random() * CORES_FOGOS.length)],
         delay: `${Math.random() * 2}s`,
       });
     }
     setDadosDosFogos(dados);
-
-    // Limpa ambos os timers na desmontagem (Garantia)
-    return () => {
-      if (cooldownTimerRef.current) clearTimeout(cooldownTimerRef.current);
-      if (focoTimerRef.current) clearTimeout(focoTimerRef.current);
-    };
+    return () => { if (focoTimerRef.current) clearInterval(focoTimerRef.current); };
   }, []);
 
-  // --- EFEITO 2: Foco Automático Temporizado (NOVO) ---
+  // --- EFEITO 2: Foco Automático ---
   useEffect(() => {
     const alternarFoco = () => {
-      setBotaoFocado(prevFoco => {
-        const currentIndex = BOTOES_ORDEM.indexOf(prevFoco);
-        const nextIndex = (currentIndex + 1) % BOTOES_ORDEM.length;
-        return BOTOES_ORDEM[nextIndex];
-      });
+      setBotaoFocado(prev => BOTOES_ORDEM[(BOTOES_ORDEM.indexOf(prev) + 1) % BOTOES_ORDEM.length]);
     };
-    
-    // Inicia o loop de foco
     focoTimerRef.current = setInterval(alternarFoco, TEMPO_FOCO_MS) as unknown as number;
+    return () => { if (focoTimerRef.current) clearInterval(focoTimerRef.current); };
+  }, []);
 
-    return () => {
-      if (focoTimerRef.current) {
-        clearInterval(focoTimerRef.current);
-      }
-    };
-  }, []); // Roda apenas uma vez na montagem
-
-  // --- EFEITO 3: Clique por Piscada (ADAPTADO) ---
+  // --- EFEITO 3: Controle Ocular ---
   useEffect(() => {
-    if (!estaPiscando || bloquearClique || !botaoFocado) {
-      return;
-    }
+    if (!estaPiscando || bloquearClique || !botaoFocado) return;
 
-    // 1. Bloqueia cliques futuros e executa a ação focada
     setBloquearClique(true);
     executarAcaoFocada();
     
-    // 2. Limpa o timer de foco para evitar que ele mude imediatamente após o clique
-    if (focoTimerRef.current) {
-      clearInterval(focoTimerRef.current);
-    }
+    if (focoTimerRef.current) clearInterval(focoTimerRef.current);
     
-    // 3. Reinicia o timer de foco após um pequeno atraso (para dar tempo do clique ocorrer)
-    focoTimerRef.current = setTimeout(() => {
-        // Reinicia o loop de foco
+    setTimeout(() => {
         focoTimerRef.current = setInterval(() => {
-            setBotaoFocado(prevFoco => {
-                const currentIndex = BOTOES_ORDEM.indexOf(prevFoco);
-                const nextIndex = (currentIndex + 1) % BOTOES_ORDEM.length;
-                return BOTOES_ORDEM[nextIndex];
-            });
+            setBotaoFocado(prev => BOTOES_ORDEM[(BOTOES_ORDEM.indexOf(prev) + 1) % BOTOES_ORDEM.length]);
         }, TEMPO_FOCO_MS) as unknown as number;
-
-        // Remove o bloqueio de clique
         setBloquearClique(false);
-    }, COOLDOWN_CLIQUE_MS) as unknown as number;
+    }, COOLDOWN_CLIQUE_MS);
     
-  }, [estaPiscando, bloquearClique, botaoFocado, executarAcaoFocada]); // Dependências
+  }, [estaPiscando, bloquearClique, botaoFocado]);
 
-  // --- EFEITO 4: Clique por Teclado (Enter) (ADAPTADO) ---
+  // --- EFEITO 4: Teclado ---
   useEffect(() => {
     const handleKeyDown = (event: KeyboardEvent) => {
       if (event.key === 'Enter' && botaoFocado) {
-        // Pausa o foco automático
         if (focoTimerRef.current) clearInterval(focoTimerRef.current);
-        
-        // Executa e reinicia o foco automático após um cooldown
         executarAcaoFocada();
       }
     };
     window.addEventListener('keydown', handleKeyDown);
     return () => window.removeEventListener('keydown', handleKeyDown);
-  }, [botaoFocado, executarAcaoFocada]);
+  }, [botaoFocado]);
 
 
   return (
     <S.FundoVitoria>
-      {/* Mapeia e renderiza cada explosão de fogos na tela */}
+      {/* Explosões Espaciais */}
       {dadosDosFogos.map(fogo => (
         <S.ContainerFogos
           key={fogo.id}
-          style={{
-            '--top': fogo.top,
-            '--left': fogo.left,
-          } as React.CSSProperties}
+          style={{ '--top': fogo.top, '--left': fogo.left } as React.CSSProperties}
         >
-          {/* Renderiza as partículas para cada explosão */}
           {Array.from({ length: PARTICULAS_POR_FOGO }).map((_, index) => (
             <S.ParticulaFogos
               key={index}
-              style={{
-                '--color': fogo.cor,
-                '--delay': fogo.delay,
-              } as React.CSSProperties}
+              style={{ '--color': fogo.cor, '--delay': fogo.delay } as React.CSSProperties}
             />
           ))}
         </S.ContainerFogos>
       ))}
 
-      {/* O conteúdo do modal é renderizado depois, ficando por cima dos fogos */}
       <S.ConteudoVitoria>
-        <S.IconeTrofeu>
-          <Trophy size={100} strokeWidth={1.5} />
-        </S.IconeTrofeu>
-        <S.TituloVitoria>MISSÃO COMPLETA!</S.TituloVitoria>
+        <S.IconeContainer>
+           {/* Ícone de Medalha Espacial */}
+          <S.IconeTrofeu>
+            <Medal size={100} strokeWidth={1.5} />
+          </S.IconeTrofeu>
+        </S.IconeContainer>
+        
+        <S.TituloVitoria>MISSÃO CUMPRIDA!</S.TituloVitoria>
+        
         <S.MensagemVitoria>
-          Parabéns, explorador espacial! Você catalogou todos os planetas na ordem correta e se tornou um mestre do Sistema Solar!
+          Excelente trabalho, Comandante! Você catalogou todo o Sistema Solar na ordem correta. <br/><br/>
+          <strong>A galáxia está segura graças a você!</strong>
         </S.MensagemVitoria>
+        
         <S.ContainerBotoes>
           <S.BotaoVitoria 
-            onClick={executarAcaoFocada} // Mapeado para a função de execução
+            onClick={executarAcaoFocada}
             $focado={botaoFocado === 'reiniciar'} 
           >
-            Jogar Novamente
+            Nova Decolagem
           </S.BotaoVitoria>
           <S.BotaoVitoria 
-            onClick={executarAcaoFocada} // Mapeado para a função de execução
+            onClick={executarAcaoFocada}
             $focado={botaoFocado === 'outroJogo'} 
           >
-            Outro Jogo
+            Base de Missões
           </S.BotaoVitoria>
         </S.ContainerBotoes>
       </S.ConteudoVitoria>

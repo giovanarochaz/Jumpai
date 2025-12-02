@@ -1,6 +1,6 @@
 import React, { useState, useEffect, useRef } from 'react';
 import * as S from './styles';
-import { Gamepad2, AlertTriangle, Trophy, Badge, Zap, Music, ShieldOff } from 'lucide-react';
+import { Rocket, Trophy, Zap, Music, ShieldOff, Flame, Orbit, Settings } from 'lucide-react'; // Ícones espaciais
 import { useStore } from 'zustand';
 import { lojaOlho } from '../../../lojas/lojaOlho';
 
@@ -30,7 +30,8 @@ type FocoConfig = 'velocidade' | 'penalidade' | 'sons' | 'iniciar';
 const VELOCIDADES: VelocidadeGeracao[] = ['lenta', 'normal', 'rapida'];
 
 const ManualSistemaSolar: React.FC<ManualSistemaSolarProps> = ({ aoIniciarMissao }) => {
-   const [tela, setTela] = useState<'planetas' | 'comoJogar' | 'perigos' | 'configuracoes'>('planetas');
+   // Nova tela inicial 'introducao'
+   const [tela, setTela] = useState<'introducao' | 'planetas' | 'comoJogar' | 'perigos' | 'configuracoes'>('introducao');
    const [slideAtual, setSlideAtual] = useState(0);
 
    const [configuracoes, setConfiguracoes] = useState<ConfiguracoesJogo>({
@@ -46,9 +47,7 @@ const ManualSistemaSolar: React.FC<ManualSistemaSolarProps> = ({ aoIniciarMissao
    const [opcaoSonsAtiva, setOpcaoSonsAtiva] = useState<boolean>(true);
    
    const autoCycleTimerRef = useRef<ReturnType<typeof setInterval> | null>(null);
-   
-   // Sistema de bloqueio único e centralizado
-   const [bloquearPiscada, setBloquearPiscada] = useState(true); // Começa bloqueado
+   const [bloquearPiscada, setBloquearPiscada] = useState(true); 
    const blockTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
 
    const conteudoAtual = planetasInfo[slideAtual];
@@ -57,7 +56,9 @@ const ManualSistemaSolar: React.FC<ManualSistemaSolarProps> = ({ aoIniciarMissao
    const slideAnterior = () => { if (slideAtual > 0) setSlideAtual(s => s - 1); };
 
    const avancarTela = () => {
-      if (tela === 'planetas') {
+      if (tela === 'introducao') {
+         setTela('planetas');
+      } else if (tela === 'planetas') {
          if (slideAtual === planetasInfo.length - 1) setTela('comoJogar');
          else proximoSlide();
       } else if (tela === 'comoJogar') {
@@ -68,44 +69,31 @@ const ManualSistemaSolar: React.FC<ManualSistemaSolarProps> = ({ aoIniciarMissao
    };
 
    const voltarTela = () => {
-      if (tela === 'planetas') slideAnterior();
-      else if (tela === 'comoJogar') setTela('planetas');
+      if (tela === 'planetas') {
+         if (slideAtual === 0) setTela('introducao');
+         else slideAnterior();
+      } else if (tela === 'comoJogar') setTela('planetas');
       else if (tela === 'perigos') setTela('comoJogar');
    };
 
-   // Efeito para o bloqueio inicial de 1 segundo ao abrir o manual
    useEffect(() => {
       blockTimerRef.current = setTimeout(() => setBloquearPiscada(false), 1000);
-      // Função de limpeza para desmontagem do componente
       return () => {
          if (blockTimerRef.current) clearTimeout(blockTimerRef.current);
          if (autoCycleTimerRef.current) clearInterval(autoCycleTimerRef.current);
       };
    }, []);
 
-   // Gerenciador de Piscadas Centralizado
    useEffect(() => {
-      // Ação só ocorre se não estiver bloqueado, a câmera estiver ligada e uma piscada for detectada.
-      if (bloquearPiscada || !mostrarCameraFlutuante || !estaPiscando) {
-         return;
-      }
+      if (bloquearPiscada || !mostrarCameraFlutuante || !estaPiscando) return;
 
-      // Garante que qualquer timer de bloqueio anterior seja limpo antes de criar um novo
-      if (blockTimerRef.current) {
-         clearTimeout(blockTimerRef.current);
-      }
-      
-      // Bloqueia imediatamente para evitar ações múltiplas
+      if (blockTimerRef.current) clearTimeout(blockTimerRef.current);
       setBloquearPiscada(true);
 
-      // Lógica para decidir a ação com base na tela atual
       if (tela !== 'configuracoes') {
-         // --- Ação de Navegação ---
          avancarTela();
-         // Define um novo bloqueio de 500ms
          blockTimerRef.current = setTimeout(() => setBloquearPiscada(false), 500);
       } else {
-         // --- Ação de Confirmação de Configuração ---
          switch (focoConfig) {
             case 'velocidade':
                setConfiguracoes(c => ({ ...c, velocidade: opcaoVelocidadeAtiva }));
@@ -123,13 +111,11 @@ const ManualSistemaSolar: React.FC<ManualSistemaSolarProps> = ({ aoIniciarMissao
                aoIniciarMissao(configuracoes);
                break;
          }
-         // Define um novo bloqueio de 500ms
          blockTimerRef.current = setTimeout(() => setBloquearPiscada(false), 500);
       }
-   }, [estaPiscando, mostrarCameraFlutuante, bloquearPiscada, tela, focoConfig, configuracoes, opcaoVelocidadeAtiva, opcaoPenalidadeAtiva, opcaoSonsAtiva]);
+   }, [estaPiscando, mostrarCameraFlutuante, bloquearPiscada, tela, focoConfig, configuracoes, opcaoVelocidadeAtiva, opcaoPenalidadeAtiva, opcaoSonsAtiva, aoIniciarMissao]);
 
 
-   // Efeito para o ciclo automático das opções de configuração
    useEffect(() => {
       if (tela !== 'configuracoes' || !mostrarCameraFlutuante) {
          if (autoCycleTimerRef.current) clearInterval(autoCycleTimerRef.current);
@@ -142,20 +128,13 @@ const ManualSistemaSolar: React.FC<ManualSistemaSolarProps> = ({ aoIniciarMissao
                const nextIndex = (currentIndex + 1) % VELOCIDADES.length;
                setOpcaoVelocidadeAtiva(VELOCIDADES[nextIndex]);
                break;
-            case 'penalidade':
-               setOpcaoPenalidadeAtiva(p => !p);
-               break;
-            case 'sons':
-               setOpcaoSonsAtiva(s => !s);
-               break;
-            case 'iniciar':
-               break;
+            case 'penalidade': setOpcaoPenalidadeAtiva(p => !p); break;
+            case 'sons': setOpcaoSonsAtiva(s => !s); break;
+            case 'iniciar': break;
          }
-      }, 1500) as unknown as number; // Adicionado type assertion para garantir compatibilidade com setInterval
+      }, 1500) as unknown as number;
 
-      return () => {
-         if (autoCycleTimerRef.current) clearInterval(autoCycleTimerRef.current);
-      };
+      return () => { if (autoCycleTimerRef.current) clearInterval(autoCycleTimerRef.current); };
    }, [tela, focoConfig, opcaoVelocidadeAtiva, mostrarCameraFlutuante]);
 
    
@@ -163,6 +142,34 @@ const ManualSistemaSolar: React.FC<ManualSistemaSolarProps> = ({ aoIniciarMissao
       const isAvancarFocado = mostrarCameraFlutuante && tela !== 'configuracoes' && !bloquearPiscada;
 
       switch (tela) {
+         // --- NOVA TELA DE INTRODUÇÃO ---
+         case 'introducao':
+             return (
+               <S.ContainerExplicacao>
+                  <S.TextoSlide><h2>Bem-vindo, Astronauta!</h2></S.TextoSlide>
+                  <S.SecaoExplicacao>
+                     <S.WrapperIcone><Rocket size={40} strokeWidth={2} /></S.WrapperIcone>
+                     <S.WrapperTexto>
+                        <h3>Sua Missão Espacial</h3>
+                        <p>Prepare-se para uma aventura educativa! Assuma o controle de um corajoso astronauta, desvie de meteoros perigosos e colete os planetas do Sistema Solar na ordem correta.</p>
+                     </S.WrapperTexto>
+                  </S.SecaoExplicacao>
+                  <S.SecaoExplicacao>
+                     <S.WrapperIcone><Trophy size={40} strokeWidth={2} /></S.WrapperIcone>
+                     <S.WrapperTexto>
+                        <h3>Desafio da Galáxia</h3>
+                        <p>Um erro pode custar sua missão! Com controles simples e desafio crescente, aprenda astronomia se divertindo. Você consegue completar a coleção?</p>
+                     </S.WrapperTexto>
+                  </S.SecaoExplicacao>
+                  <S.NavegacaoCarrossel>
+                     <div style={{width: 180}}></div> {/* Espaçador */}
+                     <S.BotaoNavegacao onClick={avancarTela} $isFocusedManual={isAvancarFocado}>
+                        Conhecer Planetas
+                     </S.BotaoNavegacao>
+                  </S.NavegacaoCarrossel>
+               </S.ContainerExplicacao>
+             );
+
          case 'planetas':
             return (
                <>
@@ -174,13 +181,10 @@ const ManualSistemaSolar: React.FC<ManualSistemaSolarProps> = ({ aoIniciarMissao
                      </S.TextoSlide>
                   </S.ContainerSlide>
                   <S.NavegacaoCarrossel>
-                     <S.BotaoNavegacao onClick={voltarTela} disabled={slideAtual === 0}>Voltar</S.BotaoNavegacao>
-                     <span>{slideAtual + 1} / {planetasInfo.length}</span>
-                     <S.BotaoNavegacao 
-                onClick={avancarTela}
-                $isFocusedManual={isAvancarFocado} // Aplicando o foco aqui
-              >
-                        {slideAtual === planetasInfo.length - 1 ? 'Como Jogar?' : 'Próximo'}
+                     <S.BotaoNavegacao onClick={voltarTela}>Voltar</S.BotaoNavegacao>
+                     <span>ALVO {slideAtual + 1} / {planetasInfo.length}</span>
+                     <S.BotaoNavegacao onClick={avancarTela} $isFocusedManual={isAvancarFocado}>
+                        {slideAtual === planetasInfo.length - 1 ? 'Instruções' : 'Próximo Alvo'}
                      </S.BotaoNavegacao>
                   </S.NavegacaoCarrossel>
                </>
@@ -189,29 +193,26 @@ const ManualSistemaSolar: React.FC<ManualSistemaSolarProps> = ({ aoIniciarMissao
          case 'comoJogar':
             return (
                <S.ContainerExplicacao>
-                  <S.TextoSlide><h2>Como Jogar</h2></S.TextoSlide>
+                  <S.TextoSlide><h2>Controles de Voo</h2></S.TextoSlide>
                      <S.SecaoExplicacao>
-                     <S.WrapperIcone><Gamepad2 size={32} strokeWidth={2.5} /></S.WrapperIcone>
+                     <S.WrapperIcone><Rocket size={32} strokeWidth={2.5} style={{transform: 'rotate(-45deg)'}} /></S.WrapperIcone>
                      <S.WrapperTexto>
-                        <h3>Controles Simples</h3>
-                        <p>Use as teclas <strong>SETA PARA CIMA</strong> e   <strong>SETA PARA BAIXO</strong> para mover seu astronauta.</p>
+                        <h3>Pilotagem</h3>
+                        <p>Use as teclas <strong>SETA PARA CIMA</strong> e <strong>SETA PARA BAIXO</strong> (ou pisque os olhos) para manobrar sua nave no espaço.</p>
                      </S.WrapperTexto>
                   </S.SecaoExplicacao>
                   <S.SecaoExplicacao>
-                     <S.WrapperIcone><Trophy size={32} strokeWidth={2.5} /></S.WrapperIcone>
+                     <S.WrapperIcone><Orbit size={32} strokeWidth={2.5} /></S.WrapperIcone>
                      <S.WrapperTexto>
-                        <h3>Missão de Coleta</h3>
-                        <p>Seu objetivo é coletar os planetas na ordem certa do Sistema Solar. Cada acerto acenderá o planeta na barra superior!</p>
+                        <h3>Ordem Cósmica</h3>
+                        <p>Colete os planetas na ordem exata (Mercúrio, Vênus, Terra...). Acompanhe a barra no topo da tela!</p>
                      </S.WrapperTexto>
                   </S.SecaoExplicacao>
                   <S.NavegacaoCarrossel>
                         <S.BotaoNavegacao onClick={voltarTela}>Voltar</S.BotaoNavegacao>
-                        <S.BotaoNavegacao 
-                    onClick={avancarTela}
-                    $isFocusedManual={isAvancarFocado} // Aplicando o foco aqui
-                >
-                    Entendi! E os perigos?
-                </S.BotaoNavegacao>
+                        <S.BotaoNavegacao onClick={avancarTela} $isFocusedManual={isAvancarFocado}>
+                           Ver Perigos
+                        </S.BotaoNavegacao>
                   </S.NavegacaoCarrossel>
                </S.ContainerExplicacao>
             );
@@ -219,29 +220,26 @@ const ManualSistemaSolar: React.FC<ManualSistemaSolarProps> = ({ aoIniciarMissao
          case 'perigos':
             return (
                <S.ContainerExplicacao>
-                  <S.TextoSlide><h2>Perigos e Objetivos</h2></S.TextoSlide>
+                  <S.TextoSlide><h2>Alertas de Navegação</h2></S.TextoSlide>
                      <S.SecaoExplicacao>
-                     <S.WrapperIcone><Badge size={32} strokeWidth={2.5} /></S.WrapperIcone>
+                     <S.WrapperIcone><Flame size={32} strokeWidth={2.5} /></S.WrapperIcone>
                      <S.WrapperTexto>
-                        <h3>Desvie dos Meteoros</h3>
-                        <p>O espaço é cheio de rochas! Se você colidir com um meteoro, todo o seu progresso será perdido e a missão recomeça.</p>
+                        <h3>Chuva de Meteoros</h3>
+                        <p>Rochas espaciais estão por toda parte! Colidir com um meteoro destruirá sua nave e reiniciará a missão.</p>
                      </S.WrapperTexto>
                   </S.SecaoExplicacao>
                   <S.SecaoExplicacao>
-                     <S.WrapperIcone><AlertTriangle size={32} strokeWidth={2.5} /></S.WrapperIcone>
+                     <S.WrapperIcone><ShieldOff size={32} strokeWidth={2.5} /></S.WrapperIcone>
                      <S.WrapperTexto>
-                        <h3>Cuidado com a Sequência</h3>
-                        <p>A ordem é TUDO! Coletar um planeta fora da sequência correta também reinicia sua missão. Fique atento!</p>
+                        <h3>Falha na Sequência</h3>
+                        <p>Pegar o planeta errado causa uma falha no sistema de navegação. Mantenha o foco na ordem correta!</p>
                      </S.WrapperTexto>
                   </S.SecaoExplicacao>
                   <S.NavegacaoCarrossel>
                         <S.BotaoNavegacao onClick={voltarTela}>Voltar</S.BotaoNavegacao>
-                        <S.BotaoNavegacao 
-                    onClick={avancarTela}
-                    $isFocusedManual={isAvancarFocado} // Aplicando o foco aqui
-                >
-                    Ajustar Jogo
-                </S.BotaoNavegacao>
+                        <S.BotaoNavegacao onClick={avancarTela} $isFocusedManual={isAvancarFocado}>
+                           Configurar Nave
+                        </S.BotaoNavegacao>
                   </S.NavegacaoCarrossel>
                </S.ContainerExplicacao>
             );
@@ -249,10 +247,10 @@ const ManualSistemaSolar: React.FC<ManualSistemaSolarProps> = ({ aoIniciarMissao
          case 'configuracoes':
             return (
                <S.ContainerConfiguracoes>
-                  <S.TextoSlide><h2>Controles do Jogo</h2></S.TextoSlide>
+                  <S.TextoSlide><h2>Sistemas da Nave</h2></S.TextoSlide>
 
                   <S.LinhaConfiguracao $isFocused={focoConfig === 'velocidade'}>
-                     <S.RotuloConfiguracao><Zap size={32} /><h3>Velocidade</h3></S.RotuloConfiguracao>
+                     <S.RotuloConfiguracao><Zap size={28} /><h3>Propulsão (Velocidade)</h3></S.RotuloConfiguracao>
                      <S.GrupoBotoes>
                         <S.BotaoOpcao 
                            ativo={configuracoes.velocidade === 'lenta'} 
@@ -265,12 +263,12 @@ const ManualSistemaSolar: React.FC<ManualSistemaSolarProps> = ({ aoIniciarMissao
                         <S.BotaoOpcao 
                            ativo={configuracoes.velocidade === 'rapida'}
                            $isFocused={mostrarCameraFlutuante && focoConfig === 'velocidade' && opcaoVelocidadeAtiva === 'rapida'}
-                           onClick={() => setConfiguracoes(c => ({...c, velocidade: 'rapida'}))}>Rápida</S.BotaoOpcao>
+                           onClick={() => setConfiguracoes(c => ({...c, velocidade: 'rapida'}))}>Turbo</S.BotaoOpcao>
                      </S.GrupoBotoes>
                   </S.LinhaConfiguracao>
 
                   <S.LinhaConfiguracao $isFocused={focoConfig === 'penalidade'}>
-                     <S.RotuloConfiguracao><ShieldOff size={32} /><h3>Erro na Ordem Reseta?</h3></S.RotuloConfiguracao>
+                     <S.RotuloConfiguracao><ShieldOff size={28} /><h3>Reiniciar ao Colidir?</h3></S.RotuloConfiguracao>
                      <S.ContainerInterruptor>
                         <S.InputInterruptor type="checkbox" 
                            checked={mostrarCameraFlutuante && focoConfig === 'penalidade' ? opcaoPenalidadeAtiva : configuracoes.penalidade} 
@@ -280,7 +278,7 @@ const ManualSistemaSolar: React.FC<ManualSistemaSolarProps> = ({ aoIniciarMissao
                   </S.LinhaConfiguracao>
 
                   <S.LinhaConfiguracao $isFocused={focoConfig === 'sons'}>
-                     <S.RotuloConfiguracao><Music size={32} /><h3>Efeitos Sonoros</h3></S.RotuloConfiguracao>
+                     <S.RotuloConfiguracao><Music size={28} /><h3>Áudio do Sistema</h3></S.RotuloConfiguracao>
                      <S.ContainerInterruptor>
                         <S.InputInterruptor type="checkbox" 
                            checked={mostrarCameraFlutuante && focoConfig === 'sons' ? opcaoSonsAtiva : configuracoes.sons}
@@ -292,7 +290,7 @@ const ManualSistemaSolar: React.FC<ManualSistemaSolarProps> = ({ aoIniciarMissao
                   <S.BotaoIniciarMissao 
                      $isFocused={focoConfig === 'iniciar'}
                      onClick={() => aoIniciarMissao(configuracoes)}>
-                        COMEÇAR MISSÃO!
+                        DECOLAR! 🚀
                   </S.BotaoIniciarMissao>
                </S.ContainerConfiguracoes>
             );

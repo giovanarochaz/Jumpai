@@ -29,14 +29,11 @@ function SistemaSolar() {
   const renderizarTela = () => {
     switch (estadoDoJogo) {
       case 'manual':
-        return <ManualSistemaSolar aoIniciarMissao={tratarInicioMissao} />;
-      
+        return <ManualSistemaSolar aoIniciarMissao={tratarInicioMissao} />; 
       case 'jogando':
-        return <JogoSistemaSolar aoVencer={tratarVitoria} configuracoes={configuracoesDoJogo} />;
-      
+        return <JogoSistemaSolar aoVencer={tratarVitoria} configuracoes={configuracoesDoJogo} />;  
       case 'vitoria':
-        return <TelaVitoria aoReiniciar={tratarReiniciar} />;
-        
+        return <TelaVitoria aoReiniciar={tratarReiniciar} />;     
       default:
         return <ManualSistemaSolar aoIniciarMissao={tratarInicioMissao} />;
     }
