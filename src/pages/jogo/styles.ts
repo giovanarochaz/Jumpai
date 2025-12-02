@@ -1,157 +1,279 @@
-// src/pages/Jogo/styles.ts
-import styled from 'styled-components';
-import { cores } from '../../estilos/cores';
+import styled, { keyframes } from 'styled-components';
 
-export const ContainerTela = styled.div`
+const CORES = {
+  roxoPrincipal: '#8B5CF6',
+  roxoEscuro: '#6D28D9',
+  amarelo: '#FBBF24',
+  branco: '#FFFFFF',
+  cinzaClaro: '#F3F4F6',
+  preto: '#111827',
+  textoCinza: '#4B5563',
+  sombraSuave: 'rgba(0, 0, 0, 0.15)',
+};
+
+const fadeIn = keyframes`
+  from { opacity: 0; transform: translateY(20px); }
+  to { opacity: 1; transform: translateY(0); }
+`;
+const pulse = keyframes`
+  0% { transform: scale(1); }
+  50% { transform: scale(1.05); }
+  100% { transform: scale(1); }
+`;
+
+export const MainContainer = styled.main`
+  display: flex; flex-direction: column; min-height: 100vh; width: 100vw;
+  background: radial-gradient(circle at center, ${CORES.roxoPrincipal} 0%, ${CORES.roxoEscuro} 100%);
+  background-image: radial-gradient(circle at center, ${CORES.roxoPrincipal} 0%, ${CORES.roxoEscuro} 100%), radial-gradient(rgba(255, 255, 255, 0.15) 1px, transparent 1px);
+  background-size: 100% 100%, 40px 40px; background-position: center, 0 0;
+  color: ${CORES.branco}; overflow-x: hidden; position: relative;
+`;
+
+export const ContentWrapper = styled.div`
+  flex: 1;
   display: flex;
   flex-direction: column;
   justify-content: center;
   align-items: center;
-  width: 100vw;
-  height: auto;
-  min-height: 100vh;
-  padding: 2rem 0; /* Remove padding lateral para o carrossel ir até a borda */
-  gap: 3rem;
-  background-color: ${cores.roxo};
+  padding: 140px 20px 40px; 
+  animation: ${fadeIn} 0.8s ease-out;
+  width: 100%;
+  
+  @media (max-height: 800px) {
+     padding-top: 100px;
+  }
 `;
 
-export const BlocoDescricao = styled.div`
-  max-width: 950px;
+export const HeaderSection = styled.section`
   text-align: center;
-  padding: 0 2rem;
+  margin-bottom: 3rem; 
+  display: flex; flex-direction: column; align-items: center;
+  width: 100%; max-width: 800px;
 `;
 
-export const Paragrafo = styled.p`
-  font-size: 1.5rem;
-  line-height: 1.6;
-  font-weight: 400;
-  color: ${cores.branco};
-  text-shadow: 1px 1px 2px ${cores.preto};
+export const GameTitle = styled.h1`
+  font-size: clamp(2.5rem, 5vw, 4rem);
+  font-weight: 900;
+  color: ${CORES.amarelo};
+  text-shadow: 4px 4px 0px ${CORES.preto};
+  margin: 0;
+  letter-spacing: 2px;
+  text-transform: uppercase;
 `;
 
-// --- ESTRUTURA DO CARROSSEL ---
+export const SubtitleWrapper = styled.div` margin-top: 1.5rem; font-size: 1.2rem; font-weight: 500; color: rgba(255,255,255, 0.9); max-width: 600px; line-height: 1.5; `;
+export const StatusEyeControl = styled.div` margin-top: 1.5rem; display: flex; align-items: center; gap: 10px; background-color: rgba(0,0,0,0.3); padding: 10px 20px; border-radius: 30px; border: 2px solid ${CORES.amarelo}; color: ${CORES.amarelo}; font-weight: 700; .blink-icon { animation: ${pulse} 1s infinite; } `;
 
 export const CarrosselContainer = styled.div`
   position: relative;
   width: 100%;
+  max-width: 1400px;
   display: flex;
   align-items: center;
   justify-content: center;
+  gap: 10px; 
 `;
-
 
 export const CarrosselViewport = styled.div`
   width: 100%;
-  overflow: hidden;
-  
-  /* CORREÇÃO AQUI: Adiciona um padding vertical para o card ter espaço para crescer no hover sem ser cortado. */
-  padding: 2rem 0;
+  overflow: visible; 
+  padding: 20px 0; 
+  perspective: 1000px;
 `;
 
-export const CarrosselTrilha = styled.div<{ indiceAtual: number }>`
+export const CarrosselTrilha = styled.div<{ $indiceAtual: number, $semTransicao?: boolean }>`
   display: flex;
   align-items: center;
-  gap: 40px;
-  transition: transform 0.6s ease-in-out;
+  gap: 40px; 
+  transition: ${({ $semTransicao }) => $semTransicao ? 'none' : 'transform 0.5s cubic-bezier(0.25, 1, 0.5, 1)'};
+  
+  transform: translateX(calc(50% - 140px - (${props => props.$indiceAtual} * (280px + 40px))));
 
-  /* Calcula o deslocamento horizontal com base na largura real do card (responsivo) */
-  transform: translateX(
-    calc(
-      50% - min(90vw, 500px) / 2 - (${props => props.indiceAtual} * (min(90vw, 500px) + 40px))
-    )
-  );
+  @media (min-width: 768px) {
+    transform: translateX(calc(50% - 170px - (${props => props.$indiceAtual} * (340px + 40px))));
+  }
+
+  @media (min-width: 1200px) {
+    transform: translateX(calc(50% - 210px - (${props => props.$indiceAtual} * (420px + 40px))));
+  }
 `;
 
-
-export const ImagemCard = styled.img`
-  width: 100%;
-  height: auto;
-  max-height: 220px;
-  object-fit: cover;
-  border-radius: 10px;
-  margin-bottom: 1rem;
-`;
 
 export const CardJogo = styled.div<{ $isActive: boolean }>`
+  position: relative;
+  flex-shrink: 0;
+  
+  width: 280px;
+  height: 350px;
+  
+  @media (min-width: 768px) { 
+    width: 340px; 
+    height: 410px; 
+  }
+
+  @media (min-width: 1200px) {
+    width: 420px; 
+    height: 490px;
+  }
+
+  background-color: ${CORES.branco};
+  border-radius: 30px; 
+  
+  padding: 12px;
+  border: 4px solid ${CORES.preto};
+  
+  box-shadow: ${({ $isActive }) => $isActive ? `10px 10px 0px ${CORES.preto}`  : `0px 4px 8px rgba(0,0,0,0.2)`};
+  
+  transition: all 0.5s cubic-bezier(0.34, 1.56, 0.64, 1);
+  cursor: pointer;
   display: flex;
   flex-direction: column;
-  align-items: center;
-  text-align: center;
-  padding: clamp(1rem, 3vw, 1.5rem);
-  gap: clamp(0.5rem, 2vw, 1rem);
+  overflow: hidden;
 
-  flex-shrink: 0;
-  width: clamp(220px, 70vw, 500px);
-  height: auto;
-
-  background-color: ${cores.branco};
-  color: ${cores.roxo};
-  border: 4px solid ${cores.preto};
-  border-radius: 20px;
-  box-shadow: 6px 6px 0px ${cores.preto};
-
-  transition: all 0.4s ease-in-out;
-  cursor: pointer;
-
-  transform: scale(${props => (props.$isActive ? 1 : 0.8)});
-  opacity: ${props => (props.$isActive ? 1 : 0.5)};
+  transform: ${({ $isActive }) => $isActive ? 'scale(1) translateY(0)' : 'scale(0.85) translateY(10px)'};
+  opacity: ${({ $isActive }) => $isActive ? 1 : 0.6}; /* Card inativo um pouco mais visível */
+  filter: ${({ $isActive }) => $isActive ? 'grayscale(0%)' : 'grayscale(100%) blur(0.5px)'};
+  z-index: ${({ $isActive }) => $isActive ? 10 : 1};
 
   &:hover {
-  transform: scale(${props => (props.$isActive ? 1.05 : 0.85)});
-  opacity: ${props => (props.$isActive ? 1 : 0.7)};
-  }
-
-
-  @media (max-width: 600px) {
-    width: 95vw;
-    padding: 0.7rem;
-    font-size: 1rem;
+    transform: ${({ $isActive }) => $isActive ? 'scale(1.02) translateY(-5px)' : 'scale(0.85)'};
+    box-shadow: ${({ $isActive }) => $isActive ? `14px 14px 0px ${CORES.preto}` : ''};
   }
 `;
 
-export const TextoCard = styled.p`
-  font-size: 1.1rem; /* Diminuímos um pouco para caber melhor */
-  font-weight: 700;
-  line-height: 1.4;
-  max-width: 95%;
+export const CardImageContainer = styled.div`
+  width: 100%;
+  position: relative;
+  border-radius: 20px;
+  border: 3px solid ${CORES.preto};
+  background-color: ${CORES.cinzaClaro};
+  overflow: hidden;
+  
+  img {
+    border-radius: 0;
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+  }
 `;
 
-export const BotaoNavegacao = styled.button<{ direcao: 'esquerda' | 'direita' }>`
+export const CardBadge = styled.div`
   position: absolute;
-  top: 50%;
-  transform: translateY(-50%);
-  z-index: 10;
-  left: ${props => props.direcao === 'esquerda' ? '5%' : 'auto'};
-  right: ${props => props.direcao === 'direita' ? '5%' : 'auto'};
+  top: 10px;
+  right: 10px;
+  background-color: ${CORES.amarelo};
+  color: ${CORES.preto};
+  font-weight: 800;
+  font-size: 0.75rem; /* Fonte menor no badge */
+  text-transform: uppercase;
+  padding: 4px 10px;
+  border-radius: 20px;
+  border: 2px solid ${CORES.preto};
+  box-shadow: 2px 2px 0px rgba(0,0,0,0.3);
+  z-index: 2;
+`;
+
+export const CardContent = styled.div`
+  flex: 1;
+  padding: 15px 5px 5px; 
+  display: flex;
+  flex-direction: column;
+  align-items: center; 
+  justify-content: center;  
+  text-align: center;      
+  background-color: ${CORES.branco};
+  gap: 10px;
+`;
+
+
+export const CardTitle = styled.h2`
+  font-size: clamp(1.2rem, 3vw, 1.6rem); 
+  font-weight: 900;
+  text-transform: uppercase;
+  color: ${CORES.roxoPrincipal};
+  margin: 0;
+  line-height: 1.1;
+`;
+
+export const CardDescription = styled.p`
+  font-size: clamp(0.85rem, 2vw, 1rem); 
+  line-height: 1.4;
+  color: ${CORES.textoCinza};
+  font-weight: 500;
+  margin: 0;
+  max-width: 95%;
+  margin-bottom: 20px;
+  
+  display: -webkit-box;
+  -webkit-line-clamp: 3;
+  -webkit-box-orient: vertical;
+  overflow: hidden;
+`;
+
+export const PlayButton = styled.div`
+  width: 100%;
+  max-width: 260px; 
+  padding: 12px; 
+  
+  background-color: ${CORES.roxoPrincipal};
+  color: ${CORES.branco};
+  font-weight: 800;
+  text-transform: uppercase;
+  font-size: 1rem;
+  border-radius: 16px;
+  border: 3px solid ${CORES.preto};
+  
   display: flex;
   align-items: center;
   justify-content: center;
-  width: clamp(40px, 7vw, 70px);
-  height: clamp(40px, 7vw, 70px);
-  background-color: ${cores.branco};
-  border: 4px solid ${cores.preto};
-  border-radius: 20px;
-  cursor: pointer;
-  box-shadow: 6px 6px 0px ${cores.preto};
-  color: ${cores.preto};
-  transition: all 0.15s ease-out;
+  gap: 8px;
+  transition: all 0.2s;
 
-  &:hover {
-    background-color: ${cores.amarelo};
-    transform: translateY(-50%) translate(3px, 3px);
-    box-shadow: 3px 3px 0px ${cores.preto};
-    color: ${cores.preto};
+  ${CardJogo}:hover & {
+    background-color: ${CORES.amarelo};
+    color: ${CORES.preto};
+    transform: translateY(-2px);
+    box-shadow: 0 4px 0 ${CORES.preto};
+  }
+`;
+
+export const BotaoNavegacao = styled.button<{ $direcao: 'esquerda' | 'direita' }>`
+  display: flex; align-items: center; justify-content: center;
+  width: 60px; height: 60px;
+  flex-shrink: 0;
+  
+  background-color: ${CORES.branco};
+  border: 4px solid ${CORES.preto};
+  border-radius: 50%;
+  color: ${CORES.preto};
+  box-shadow: 4px 4px 0px ${CORES.preto};
+  cursor: pointer;
+  transition: all 0.2s;
+  z-index: 20;
+
+  &:hover:not(:disabled) {
+    background-color: ${CORES.amarelo};
+    transform: translate(-2px, -2px);
+    box-shadow: 6px 6px 0px ${CORES.preto};
   }
 
-  &:active {
-    transform: translateY(-50%) translate(6px, 6px);
-    box-shadow: 0px 0px 0px ${cores.preto};
+  &:active:not(:disabled) {
+    transform: translate(2px, 2px);
+    box-shadow: 0 0 0;
+  }
+
+  &:disabled {
+    opacity: 0.5;
+    cursor: not-allowed;
+    background-color: #e5e7eb;
+    box-shadow: none;
   }
 
   @media (max-width: 600px) {
-    left: ${props => props.direcao === 'esquerda' ? '10px' : 'auto'};
-    right: ${props => props.direcao === 'direita' ? '10px' : 'auto'};
-    width: 40px;
-    height: 40px;
+    position: absolute;
+    top: 50%;
+    transform: translateY(-50%);
+    width: 45px; height: 45px;
+    ${({ $direcao }) => $direcao === 'esquerda' ? 'left: 5px;' : 'right: 5px;'}
   }
 `;

@@ -1,151 +1,174 @@
-// src/pages/Jogo/index.tsx
-import React, { useState, useEffect, useRef } from 'react';
-import { Paragrafo, CarrosselViewport, CarrosselTrilha, TextoCard, CardJogo, ImagemCard, BotaoNavegacao, CarrosselContainer } from './styles';
-import { BlocoDeDescricao, ContainerDaTela } from '../controle/styles';
-import { ArrowLeftCircle, ArrowRightCircle } from 'lucide-react';
+import React, { useState, useEffect, useRef, useCallback } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { useStore } from 'zustand'; // Importa useStore
-import { lojaOlho } from '../../lojas/lojaOlho'; // Importa sua loja global
+import { ArrowLeft, ArrowRight, Eye, Play } from 'lucide-react';
+import { useStore } from 'zustand';
+import { lojaOlho } from '../../lojas/lojaOlho';
+import {
+  MainContainer,ContentWrapper,HeaderSection,GameTitle,SubtitleWrapper,CarrosselContainer,BotaoNavegacao,
+  CarrosselViewport,CarrosselTrilha,CardJogo,CardImageContainer,CardBadge,CardContent,CardTitle,CardDescription, PlayButton, StatusEyeControl
+} from './styles';
+import { ImageWithLoader } from '../../componentes/Imagem/ImageWithLoader';
+import Menu from '../../componentes/Menu';
 
-const fasesDoJogo = [
+
+const dadosJogos = [
   {
     id: 1,
     titulo: 'Aventura Espacial',
+    categoria: 'Astronomia',
     imagem: '/assets/jogos/capa_sistema_solar.png', 
-    texto: "Prepare-se para uma aventura espacial educativa! Assuma o controle de um corajoso astronauta, desvie de chuvas de meteoros perigosas e colete os planetas do nosso Sistema Solar na ordem correta. Um erro pode custar toda a sua missão! Com controles simples e um desafio crescente, aprenda sobre astronomia da forma mais divertida possível. Você consegue completar a coleção?",
+    descricao: "Viaje pelo Sistema Solar! Desvie de meteoros e colete planetas na ordem certa.",
     rota: "/sistemaSolar",
   },
   {
     id: 2,
-    titulo: 'Piramide do Sabor',
+    titulo: 'Pirâmide do Sabor',
+    categoria: 'Nutrição',
     imagem: '/assets/jogos/capa_piramide_do_sabor.png', 
-    texto: "Prepare-se para uma aventura deliciosa! Assuma o controle de um chef e crie pratos incríveis enquanto aprende sobre nutrição e ingredientes saudáveis. Um erro pode custar toda a sua missão! Com controles simples e um desafio crescente, aprenda sobre culinária da forma mais divertida possível. Você consegue completar a coleção?",
+    descricao: "Monte pratos saudáveis e deliciosos como um verdadeiro Chef Nutri!",
     rota: "/piramideDoSabor",
   },
-  // {
-  //   id: 4,
-  //   titulo: 'Missão Corpo Humano',
-  //   imagem: '/assets/jogos/capa_corpo_humano.png',
-  //   texto: "Explore o corpo humano! Navegue pela corrente sanguínea e aprenda sobre as células.",
-  //   rota: "/corpoHumano",
-  // },
-  // Os outros jogos comentados no código original podem ser descomentados aqui.
 ];
 
 const Jogo: React.FC = () => {
-  const [indiceAtivo, setIndiceAtivo] = useState(0);
-  const timerRef = useRef<number | null>(null);
+  const listaEstendida = [...dadosJogos, ...dadosJogos, ...dadosJogos];
+  const totalOriginal = dadosJogos.length;
+  
+  const [indiceAtual, setIndiceAtual] = useState(totalOriginal);
+  const [semTransicao, setSemTransicao] = useState(false); 
 
+  const timerRef = useRef<number | null>(null);
   const navigate = useNavigate();
 
-  // 1. Acessa o estado de controle ocular e de piscada da loja global
   const mostrarCameraFlutuante = useStore(lojaOlho, (state) => state.mostrarCameraFlutuante);
   const estaPiscando = useStore(lojaOlho, (state) => state.estaPiscando);
 
-  // Funções para navegação manual
-  const irParaProximo = () => {
-    setIndiceAtivo((indiceAnterior) => (indiceAnterior + 1) % fasesDoJogo.length);
-  };
+  const indiceReal = indiceAtual % totalOriginal;
 
-  const irParaAnterior = () => {
-    setIndiceAtivo((indiceAnterior) => 
-      (indiceAnterior - 1 + fasesDoJogo.length) % fasesDoJogo.length
-    );
-  };
+  const irParaProximo = useCallback(() => {
+    setSemTransicao(false);
+    setIndiceAtual(prev => prev + 1);
+  }, []);
 
-  // Efeito para a rolagem automática do carrossel
+  const irParaAnterior = useCallback(() => {
+    setSemTransicao(false);
+    setIndiceAtual(prev => prev - 1);
+  }, []);
+
   useEffect(() => {
-    if (timerRef.current) {
-      clearInterval(timerRef.current);
+    if (indiceAtual >= totalOriginal * 2) {
+      setTimeout(() => {
+        setSemTransicao(true);
+        setIndiceAtual(totalOriginal);
+      }, 500); 
+    } else if (indiceAtual < totalOriginal) {
+      setTimeout(() => {
+        setSemTransicao(true);
+        setIndiceAtual(totalOriginal * 2 - 1);
+      }, 500);
     }
-    // A rolagem automática deve sempre ocorrer para "pré-selecionar" os jogos
-    timerRef.current = setInterval(irParaProximo, 3000);
+  }, [indiceAtual, totalOriginal]);
 
-    return () => {
-      if (timerRef.current) {
-        clearInterval(timerRef.current);
-      }
-    };
-    // Dependência [indiceAtivo] garante que o timer seja resetado a cada mudança de card
-  }, [indiceAtivo]); 
+  // Autoplay
+  useEffect(() => {
+    if (timerRef.current) clearInterval(timerRef.current);
+    if (mostrarCameraFlutuante) {
+      timerRef.current = window.setInterval(irParaProximo, 3500);
+    }
+    return () => { if (timerRef.current) clearInterval(timerRef.current); };
+  }, [indiceAtual, mostrarCameraFlutuante, irParaProximo]);
 
-  // 2. Novo efeito para detecção de piscada e confirmação
+  // Piscada
   useEffect(() => {
     if (mostrarCameraFlutuante && estaPiscando) {
-      console.log('Piscada detectada, confirmando seleção:', fasesDoJogo[indiceAtivo].titulo);
-      // Para a rolagem automática imediatamente após a confirmação
-      if (timerRef.current) {
-        clearInterval(timerRef.current);
-        timerRef.current = null; // Garante que o timer seja explicitamente null
-      }
-      navigate(fasesDoJogo[indiceAtivo].rota);
-      // A lojaOlho já cuida de setar estaPiscando para false após um curto período,
-      // evitando múltiplas navegações com uma única piscada.
+      if (timerRef.current) clearInterval(timerRef.current);
+      navigate(dadosJogos[indiceReal].rota);
     }
-  }, [estaPiscando, mostrarCameraFlutuante, indiceAtivo, navigate]);
+  }, [estaPiscando, mostrarCameraFlutuante, indiceReal, navigate]);
 
-
-  // 3. Lógica condicional para o clique no card
-  const handleCardClick = (index: number) => {
+  const handleCardClick = (indexNoLoop: number) => {
+    const jogoRealIndex = indexNoLoop % totalOriginal;
+    
     if (mostrarCameraFlutuante) {
-      // Se o controle ocular estiver ativo, o clique apenas seleciona o card
-      // A navegação ocorre APENAS com a piscada.
-      if (index === indiceAtivo) {
-        console.log("Controle Ocular Ativado: pisque para confirmar o jogo.");
-        // Opcionalmente, adicione um feedback visual aqui.
-      } else {
-        setIndiceAtivo(index); // Permite a pré-seleção manual do card
-      }
+      if (indexNoLoop !== indiceAtual) setIndiceAtual(indexNoLoop);
     } else {
-      // Comportamento original: clica para navegar
-      if (index === indiceAtivo) {
-        navigate(fasesDoJogo[index].rota);
-      } else {
-        setIndiceAtivo(index);
-      }
+      if (indexNoLoop === indiceAtual) navigate(dadosJogos[jogoRealIndex].rota);
+      else setIndiceAtual(indexNoLoop);
     }
   };
 
+
   return (
-    <ContainerDaTela>
-      <BlocoDeDescricao>
-        <Paragrafo>
-          Selecione um tipo de Jogo e comece a explorar um universo de possibilidades!
-          {/* 5. Mensagem informativa */}
-          {mostrarCameraFlutuante && (
-            <span> (Controle Ocular Ativado: o jogo muda automaticamente, pisque para confirmar!)</span>
+    <MainContainer>
+      <Menu />
+
+      <ContentWrapper>
+        <HeaderSection>
+          <GameTitle>SELECIONE A MISSÃO</GameTitle>
+          
+          {mostrarCameraFlutuante ? (
+            <StatusEyeControl>
+              <Eye size={24} className="blink-icon" />
+              <span>Controle Ocular Ativo: Pisque para entrar!</span>
+            </StatusEyeControl>
+          ) : (
+            <SubtitleWrapper>
+              Escolha seu desafio e comece a aventura!
+            </SubtitleWrapper>
           )}
-        </Paragrafo>
-      </BlocoDeDescricao>
+        </HeaderSection>
 
-      <CarrosselContainer>
-        {/* 4. Desativa os botões de navegação manual quando o controle ocular está ativo */}
-        <BotaoNavegacao direcao="esquerda" onClick={irParaAnterior} disabled={mostrarCameraFlutuante}>
-          <ArrowLeftCircle size={50} />
-        </BotaoNavegacao>
+        <CarrosselContainer>
+          <BotaoNavegacao 
+            $direcao="esquerda" 
+            onClick={irParaAnterior} 
+            disabled={mostrarCameraFlutuante}
+          >
+            <ArrowLeft size={32} />
+          </BotaoNavegacao>
 
-        <CarrosselViewport>
-          <CarrosselTrilha indiceAtual={indiceAtivo}>
-            {fasesDoJogo.map((fase, index) => (
-              <CardJogo
-                key={`${fase.id}-${index}`}
-                $isActive={index === indiceAtivo}
-                onClick={() => handleCardClick(index)}
-              >
-                <TextoCard>{fase.titulo}</TextoCard>
-                <ImagemCard src={fase.imagem} alt={fase.titulo} />
-                <TextoCard>{fase.texto}</TextoCard>
-              </CardJogo>
-            ))}
-          </CarrosselTrilha>
-        </CarrosselViewport>
+          <CarrosselViewport>
+            <CarrosselTrilha 
+              $indiceAtual={indiceAtual} 
+              $semTransicao={semTransicao}
+            >
+              {listaEstendida.map((fase, index) => (
+                <CardJogo
+                  key={`${fase.id}-${index}`} 
+                  $isActive={index === indiceAtual}
+                  onClick={() => handleCardClick(index)}
+                >
+                  <CardImageContainer>
+                    <CardBadge>{fase.categoria}</CardBadge>
+                    <ImageWithLoader src={fase.imagem} alt={fase.titulo} />
+                  </CardImageContainer>
+                  
+                  <CardContent>
+                    <div>
+                        <CardTitle>{fase.titulo}</CardTitle>
+                        <CardDescription>{fase.descricao}</CardDescription>
+                    </div>
+                    
+                    <PlayButton>
+                        <Play size={20} fill="currentColor" />
+                        {index === indiceAtual ? 'JOGAR AGORA' : 'SELECIONAR'}
+                    </PlayButton>
+                  </CardContent>
+                </CardJogo>
+              ))}
+            </CarrosselTrilha>
+          </CarrosselViewport>
 
-        {/* 4. Desativa os botões de navegação manual quando o controle ocular está ativo */}
-        <BotaoNavegacao direcao="direita" onClick={irParaProximo} disabled={mostrarCameraFlutuante}>
-          <ArrowRightCircle size={50} />
-        </BotaoNavegacao>
-      </CarrosselContainer>
-    </ContainerDaTela>
+          <BotaoNavegacao 
+            $direcao="direita" 
+            onClick={irParaProximo} 
+            disabled={mostrarCameraFlutuante}
+          >
+            <ArrowRight size={32} />
+          </BotaoNavegacao>
+        </CarrosselContainer>
+      </ContentWrapper>
+    </MainContainer>
   );
 };
 
