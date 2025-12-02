@@ -1,6 +1,6 @@
 import React, { useState, useEffect, useRef } from 'react';
 import * as S from './styles';
-import { Medal, Rocket } from 'lucide-react'; // Ícones temáticos
+import { Medal } from 'lucide-react'; // Ícones temáticos
 import { useNavigate } from 'react-router-dom';
 import { useStore } from 'zustand'; 
 import { lojaOlho } from '../../../lojas/lojaOlho';

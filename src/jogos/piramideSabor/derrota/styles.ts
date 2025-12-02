@@ -1,5 +1,4 @@
 import styled, { keyframes, css } from 'styled-components';
-import { cores } from '../../../estilos/cores';
 
 const TEMA = {
    vermelhoErro: '#dc2626',

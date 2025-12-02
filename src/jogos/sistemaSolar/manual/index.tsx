@@ -1,6 +1,6 @@
 import React, { useState, useEffect, useRef } from 'react';
 import * as S from './styles';
-import { Rocket, Trophy, Zap, Music, ShieldOff, Flame, Orbit, Settings } from 'lucide-react'; // Ícones espaciais
+import { Rocket, Trophy, Zap, Music, ShieldOff, Flame, Orbit } from 'lucide-react'; // Ícones espaciais
 import { useStore } from 'zustand';
 import { lojaOlho } from '../../../lojas/lojaOlho';
 

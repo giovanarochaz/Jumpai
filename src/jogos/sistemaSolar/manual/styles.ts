@@ -19,12 +19,6 @@ const aparecer = keyframes`
    to { transform: scale(1); opacity: 1; }
 `;
 
-const flutuarNoEspaco = keyframes`
-   0% { transform: translateY(0px); }
-   50% { transform: translateY(-10px); }
-   100% { transform: translateY(0px); }
-`;
-
 const rotacionarPlaneta = keyframes`
    from { transform: rotate(0deg); }
    to { transform: rotate(360deg); }

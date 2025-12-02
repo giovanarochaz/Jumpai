@@ -1,5 +1,4 @@
 import styled, { keyframes, css } from 'styled-components';
-import { cores } from '../../../estilos/cores'; 
 
 // --- PALETA TEMÁTICA DO JOGO (DEFINIDA AQUI PARA GARANTIR O VISUAL) ---
 const TEMA = {
