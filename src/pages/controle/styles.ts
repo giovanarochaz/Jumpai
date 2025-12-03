@@ -61,7 +61,7 @@ export const HeaderSection = styled.section`
 
 export const GameTitle = styled.h1`
   position: relative;
-  font-size: clamp(4rem, 8vw, 6rem);
+  font-size: clamp(4rem, 8vw, 5rem);
   font-weight: 900;
   color: ${CORES.amarelo};
   margin: 0;
@@ -113,8 +113,8 @@ export const SelectionCard = styled.button`
   justify-content: center;
   gap: 0.8rem;
   
-  width: clamp(250px, 30vw, 320px);
-  height: clamp(200px, 20vw, 260px);
+  width: clamp(250px, 30vw, 280px);
+  height: clamp(200px, 20vw, 200px);
   
   background-color: ${CORES.branco};
   border: 4px solid ${CORES.preto};

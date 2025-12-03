@@ -46,13 +46,13 @@ export const ContentWrapper = styled.div`
 
 export const HeaderSection = styled.section`
   text-align: center;
-  margin-bottom: 3rem; 
+  margin-bottom: 1rem; 
   display: flex; flex-direction: column; align-items: center;
   width: 100%; max-width: 800px;
 `;
 
 export const GameTitle = styled.h1`
-  font-size: clamp(2.5rem, 5vw, 4rem);
+  font-size: clamp(2.5rem, 5vw, 3rem);
   font-weight: 900;
   color: ${CORES.amarelo};
   text-shadow: 4px 4px 0px ${CORES.preto};
@@ -102,42 +102,40 @@ export const CarrosselTrilha = styled.div<{ $indiceAtual: number, $semTransicao?
 export const CardJogo = styled.div<{ $isActive: boolean }>`
   position: relative;
   flex-shrink: 0;
-  
-  width: 280px;
-  height: 350px;
-  
-  @media (min-width: 768px) { 
-    width: 340px; 
-    height: 410px; 
-  }
 
-  @media (min-width: 1200px) {
-    width: 420px; 
-    height: 490px;
-  }
+  width: clamp(240px, 28vw, 420px);
+  aspect-ratio: 3 / 4; 
+  height: clamp(300px, 60vh, 500px);
 
   background-color: ${CORES.branco};
-  border-radius: 30px; 
-  
+  border-radius: 30px;
   padding: 12px;
   border: 4px solid ${CORES.preto};
-  
-  box-shadow: ${({ $isActive }) => $isActive ? `10px 10px 0px ${CORES.preto}`  : `0px 4px 8px rgba(0,0,0,0.2)`};
-  
+
+  box-shadow: ${({ $isActive }) =>
+    $isActive
+      ? `10px 10px 0px ${CORES.preto}`
+      : `0px 4px 8px rgba(0,0,0,0.2)`};
+
   transition: all 0.5s cubic-bezier(0.34, 1.56, 0.64, 1);
   cursor: pointer;
   display: flex;
   flex-direction: column;
   overflow: hidden;
 
-  transform: ${({ $isActive }) => $isActive ? 'scale(1) translateY(0)' : 'scale(0.85) translateY(10px)'};
-  opacity: ${({ $isActive }) => $isActive ? 1 : 0.6}; /* Card inativo um pouco mais visível */
-  filter: ${({ $isActive }) => $isActive ? 'grayscale(0%)' : 'grayscale(100%) blur(0.5px)'};
-  z-index: ${({ $isActive }) => $isActive ? 10 : 1};
+  transform: ${({ $isActive }) =>
+    $isActive ? "scale(1) translateY(0)" : "scale(0.85) translateY(10px)"};
+
+  opacity: ${({ $isActive }) => ($isActive ? 1 : 0.6)};
+  filter: ${({ $isActive }) =>
+    $isActive ? "grayscale(0%)" : "grayscale(100%) blur(0.5px)"};
+  z-index: ${({ $isActive }) => ($isActive ? 10 : 1)};
 
   &:hover {
-    transform: ${({ $isActive }) => $isActive ? 'scale(1.02) translateY(-5px)' : 'scale(0.85)'};
-    box-shadow: ${({ $isActive }) => $isActive ? `14px 14px 0px ${CORES.preto}` : ''};
+    transform: ${({ $isActive }) =>
+      $isActive ? "scale(1.02) translateY(-5px)" : "scale(0.85)"};
+    box-shadow: ${({ $isActive }) =>
+      $isActive ? `14px 14px 0px ${CORES.preto}` : ""};
   }
 `;
 
