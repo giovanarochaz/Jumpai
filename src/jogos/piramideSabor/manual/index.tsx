@@ -1,35 +1,37 @@
-import React, { useState, useEffect, useRef } from 'react';
+import React, { useState, useEffect, useCallback } from 'react';
 import * as S from './styles';
 import { Gamepad2, AlertTriangle, Trophy, Bomb, Zap, Music, ShieldOff, ChefHat } from 'lucide-react';
 import { useStore } from 'zustand';
 import { lojaOlho } from '../../../lojas/lojaOlho';
+import { useLeitorOcular } from '../../../hooks/useLeitorOcular';
+import { pararNarracao } from '../../../servicos/acessibilidade';
 
 // --- TEXTO MAIS LÚDICO E EDUCATIVO PARA CRIANÇAS ---
 const receitaInfo = [
     {
       nome: 'Pão (a base)',
       imagem: '/assets/piramideSabor/pao_base.png',
-      descricao: "Todo grande lanche começa com ele! O pão é do grupo dos **Carboidratos**. Eles são como a supergasolina do nosso corpo, nos dando **energia** para brincar, correr e se divertir o dia todo!"
+      descricao: "Todo grande lanche começa com ele! O pão é do grupo dos Carboidratos. Eles são como a supergasolina do nosso corpo, nos dando energia para brincar, correr e se divertir o dia todo!"
     },
     {
       nome: 'Hambúrguer',
       imagem: '/assets/piramideSabor/carne.png',
-      descricao: "A força do nosso lanche! O hambúrguer é do grupo das **Proteínas**. Elas são os 'tijolinhos' que constroem nossos **músculos** e nos deixam super fortes para qualquer aventura!"
+      descricao: "A força do nosso lanche! O hambúrguer é do grupo das Proteínas. Elas são os 'tijolinhos' que constroem nossos músculos e nos deixam super fortes para qualquer aventura!"
     },
     {
       nome: 'Queijo',
       imagem: '/assets/piramideSabor/queijo.png',
-      descricao: "Um sorriso no nosso lanche! O queijo vem dos **Laticínios** e é cheio de **Cálcio**. O cálcio deixa nossos **ossos e dentes duros como uma rocha** e prontos para dar aquele sorrisão!"
+      descricao: "Um sorriso no nosso lanche! O queijo vem dos Laticínios e é cheio de Cálcio. O cálcio deixa nossos ossos e dentes duros como uma rocha e prontos para dar aquele sorrisão!"
     },
     {
       nome: 'Salada',
       imagem: '/assets/piramideSabor/salada.png',
-      descricao: "As cores mágicas! A salada é do grupo das **Hortaliças**. Elas têm **Vitaminas e Minerais**, que são como um escudo mágico que **protege nosso corpo** contra os vilões da gripe e do resfriado!"
+      descricao: "As cores mágicas! A salada é do grupo das Hortaliças. Elas têm Vitaminas e Minerais, que são como um escudo mágico que protege nosso corpo contra os vilões da gripe e do resfriado!"
     },
     {
       nome: 'Pão (o topo)',
       imagem: '/assets/piramideSabor/pao_topo.png',
-      descricao: "Fechando com chave de ouro! Mais um pãozinho para garantir que sua **energia** fique no máximo. Com todos os ingredientes juntos, nosso lanche fica forte e equilibrado. Missão quase cumprida, chef!"
+      descricao: "Fechando com chave de ouro! Mais um pãozinho para garantir que sua energia fique no máximo. Com todos os ingredientes juntos, nosso lanche fica forte e equilibrado. Missão quase cumprida, chef!"
     },
 ];
 
@@ -45,7 +47,6 @@ interface ManualPiramideSaborProps {
 type FocoConfig = 'velocidade' | 'penalidade' | 'sons' | 'iniciar';
 const VELOCIDADES: VelocidadeGeracao[] = ['lenta', 'normal', 'rapida'];
 
-// --- COMPONENTE PRINCIPAL ---
 const ManualPiramideSabor: React.FC<ManualPiramideSaborProps> = ({ aoIniciarMissao }) => {
    const [tela, setTela] = useState<'introducao' | 'receita' | 'comoJogar' | 'desafios' | 'configuracoes'>('introducao');
    const [slideAtual, setSlideAtual] = useState(0);
@@ -61,48 +62,86 @@ const ManualPiramideSabor: React.FC<ManualPiramideSaborProps> = ({ aoIniciarMiss
    const [opcaoVelocidadeAtiva, setOpcaoVelocidadeAtiva] = useState<VelocidadeGeracao>('normal');
    const [opcaoPenalidadeAtiva, setOpcaoPenalidadeAtiva] = useState<boolean>(true);
    const [opcaoSonsAtiva, setOpcaoSonsAtiva] = useState<boolean>(true);
-   const autoCycleTimerRef = useRef<ReturnType<typeof setInterval> | null>(null);
+   
    const [bloquearPiscada, setBloquearPiscada] = useState(true);
-   const blockTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
 
    const conteudoAtual = receitaInfo[slideAtual];
 
-   const proximoSlide = () => { if (slideAtual < receitaInfo.length - 1) setSlideAtual(s => s + 1); };
-   const slideAnterior = () => { if (slideAtual > 0) setSlideAtual(s => s - 1); };
+   // --- LÓGICA DE TEXTO PARA O LEITOR ---
+   const obterTextoParaLeitura = useCallback(() => {
+      if (tela === 'introducao') {
+         return "Olá, Super Chef! Sua missão de hoje é ajudar o Mestre Cuca a montar o Hambúrguer Lendário. Pisque em Ver a Receita para começar.";
+      }
+      if (tela === 'receita') {
+         return `${conteudoAtual.nome}. ${conteudoAtual.descricao} Pisque para o próximo passo.`;
+      }
+      if (tela === 'comoJogar') {
+         return "Como Jogar. Use as setas esquerda e direita para mover o seu personagem. Pegue os ingredientes na ordem certa! Pisque para ver os perigos.";
+      }
+      if (tela === 'desafios') {
+         return "Cuidado na Cozinha! Desvie dos doces e frituras, e não pegue ingredientes na hora errada. Pisque para Ajustar o Jogo.";
+      }
+      if (tela === 'configuracoes') {
+         if (focoConfig === 'velocidade') return `Velocidade da comida. Opção atual: ${opcaoVelocidadeAtiva === 'lenta' ? 'Devagar' : opcaoVelocidadeAtiva === 'normal' ? 'Normal' : 'Rápido'}.`;
+         if (focoConfig === 'penalidade') return `Erro na ordem recomeça o jogo? Atualmente ${opcaoPenalidadeAtiva ? 'Sim' : 'Não'}.`;
+         if (focoConfig === 'sons') return `Música e sons. Atualmente ${opcaoSonsAtiva ? 'Ligado' : 'Desligado'}.`;
+         if (focoConfig === 'iniciar') return "Botão Mãos na Massa! Pisque para começar o jogo agora!";
+      }
+      return null;
+   }, [tela, slideAtual, focoConfig, opcaoVelocidadeAtiva, opcaoPenalidadeAtiva, opcaoSonsAtiva, conteudoAtual]);
 
-   const avancarTela = () => {
+   // --- SINCRONIA VOZ + UI ---
+   const lidarComFimDaLeitura = useCallback(() => {
+      if (mostrarCameraFlutuante && tela === 'configuracoes') {
+         // Pequeno delay após a fala para trocar a opção visualmente (auto-cycle)
+         setTimeout(() => {
+            switch (focoConfig) {
+               case 'velocidade':
+                  setOpcaoVelocidadeAtiva(prev => {
+                     const idx = VELOCIDADES.indexOf(prev);
+                     return VELOCIDADES[(idx + 1) % VELOCIDADES.length];
+                  });
+                  break;
+               case 'penalidade': setOpcaoPenalidadeAtiva(p => !p); break;
+               case 'sons': setOpcaoSonsAtiva(s => !s); break;
+               case 'iniciar': break;
+            }
+         }, 1500);
+      }
+      setBloquearPiscada(false);
+   }, [mostrarCameraFlutuante, tela, focoConfig]);
+
+   // Ativa o leitor
+   useLeitorOcular(obterTextoParaLeitura(), [tela, slideAtual, focoConfig, opcaoVelocidadeAtiva], lidarComFimDaLeitura);
+
+   const avancarTela = useCallback(() => {
+      setBloquearPiscada(true);
       if (tela === 'introducao') setTela('receita');
       else if (tela === 'receita') {
          if (slideAtual === receitaInfo.length - 1) setTela('comoJogar');
-         else proximoSlide();
+         else setSlideAtual(s => s + 1);
       } else if (tela === 'comoJogar') setTela('desafios');
       else if (tela === 'desafios') setTela('configuracoes');
-   };
+   }, [tela, slideAtual]);
 
    const voltarTela = () => {
+      pararNarracao();
       if (tela === 'receita') {
          if (slideAtual === 0) setTela('introducao');
-         else slideAnterior();
+         else setSlideAtual(s => s - 1);
       } else if (tela === 'comoJogar') setTela('receita');
       else if (tela === 'desafios') setTela('comoJogar');
    };
 
-    useEffect(() => {
-      blockTimerRef.current = setTimeout(() => setBloquearPiscada(false), 1000);
-      return () => {
-         if (blockTimerRef.current) clearTimeout(blockTimerRef.current);
-         if (autoCycleTimerRef.current) clearInterval(autoCycleTimerRef.current);
-      };
-   }, []);
-
+   // Piscada (Seleção)
    useEffect(() => {
       if (bloquearPiscada || !mostrarCameraFlutuante || !estaPiscando) return;
-      if (blockTimerRef.current) clearTimeout(blockTimerRef.current);
+      
+      pararNarracao();
       setBloquearPiscada(true);
 
       if (tela !== 'configuracoes') {
          avancarTela();
-         blockTimerRef.current = setTimeout(() => setBloquearPiscada(false), 500);
       } else {
          switch (focoConfig) {
             case 'velocidade':
@@ -121,31 +160,8 @@ const ManualPiramideSabor: React.FC<ManualPiramideSaborProps> = ({ aoIniciarMiss
                aoIniciarMissao(configuracoes);
                break;
          }
-         blockTimerRef.current = setTimeout(() => setBloquearPiscada(false), 500);
       }
-   }, [estaPiscando, mostrarCameraFlutuante, bloquearPiscada, tela, focoConfig, configuracoes, opcaoVelocidadeAtiva, opcaoPenalidadeAtiva, opcaoSonsAtiva, aoIniciarMissao]);
-
-   useEffect(() => {
-      if (tela !== 'configuracoes' || !mostrarCameraFlutuante) {
-         if (autoCycleTimerRef.current) clearInterval(autoCycleTimerRef.current);
-         return;
-      }
-      autoCycleTimerRef.current = setInterval(() => {
-         switch (focoConfig) {
-            case 'velocidade':
-               const currentIndex = VELOCIDADES.indexOf(opcaoVelocidadeAtiva);
-               const nextIndex = (currentIndex + 1) % VELOCIDADES.length;
-               setOpcaoVelocidadeAtiva(VELOCIDADES[nextIndex]);
-               break;
-            case 'penalidade': setOpcaoPenalidadeAtiva(p => !p); break;
-            case 'sons': setOpcaoSonsAtiva(s => !s); break;
-            case 'iniciar': break;
-         }
-      }, 1500) as unknown as number;
-
-      return () => { if (autoCycleTimerRef.current) clearInterval(autoCycleTimerRef.current); };
-   }, [tela, focoConfig, opcaoVelocidadeAtiva, mostrarCameraFlutuante]);
-
+   }, [estaPiscando, mostrarCameraFlutuante, bloquearPiscada, tela, focoConfig, configuracoes, opcaoVelocidadeAtiva, opcaoPenalidadeAtiva, opcaoSonsAtiva, aoIniciarMissao, avancarTela]);
 
    const renderizarTela = () => {
       const isAvancarFocado = mostrarCameraFlutuante && tela !== 'configuracoes' && !bloquearPiscada;
@@ -189,7 +205,7 @@ const ManualPiramideSabor: React.FC<ManualPiramideSaborProps> = ({ aoIniciarMiss
                      </S.TextoSlide>
                   </S.ContainerSlide>
                   <S.NavegacaoCarrossel>
-                     <S.BotaoNavegacao onClick={voltarTela} disabled={slideAtual === 0 && tela === 'receita'}>
+                     <S.BotaoNavegacao onClick={voltarTela}>
                         {slideAtual === 0 ? 'Voltar' : 'Anterior'}
                      </S.BotaoNavegacao>
                      <span>Passo {slideAtual + 1} de {receitaInfo.length}</span>
@@ -261,22 +277,22 @@ const ManualPiramideSabor: React.FC<ManualPiramideSaborProps> = ({ aoIniciarMiss
                   <S.LinhaConfiguracao $isFocused={focoConfig === 'velocidade'}>
                      <S.RotuloConfiguracao><Zap size={32} /><h3>Velocidade da Comida</h3></S.RotuloConfiguracao>
                      <S.GrupoBotoes>
-                        <S.BotaoOpcao ativo={configuracoes.velocidade === 'lenta'} $isFocused={mostrarCameraFlutuante && focoConfig === 'velocidade' && opcaoVelocidadeAtiva === 'lenta'} onClick={() => setConfiguracoes(c => ({...c, velocidade: 'lenta'}))}>Devagar</S.BotaoOpcao>
-                        <S.BotaoOpcao ativo={configuracoes.velocidade === 'normal'} $isFocused={mostrarCameraFlutuante && focoConfig === 'velocidade' && opcaoVelocidadeAtiva === 'normal'} onClick={() => setConfiguracoes(c => ({...c, velocidade: 'normal'}))}>Normal</S.BotaoOpcao>
-                        <S.BotaoOpcao ativo={configuracoes.velocidade === 'rapida'} $isFocused={mostrarCameraFlutuante && focoConfig === 'velocidade' && opcaoVelocidadeAtiva === 'rapida'} onClick={() => setConfiguracoes(c => ({...c, velocidade: 'rapida'}))}>Rápido</S.BotaoOpcao>
+                        <S.BotaoOpcao ativo={configuracoes.velocidade === 'lenta'} $isFocused={mostrarCameraFlutuante && focoConfig === 'velocidade' && opcaoVelocidadeAtiva === 'lenta'}>Devagar</S.BotaoOpcao>
+                        <S.BotaoOpcao ativo={configuracoes.velocidade === 'normal'} $isFocused={mostrarCameraFlutuante && focoConfig === 'velocidade' && opcaoVelocidadeAtiva === 'normal'}>Normal</S.BotaoOpcao>
+                        <S.BotaoOpcao ativo={configuracoes.velocidade === 'rapida'} $isFocused={mostrarCameraFlutuante && focoConfig === 'velocidade' && opcaoVelocidadeAtiva === 'rapida'}>Rápido</S.BotaoOpcao>
                      </S.GrupoBotoes>
                   </S.LinhaConfiguracao>
                   <S.LinhaConfiguracao $isFocused={focoConfig === 'penalidade'}>
                      <S.RotuloConfiguracao><ShieldOff size={32} /><h3>Erro na ordem recomeça?</h3></S.RotuloConfiguracao>
                      <S.ContainerInterruptor>
-                        <S.InputInterruptor type="checkbox" checked={mostrarCameraFlutuante && focoConfig === 'penalidade' ? opcaoPenalidadeAtiva : configuracoes.penalidade} onChange={e => setConfiguracoes(c => ({...c, penalidade: e.target.checked}))} />
+                        <S.InputInterruptor type="checkbox" checked={mostrarCameraFlutuante && focoConfig === 'penalidade' ? opcaoPenalidadeAtiva : configuracoes.penalidade} readOnly />
                         <S.DeslizadorInterruptor />
                      </S.ContainerInterruptor>
                   </S.LinhaConfiguracao>
                   <S.LinhaConfiguracao $isFocused={focoConfig === 'sons'}>
                      <S.RotuloConfiguracao><Music size={32} /><h3>Música e Sons</h3></S.RotuloConfiguracao>
                      <S.ContainerInterruptor>
-                        <S.InputInterruptor type="checkbox" checked={mostrarCameraFlutuante && focoConfig === 'sons' ? opcaoSonsAtiva : configuracoes.sons} onChange={e => setConfiguracoes(c => ({...c, sons: e.target.checked}))} />
+                        <S.InputInterruptor type="checkbox" checked={mostrarCameraFlutuante && focoConfig === 'sons' ? opcaoSonsAtiva : configuracoes.sons} readOnly />
                         <S.DeslizadorInterruptor />
                      </S.ContainerInterruptor>
                   </S.LinhaConfiguracao>

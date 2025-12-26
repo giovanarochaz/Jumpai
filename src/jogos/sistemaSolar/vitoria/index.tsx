@@ -1,11 +1,12 @@
-import React, { useState, useEffect, useRef } from 'react';
+import React, { useState, useEffect, useCallback } from 'react';
 import * as S from './styles';
-import { Medal } from 'lucide-react'; // Ícones temáticos
+import { Medal } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
 import { useStore } from 'zustand'; 
 import { lojaOlho } from '../../../lojas/lojaOlho';
+import { useLeitorOcular } from '../../../hooks/useLeitorOcular';
+import { pararNarracao } from '../../../servicos/acessibilidade';
 
-// Cores mais vibrantes e neon para o espaço
 const CORES_FOGOS = ['#fbbf24', '#a855f7', '#3b82f6', '#ec4899', '#ffffff'];
 const NUMERO_FOGOS = 12;
 const PARTICULAS_POR_FOGO = 12;
@@ -22,30 +23,68 @@ interface TelaVitoriaProps {
   aoReiniciar: () => void;
 }
 
-type BotaoFoco = 'reiniciar' | 'outroJogo' | null;
+type BotaoFoco = 'reiniciar' | 'outroJogo';
 const BOTOES_ORDEM: BotaoFoco[] = ['reiniciar', 'outroJogo'];
-const TEMPO_FOCO_MS = 1500;
-const COOLDOWN_CLIQUE_MS = 800;
 
 const TelaVitoria: React.FC<TelaVitoriaProps> = ({ aoReiniciar }) => {
-  const { estaPiscando } = useStore(lojaOlho);
+  const { estaPiscando, mostrarCameraFlutuante } = useStore(lojaOlho);
   const [dadosDosFogos, setDadosDosFogos] = useState<DadosFogos[]>([]);
   const [botaoFocado, setBotaoFocado] = useState<BotaoFoco>('reiniciar');
-  const [bloquearClique, setBloquearClique] = useState(false);
+  const [bloquearPiscada, setBloquearPiscada] = useState(true);
+  const [introConcluida, setIntroConcluida] = useState(false);
   
-  const focoTimerRef = useRef<number | null>(null);
   const navigate = useNavigate();
 
-  // --- LÓGICA DE AÇÃO ---
-  const executarAcaoFocada = () => {
+  // --- LÓGICA DE TEXTO PARA O LEITOR ---
+  const obterTextoParaLeitura = useCallback(() => {
+    // 1. Primeiro lê a mensagem de vitória
+    if (!introConcluida) {
+      return "Missão Cumprida! Excelente trabalho, Comandante! Você catalogou todo o Sistema Solar na ordem correta. A galáxia está segura graças a você!";
+    }
+    // 2. Depois lê o botão que está focado no momento
+    if (botaoFocado === 'reiniciar') {
+      return "Botão: Nova Decolagem. Pisque para jogar este jogo de novo.";
+    }
+    if (botaoFocado === 'outroJogo') {
+      return "Botão: Base de Missões. Pisque para escolher um desafio diferente.";
+    }
+    return null;
+  }, [introConcluida, botaoFocado]);
+
+  // --- SINCRONIA VOZ + FOCO ---
+  const lidarComFimDaLeitura = useCallback(() => {
+    if (!mostrarCameraFlutuante) return;
+
+    if (!introConcluida) {
+      // Terminou de ler a intro, agora libera os botões
+      setIntroConcluida(true);
+      setBloquearPiscada(false);
+    } else {
+      // Se já terminou a intro, alterna o foco entre os botões após a leitura
+      setBloquearPiscada(false);
+      setTimeout(() => {
+        setBotaoFocado(prev => {
+          const proximoIndex = (BOTOES_ORDEM.indexOf(prev) + 1) % BOTOES_ORDEM.length;
+          return BOTOES_ORDEM[proximoIndex];
+        });
+      }, 1500); // Pausa para o usuário decidir se pisca
+    }
+  }, [introConcluida, mostrarCameraFlutuante]);
+
+  // Ativa o leitor automático
+  useLeitorOcular(obterTextoParaLeitura(), [introConcluida, botaoFocado], lidarComFimDaLeitura);
+
+  // --- AÇÃO AO SELECIONAR ---
+  const executarAcaoFocada = useCallback(() => {
+    pararNarracao();
     if (botaoFocado === 'reiniciar') {
       aoReiniciar();
     } else if (botaoFocado === 'outroJogo') {
       navigate('/jogos/teclado');
     }
-  };
+  }, [botaoFocado, aoReiniciar, navigate]);
 
-  // --- EFEITO 1: Geração de Fogos ---
+  // --- EFEITO: Geração de Fogos ---
   useEffect(() => {
     const dados: DadosFogos[] = [];
     for (let i = 0; i < NUMERO_FOGOS; i++) {
@@ -58,47 +97,25 @@ const TelaVitoria: React.FC<TelaVitoriaProps> = ({ aoReiniciar }) => {
       });
     }
     setDadosDosFogos(dados);
-    return () => { if (focoTimerRef.current) clearInterval(focoTimerRef.current); };
   }, []);
 
-  // --- EFEITO 2: Foco Automático ---
+  // --- EFEITO: Controle Ocular (Piscada) ---
   useEffect(() => {
-    const alternarFoco = () => {
-      setBotaoFocado(prev => BOTOES_ORDEM[(BOTOES_ORDEM.indexOf(prev) + 1) % BOTOES_ORDEM.length]);
-    };
-    focoTimerRef.current = setInterval(alternarFoco, TEMPO_FOCO_MS) as unknown as number;
-    return () => { if (focoTimerRef.current) clearInterval(focoTimerRef.current); };
-  }, []);
+    if (!estaPiscando || bloquearPiscada || !mostrarCameraFlutuante) return;
 
-  // --- EFEITO 3: Controle Ocular ---
-  useEffect(() => {
-    if (!estaPiscando || bloquearClique || !botaoFocado) return;
-
-    setBloquearClique(true);
     executarAcaoFocada();
-    
-    if (focoTimerRef.current) clearInterval(focoTimerRef.current);
-    
-    setTimeout(() => {
-        focoTimerRef.current = setInterval(() => {
-            setBotaoFocado(prev => BOTOES_ORDEM[(BOTOES_ORDEM.indexOf(prev) + 1) % BOTOES_ORDEM.length]);
-        }, TEMPO_FOCO_MS) as unknown as number;
-        setBloquearClique(false);
-    }, COOLDOWN_CLIQUE_MS);
-    
-  }, [estaPiscando, bloquearClique, botaoFocado]);
+  }, [estaPiscando, bloquearPiscada, mostrarCameraFlutuante, executarAcaoFocada]);
 
-  // --- EFEITO 4: Teclado ---
+  // --- EFEITO: Teclado (Enter) ---
   useEffect(() => {
     const handleKeyDown = (event: KeyboardEvent) => {
-      if (event.key === 'Enter' && botaoFocado) {
-        if (focoTimerRef.current) clearInterval(focoTimerRef.current);
+      if (event.key === 'Enter') {
         executarAcaoFocada();
       }
     };
     window.addEventListener('keydown', handleKeyDown);
     return () => window.removeEventListener('keydown', handleKeyDown);
-  }, [botaoFocado]);
+  }, [executarAcaoFocada]);
 
 
   return (
@@ -120,7 +137,6 @@ const TelaVitoria: React.FC<TelaVitoriaProps> = ({ aoReiniciar }) => {
 
       <S.ConteudoVitoria>
         <S.IconeContainer>
-           {/* Ícone de Medalha Espacial */}
           <S.IconeTrofeu>
             <Medal size={100} strokeWidth={1.5} />
           </S.IconeTrofeu>
@@ -135,13 +151,13 @@ const TelaVitoria: React.FC<TelaVitoriaProps> = ({ aoReiniciar }) => {
         
         <S.ContainerBotoes>
           <S.BotaoVitoria 
-            onClick={executarAcaoFocada}
+            onClick={() => { setBotaoFocado('reiniciar'); executarAcaoFocada(); }}
             $focado={botaoFocado === 'reiniciar'} 
           >
             Nova Decolagem
           </S.BotaoVitoria>
           <S.BotaoVitoria 
-            onClick={executarAcaoFocada}
+            onClick={() => { setBotaoFocado('outroJogo'); executarAcaoFocada(); }}
             $focado={botaoFocado === 'outroJogo'} 
           >
             Base de Missões

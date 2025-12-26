@@ -24,7 +24,6 @@ import {
   GlobalStyle
 } from './styles';
 import { lojaOlho } from '../../../lojas/lojaOlho';
-import { useIluminacaoAutomatica } from '../../../hooks/useIluminacaoAutomatica';
 import { lojaIluminacao } from '../../../lojas/lojaIluminacao';
 import ModalGenerico from '../../../componentes/ModalGenerico';
 
@@ -55,8 +54,6 @@ const CalibragemOcular: React.FC = () => {
   const alturasOlhoEsquerdoRef = useRef<number[]>([]);
   const alturasOlhoDireitoRef = useRef<number[]>([]);
   const temporizadorSemRostoRef = useRef<number | null>(null);
-
-  useIluminacaoAutomatica(videoRef);
 
   const [carregando, setCarregando] = useState(true);
   const [erro, setErro] = useState<string | null>(null);

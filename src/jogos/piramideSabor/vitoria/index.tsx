@@ -1,13 +1,14 @@
-import React, { useState, useEffect, useRef } from 'react';
+import React, { useState, useEffect, useCallback } from 'react';
 import * as S from './styles';
-import { Star } from 'lucide-react'; // Trocamos o ChefHat por Estrelas para a nota
+import { Star } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
 import { useStore } from 'zustand'; 
 import { lojaOlho } from '../../../lojas/lojaOlho';
+import { useLeitorOcular } from '../../../hooks/useLeitorOcular';
+import { pararNarracao } from '../../../servicos/acessibilidade';
 
-// Configurações para o efeito de confete
 const NUMERO_CONFETES = 50;
-const CORES_CONFETE = ['#ef4444', '#fbbf24', '#22c55e', '#ffffff']; // Vermelho, Amarelo, Verde, Branco
+const CORES_CONFETE = ['#ef4444', '#fbbf24', '#22c55e', '#ffffff'];
 
 interface DadosConfete {
   id: number;
@@ -16,36 +17,72 @@ interface DadosConfete {
   duration: string;
   color: string;
   size: string;
-  radius: string; // Para variar entre quadrados e círculos
+  radius: string;
 }
 
 interface TelaVitoriaPiramideSaborProps {
   aoReiniciar: () => void;
 }
 
-type BotaoFoco = 'reiniciar' | 'outroJogo' | null;
+type BotaoFoco = 'reiniciar' | 'outroJogo';
 const BOTOES_ORDEM: BotaoFoco[] = ['reiniciar', 'outroJogo'];
-const TEMPO_FOCO_MS = 1500;
-const COOLDOWN_CLIQUE_MS = 800;
 
 const TelaVitoriaPiramideSabor: React.FC<TelaVitoriaPiramideSaborProps> = ({ aoReiniciar }) => {
-  const { estaPiscando } = useStore(lojaOlho);
+  const { estaPiscando, mostrarCameraFlutuante } = useStore(lojaOlho);
   const [dadosConfetes, setDadosConfetes] = useState<DadosConfete[]>([]);
   const [botaoFocado, setBotaoFocado] = useState<BotaoFoco>('reiniciar');
-  const [bloquearClique, setBloquearClique] = useState(false);
+  const [bloquearPiscada, setBloquearPiscada] = useState(true);
+  const [introConcluida, setIntroConcluida] = useState(false);
   
-  const focoTimerRef = useRef<number | null>(null);
   const navigate = useNavigate();
 
-  const executarAcaoFocada = () => {
+  // --- LÓGICA DE TEXTO PARA O LEITOR ---
+  const obterTextoParaLeitura = useCallback(() => {
+    if (!introConcluida) {
+      return "Delicioso! Parabéns, Chef! Você montou um prato lendário seguindo a receita direitinho. Sabor e Saúde nota 10!";
+    }
+    if (botaoFocado === 'reiniciar') {
+      return "Botão: Cozinhar de Novo. Pisque para começar uma nova receita.";
+    }
+    if (botaoFocado === 'outroJogo') {
+      return "Botão: Sair da Cozinha. Pisque para escolher outro jogo.";
+    }
+    return null;
+  }, [introConcluida, botaoFocado]);
+
+  // --- SINCRONIA VOZ + FOCO ---
+  const lidarComFimDaLeitura = useCallback(() => {
+    if (!mostrarCameraFlutuante) return;
+
+    if (!introConcluida) {
+      setIntroConcluida(true);
+      setBloquearPiscada(false);
+    } else {
+      setBloquearPiscada(false);
+      // Aguarda 1.5s após a voz terminar para mudar o foco para o próximo botão
+      setTimeout(() => {
+        setBotaoFocado(prev => {
+          const proximoIndex = (BOTOES_ORDEM.indexOf(prev) + 1) % BOTOES_ORDEM.length;
+          return BOTOES_ORDEM[proximoIndex];
+        });
+      }, 1500);
+    }
+  }, [introConcluida, mostrarCameraFlutuante]);
+
+  // Hook de leitura automática
+  useLeitorOcular(obterTextoParaLeitura(), [introConcluida, botaoFocado], lidarComFimDaLeitura);
+
+  // --- AÇÃO AO SELECIONAR ---
+  const executarAcaoFocada = useCallback(() => {
+    pararNarracao();
     if (botaoFocado === 'reiniciar') {
       aoReiniciar();
     } else if (botaoFocado === 'outroJogo') {
       navigate('/jogos/teclado');
     }
-  };
+  }, [botaoFocado, aoReiniciar, navigate]);
 
-  // EFEITO 1: Geração dos Confetes
+  // --- EFEITOS VISUAIS E CONTROLES ---
   useEffect(() => {
     const dados: DadosConfete[] = [];
     for (let i = 0; i < NUMERO_CONFETES; i++) {
@@ -56,52 +93,28 @@ const TelaVitoriaPiramideSabor: React.FC<TelaVitoriaPiramideSaborProps> = ({ aoR
         duration: `${2 + Math.random() * 3}s`,
         color: CORES_CONFETE[Math.floor(Math.random() * CORES_CONFETE.length)],
         size: `${8 + Math.random() * 8}px`,
-        radius: Math.random() > 0.5 ? '50%' : '2px', // Círculo ou Quadrado
+        radius: Math.random() > 0.5 ? '50%' : '2px',
       });
     }
     setDadosConfetes(dados);
   }, []);
 
-  // EFEITO 2: Foco automático (Inalterado)
+  // Controle por Piscada
   useEffect(() => {
-    const alternarFoco = () => {
-      setBotaoFocado(prev => BOTOES_ORDEM[(BOTOES_ORDEM.indexOf(prev) + 1) % BOTOES_ORDEM.length]);
-    };
-    focoTimerRef.current = setInterval(alternarFoco, TEMPO_FOCO_MS) as unknown as number;
-    return () => { if (focoTimerRef.current) clearInterval(focoTimerRef.current); };
-  }, []);
-
-  // EFEITO 3: Clique por piscada (Inalterado)
-  useEffect(() => {
-    if (!estaPiscando || bloquearClique || !botaoFocado) return;
-
-    setBloquearClique(true);
+    if (!estaPiscando || bloquearPiscada || !mostrarCameraFlutuante) return;
     executarAcaoFocada();
-    
-    if (focoTimerRef.current) clearInterval(focoTimerRef.current);
-    
-    const cooldownTimer = setTimeout(() => {
-        const newFocoTimer = setInterval(() => {
-            setBotaoFocado(prev => BOTOES_ORDEM[(BOTOES_ORDEM.indexOf(prev) + 1) % BOTOES_ORDEM.length]);
-        }, TEMPO_FOCO_MS);
-        focoTimerRef.current = newFocoTimer as unknown as number;
-        setBloquearClique(false);
-    }, COOLDOWN_CLIQUE_MS);
-    
-    return () => clearTimeout(cooldownTimer);
-  }, [estaPiscando, bloquearClique, botaoFocado]);
+  }, [estaPiscando, bloquearPiscada, mostrarCameraFlutuante, executarAcaoFocada]);
 
-  // EFEITO 4: Teclado (Inalterado)
+  // Controle por Teclado
   useEffect(() => {
     const handleKeyDown = (event: KeyboardEvent) => {
-      if (event.key === 'Enter' && botaoFocado) {
-        if (focoTimerRef.current) clearInterval(focoTimerRef.current);
+      if (event.key === 'Enter') {
         executarAcaoFocada();
       }
     };
     window.addEventListener('keydown', handleKeyDown);
     return () => window.removeEventListener('keydown', handleKeyDown);
-  }, [botaoFocado]);
+  }, [executarAcaoFocada]);
 
   return (
     <S.FundoVitoria>
@@ -121,7 +134,6 @@ const TelaVitoriaPiramideSabor: React.FC<TelaVitoriaPiramideSaborProps> = ({ aoR
       ))}
 
       <S.ConteudoVitoria>
-        {/* 3 Estrelas de Classificação */}
         <S.EstrelasContainer>
             <S.IconeEstrela $delay="0s"><Star size={60} fill="#fbbf24" strokeWidth={3} stroke="#78350f" /></S.IconeEstrela>
             <S.IconeEstrela $delay="0.3s"><Star size={80} fill="#fbbf24" strokeWidth={3} stroke="#78350f" /></S.IconeEstrela>
@@ -137,13 +149,13 @@ const TelaVitoriaPiramideSabor: React.FC<TelaVitoriaPiramideSaborProps> = ({ aoR
         
         <S.ContainerBotoes>
           <S.BotaoVitoria 
-            onClick={() => aoReiniciar()} 
+            onClick={() => { setBotaoFocado('reiniciar'); executarAcaoFocada(); }}
             $focado={botaoFocado === 'reiniciar'} 
           >
             Cozinhar de Novo
           </S.BotaoVitoria>
           <S.BotaoVitoria 
-            onClick={() => navigate('/jogos/teclado')} 
+            onClick={() => { setBotaoFocado('outroJogo'); executarAcaoFocada(); }}
             $focado={botaoFocado === 'outroJogo'} 
           >
             Sair da Cozinha

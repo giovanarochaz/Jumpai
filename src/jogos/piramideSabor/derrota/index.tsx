@@ -4,14 +4,10 @@ import { ShieldAlert } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
 import { useStore } from 'zustand';
 import { lojaOlho } from '../../../lojas/lojaOlho';
+import { useLeitorOcular } from '../../../hooks/useLeitorOcular';
+import { pararNarracao } from '../../../servicos/acessibilidade';
 
 const NUMERO_SPLATTERS = 15;
-
-// ATUALIZAÇÃO DAS CORES:
-// 1. Ketchup (Vermelho)
-// 2. Mostarda (Agora bem Amarela)
-// 3. Queimado (Marrom escuro)
-// 4. Maionese (Novo - Creme claro)
 const CORES_SUJEIRA = ['#ef4444', '#facc15', '#451a03', '#fefce8'];
 
 interface DadosSplatter {
@@ -29,22 +25,59 @@ interface TelaDerrotaPiramideSaborProps {
   aoReiniciar: () => void;
 }
 
-type BotaoFoco = 'reiniciar' | 'outroJogo' | null;
+type BotaoFoco = 'reiniciar' | 'outroJogo';
 const BOTOES_ORDEM: BotaoFoco[] = ['reiniciar', 'outroJogo'];
-const TEMPO_FOCO_MS = 1500;
-const COOLDOWN_CLIQUE_MS = 800;
 
 const TelaDerrotaPiramideSabor: React.FC<TelaDerrotaPiramideSaborProps> = ({ aoReiniciar }) => {
-  const { estaPiscando } = useStore(lojaOlho);
+  const { estaPiscando, mostrarCameraFlutuante } = useStore(lojaOlho);
   const [dadosDoSplatters, setDadosDoSplatters] = useState<DadosSplatter[]>([]);
   const [botaoFocado, setBotaoFocado] = useState<BotaoFoco>('reiniciar');
-  const [bloquearClique, setBloquearClique] = useState(false);
+  const [bloquearPiscada, setBloquearPiscada] = useState(true);
+  const [introConcluida, setIntroConcluida] = useState(false);
   
-  const focoTimerRef = useRef<number | null>(null);
   const somDerrotaRef = useRef<HTMLAudioElement | null>(null);
   const navigate = useNavigate();
 
+  // --- LÓGICA DE TEXTO PARA O LEITOR ---
+  const obterTextoParaLeitura = useCallback(() => {
+    if (!introConcluida) {
+      return "Pedido Rejeitado! Ops! Esse pedido ficou uma bagunça ou você pegou o que não devia. Vamos limpar tudo e tentar de novo?";
+    }
+    if (botaoFocado === 'reiniciar') {
+      return "Botão: Tentar de Novo. Pisque para limpar a cozinha e recomeçar a receita.";
+    }
+    if (botaoFocado === 'outroJogo') {
+      return "Botão: Sair da Cozinha. Pisque para escolher outro desafio.";
+    }
+    return null;
+  }, [introConcluida, botaoFocado]);
+
+  // --- SINCRONIA VOZ + FOCO ---
+  const lidarComFimDaLeitura = useCallback(() => {
+    if (!mostrarCameraFlutuante) return;
+
+    if (!introConcluida) {
+      // Após ler a mensagem de erro, permite a interação e inicia o ciclo de botões
+      setIntroConcluida(true);
+      setBloquearPiscada(false);
+    } else {
+      setBloquearPiscada(false);
+      // Aguarda 1.5s após a voz terminar para mudar o foco para o próximo botão
+      setTimeout(() => {
+        setBotaoFocado(prev => {
+          const proximoIndex = (BOTOES_ORDEM.indexOf(prev) + 1) % BOTOES_ORDEM.length;
+          return BOTOES_ORDEM[proximoIndex];
+        });
+      }, 1500);
+    }
+  }, [introConcluida, mostrarCameraFlutuante]);
+
+  // Hook de leitura automática
+  useLeitorOcular(obterTextoParaLeitura(), [introConcluida, botaoFocado], lidarComFimDaLeitura);
+
+  // --- AÇÃO AO SELECIONAR ---
   const executarAcaoFocada = useCallback(() => {
+    pararNarracao();
     if (botaoFocado === 'reiniciar') {
       aoReiniciar();
     } else if (botaoFocado === 'outroJogo') {
@@ -52,15 +85,17 @@ const TelaDerrotaPiramideSabor: React.FC<TelaDerrotaPiramideSaborProps> = ({ aoR
     }
   }, [botaoFocado, aoReiniciar, navigate]);
 
+  // --- EFEITO: Inicialização e Sujeira ---
   useEffect(() => {
+    // Som de derrota
     somDerrotaRef.current = new Audio('/assets/piramideSabor/sounds/derrota.mp3');
     somDerrotaRef.current.volume = 0.5;
     somDerrotaRef.current.play().catch(e => console.log("Erro som:", e));
 
+    // Gerar manchas de sujeira
     const dados: DadosSplatter[] = [];
     for (let i = 0; i < NUMERO_SPLATTERS; i++) {
       const r = (min: number, max: number) => `${Math.floor(Math.random() * (max - min + 1) + min)}%`;
-      
       dados.push({
         id: i,
         top: `${Math.random() * 90}%`,
@@ -73,40 +108,26 @@ const TelaDerrotaPiramideSabor: React.FC<TelaDerrotaPiramideSaborProps> = ({ aoR
       });
     }
     setDadosDoSplatters(dados);
+
+    return () => pararNarracao();
   }, []);
 
+  // --- EFEITO: Controle Ocular (Piscada) ---
   useEffect(() => {
-    const alternarFoco = () => {
-      setBotaoFocado(prev => BOTOES_ORDEM[(BOTOES_ORDEM.indexOf(prev) + 1) % BOTOES_ORDEM.length]);
-    };
-    focoTimerRef.current = setInterval(alternarFoco, TEMPO_FOCO_MS) as unknown as number;
-    return () => { if (focoTimerRef.current) clearInterval(focoTimerRef.current); };
-  }, []);
-
-  useEffect(() => {
-    if (!estaPiscando || bloquearClique || !botaoFocado) return;
-    setBloquearClique(true);
+    if (!estaPiscando || bloquearPiscada || !mostrarCameraFlutuante) return;
     executarAcaoFocada();
-    if (focoTimerRef.current) clearInterval(focoTimerRef.current);
-    
-    const timer = setTimeout(() => {
-      const newTimer = setInterval(() => setBotaoFocado(prev => BOTOES_ORDEM[(BOTOES_ORDEM.indexOf(prev) + 1) % BOTOES_ORDEM.length]), TEMPO_FOCO_MS);
-      focoTimerRef.current = newTimer as unknown as number;
-      setBloquearClique(false);
-    }, COOLDOWN_CLIQUE_MS);
-    return () => clearTimeout(timer);
-  }, [estaPiscando, bloquearClique, botaoFocado, executarAcaoFocada]);
+  }, [estaPiscando, bloquearPiscada, mostrarCameraFlutuante, executarAcaoFocada]);
 
+  // --- EFEITO: Teclado (Enter) ---
   useEffect(() => {
     const handleKeyDown = (e: KeyboardEvent) => {
-      if (e.key === 'Enter' && botaoFocado) {
-        if (focoTimerRef.current) clearInterval(focoTimerRef.current);
+      if (e.key === 'Enter') {
         executarAcaoFocada();
       }
     };
     window.addEventListener('keydown', handleKeyDown);
     return () => window.removeEventListener('keydown', handleKeyDown);
-  }, [botaoFocado, executarAcaoFocada]);
+  }, [executarAcaoFocada]);
 
   return (
     <S.FundoDerrota>
@@ -127,7 +148,6 @@ const TelaDerrotaPiramideSabor: React.FC<TelaDerrotaPiramideSaborProps> = ({ aoR
 
       <S.ConteudoDerrota>
         <S.IconeDerrota>
-          {/* A cor do ícone SVG agora será herdada (branca) */}
           <ShieldAlert size={80} strokeWidth={2} />
         </S.IconeDerrota>
         
@@ -140,13 +160,13 @@ const TelaDerrotaPiramideSabor: React.FC<TelaDerrotaPiramideSaborProps> = ({ aoR
         
         <S.ContainerBotoes>
           <S.BotaoDerrota 
-            onClick={() => aoReiniciar()}
+            onClick={() => { setBotaoFocado('reiniciar'); executarAcaoFocada(); }}
             $focado={botaoFocado === 'reiniciar'} 
           >
             Tentar de Novo
           </S.BotaoDerrota>
           <S.BotaoDerrota 
-            onClick={() => navigate('/jogos/teclado')}
+            onClick={() => { setBotaoFocado('outroJogo'); executarAcaoFocada(); }}
             $focado={botaoFocado === 'outroJogo'} 
           >
             Sair da Cozinha
