@@ -284,7 +284,7 @@ interface EstadoModal {
     if (sucessos >= 2) {
       // Ativa CameraFlutuante, desativa teste
       lojaOlho.getState().setMostrarCameraFlutuante(true);
-      exibirModal('sucesso', () => navigate('/jogos/ocular'));
+      exibirModal('sucesso', () => navigate('/jogos'));
     } else {
       exibirModal('falha', handleReiniciarTeste);
     }

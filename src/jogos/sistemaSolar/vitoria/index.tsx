@@ -80,7 +80,7 @@ const TelaVitoria: React.FC<TelaVitoriaProps> = ({ aoReiniciar }) => {
     if (botaoFocado === 'reiniciar') {
       aoReiniciar();
     } else if (botaoFocado === 'outroJogo') {
-      navigate('/jogos/teclado');
+      navigate('/jogos');
     }
   }, [botaoFocado, aoReiniciar, navigate]);
 

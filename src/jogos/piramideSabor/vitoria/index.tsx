@@ -78,7 +78,7 @@ const TelaVitoriaPiramideSabor: React.FC<TelaVitoriaPiramideSaborProps> = ({ aoR
     if (botaoFocado === 'reiniciar') {
       aoReiniciar();
     } else if (botaoFocado === 'outroJogo') {
-      navigate('/jogos/teclado');
+      navigate('/jogos');
     }
   }, [botaoFocado, aoReiniciar, navigate]);
 

@@ -81,7 +81,7 @@ const TelaDerrotaPiramideSabor: React.FC<TelaDerrotaPiramideSaborProps> = ({ aoR
     if (botaoFocado === 'reiniciar') {
       aoReiniciar();
     } else if (botaoFocado === 'outroJogo') {
-      navigate('/jogos/teclado');
+      navigate('/jogos');
     }
   }, [botaoFocado, aoReiniciar, navigate]);
 

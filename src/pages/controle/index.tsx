@@ -17,7 +17,7 @@ const Controle: React.FC = () => {
   }, [navigate]);
 
   const handleNavigateToKeyboardControl = useCallback(() => {
-    navigate('/jogos/teclado');
+    navigate('/jogos');
   }, [navigate]);
 
   return (

@@ -29,6 +29,15 @@ const dadosJogos = [
     descricao: "Monte pratos saudáveis e deliciosos como um verdadeiro Chef Nutri!",
     rota: "/piramideDoSabor",
   },
+  {
+    id: 3,
+    titulo: 'Salto Alfabético',
+    categoria: 'Linguagem',
+    imagem: '/assets/jogos/capa_salto_alfabetico.png',
+    descricao: "Pule sobre letras e descubra palavras! Um jogo divertido para aprender o alfabeto.",
+    rota: "/saltoAlfabetico",
+  },
+
 ];
 
 const Jogo: React.FC = () => {
