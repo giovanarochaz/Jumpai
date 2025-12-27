@@ -5,9 +5,9 @@ import { useStore } from 'zustand';
 import { useNavigate } from 'react-router-dom';
 import { lojaOlho } from '../../../lojas/lojaOlho';
 
-interface Props { aoReiniciar: () => void; aoSair: () => void; }
+interface Props { aoReiniciar: () => void }
 
-const TelaVitoriaSalto: React.FC<Props> = ({ aoReiniciar, aoSair }) => {
+const TelaVitoriaSalto: React.FC<Props> = ({ aoReiniciar }) => {
   const { estaPiscando } = useStore(lojaOlho);
   const [foco, setFoco] = useState<'reiniciar' | 'sair'>('reiniciar');
   const [bloqueado, setBloqueado] = useState(false);

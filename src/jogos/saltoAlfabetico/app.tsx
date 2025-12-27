@@ -1,12 +1,10 @@
 import React, { useState } from 'react';
-import { useNavigate } from 'react-router-dom'; // Importe o navigate
 import JogoSaltoAlfabetico from './jogo';
 import ManualSaltoAlfabetico, { type ConfiguracoesSalto } from './manual';
 import TelaVitoriaSalto from './vitoria';
 import TelaDerrotaSalto from './derrota';
 
 const SaltoAlfabetico: React.FC = () => {
-  const navigate = useNavigate(); // Inicialize o hook de navegação
   const [estadoDoJogo, setEstadoDoJogo] = useState<'manual' | 'jogando' | 'vitoria' | 'derrota'>('manual');
   
   const [configuracoes, setConfiguracoes] = useState<ConfiguracoesSalto>({
@@ -35,11 +33,6 @@ const SaltoAlfabetico: React.FC = () => {
     setEstadoDoJogo('jogando');
   };
 
-  const sairDoJogo = () => {
-    navigate('/jogos');
-  };
-
-
   return (
     <>
       {estadoDoJogo === 'manual' && (
@@ -57,14 +50,12 @@ const SaltoAlfabetico: React.FC = () => {
       {estadoDoJogo === 'vitoria' && (
         <TelaVitoriaSalto 
           aoReiniciar={reiniciarJogo} 
-          aoSair={sairDoJogo} // Passa a função de navegar
         />
       )}
 
       {estadoDoJogo === 'derrota' && (
         <TelaDerrotaSalto 
           aoReiniciar={reiniciarJogo} 
-          aoSair={sairDoJogo} // Passa a função de navegar
         />
       )}
     </>
