@@ -11,25 +11,14 @@ const aparecer = keyframes`
   to { opacity: 1; transform: translateY(0); }
 `;
 
-const girar = keyframes`
-  0% { transform: rotate(0deg) scale(1); }
-  50% { transform: rotate(180deg) scale(1.2); }
-  100% { transform: rotate(360deg) scale(1); }
-`;
-
 export const ConteinerPrincipal = styled.main`
   display: flex;
   flex-direction: column;
-  min-height: 100vh;
-  width: 100%;
+  height: 100vh;
+  width: 100vw;
   background: radial-gradient(circle at center, ${cores.roxoPrincipal} 0%, ${cores.roxoEscuro} 100%);
-  background-image: 
-    radial-gradient(circle at center, ${cores.roxoPrincipal} 0%, ${cores.roxoEscuro} 100%),
-    radial-gradient(${cores.branco} 1px, transparent 1px);
-  background-size: 100% 100%, 40px 40px;
-  background-position: center, 0 0;
   color: ${cores.branco};
-  overflow-x: hidden;
+  overflow: hidden;
   position: relative;
 `;
 
@@ -39,80 +28,67 @@ export const AreaConteudo = styled.div`
   flex-direction: column;
   justify-content: center;
   align-items: center;
-  padding: 80px 20px 40px;
+  padding: 120px 20px 20px; 
   animation: ${aparecer} 0.8s ease-out;
 
   @media (max-height: 700px) {
-    padding-top: 60px;
-    justify-content: flex-start;
+    padding-top: 100px;
+    justify-content: space-evenly;
   }
 `;
 
 export const SecaoCabecalho = styled.section`
   text-align: center;
-  margin-bottom: clamp(1.5rem, 4vh, 3rem);
+  margin-bottom: clamp(1rem, 3vh, 2rem);
   display: flex;
   flex-direction: column;
   align-items: center;
   width: 100%;
-  max-width: 1200px;
 `;
 
 export const TituloJogo = styled.h1`
-  position: relative;
-  font-size: clamp(3rem, 10vh, 5.5rem);
+  font-size: clamp(3.5rem, 12vh, 6.5rem);
   font-weight: 900;
   color: ${cores.amarelo};
   margin: 0;
   letter-spacing: 4px;
   text-shadow: 6px 6px 0px ${cores.preto};
-  
-  .icone-decoresativo {
-    position: absolute;
-    top: -10px; 
-    right: -45px;
-    color: ${cores.branco};
-    animation: ${girar} 4s linear infinite;
-    
-    @media (max-width: 480px) {
-        display: none;
-    }
-  }
+  line-height: 1;
 `;
 
 export const TextoDescricao = styled.p`
-  font-size: clamp(1rem, 1.5vh, 1.25rem);
+  font-size: clamp(0.9rem, 1.8vh, 1.2rem);
   line-height: 1.5;
-  max-width: 700px;
-  margin-top: 1rem;
+  max-width: 650px;
+  margin-top: 1.5rem;
   opacity: 0.9;
   text-shadow: 1px 1px 2px rgba(0,0,0,0.3);
 
-  @media (max-height: 600px) {
-    display: none;
+  @media (max-height: 650px) {
+    max-width: 550px;
+    margin-top: 0.5rem;
   }
 `;
 
 export const EnvoltorioSubtitulo = styled.div`
   margin-top: clamp(1rem, 3vh, 2.5rem);
-  background-color: rgba(255,255,255, 0.2);
-  padding: 8px 25px;
+  background-color: rgba(255,255,255, 0.15);
+  padding: 10px 30px;
   border-radius: 50px;
-  border: 2px solid ${cores.branco};
-  font-size: clamp(1rem, 2vh, 1.4rem);
+  border: 2px solid rgba(255,255,255, 0.4);
+  font-size: clamp(0.9rem, 2.2vh, 1.3rem);
   font-weight: 700;
   color: ${cores.branco};
-  box-shadow: 0 4px 15px rgba(0,0,0,0.1);
   animation: ${flutuar} 3s ease-in-out infinite;
 `;
 
 export const SecaoNavegacao = styled.div`
   display: flex;
-  gap: clamp(1rem, 5vw, 3rem);
-  flex-wrap: wrap;
+  gap: clamp(1.5rem, 5vw, 4rem);
   justify-content: center;
+  align-items: center;
   width: 100%;
-  max-width: 1400px;
+  margin-top: 1.5rem;
 `;
 
 export const CartaoSelecao = styled.button`
@@ -121,64 +97,46 @@ export const CartaoSelecao = styled.button`
   align-items: center;
   justify-content: center;
   gap: 1rem;
-  width: clamp(240px, 22vw, 320px);
-  height: clamp(180px, 25vh, 240px);
+  width: clamp(260px, 25vw, 350px);
+  height: clamp(180px, 28vh, 250px);
   background-color: ${cores.branco};
   border: 4px solid ${cores.preto};
-  border-radius: 24px;
+  border-radius: 30px;
   cursor: pointer;
-  box-shadow: 8px 8px 0px ${cores.preto};
-  transition: all 0.2s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+  box-shadow: 10px 10px 0px ${cores.preto};
+  transition: all 0.2s ease-in-out;
   color: ${cores.preto};
 
   svg {
-    width: clamp(40px, 6vh, 64px);
-    height: clamp(40px, 6vh, 64px);
-    transition: transform 0.3s;
+    width: clamp(45px, 7vh, 65px);
+    height: clamp(45px, 7vh, 65px);
   }
 
   &:hover {
     background-color: ${cores.amarelo};
-    transform: translate(-4px, -4px);
-    box-shadow: 12px 12px 0px ${cores.preto};
-    
-    svg {
-      transform: scale(1.2) rotate(-5deg);
-    }
+    transform: translate(-5px, -5px);
+    box-shadow: 15px 15px 0px ${cores.preto};
   }
 
   &:active {
-    transform: translate(4px, 4px); 
+    transform: translate(5px, 5px);
     box-shadow: 2px 2px 0px ${cores.preto};
   }
 
   @media (max-height: 700px) {
-    height: clamp(140px, 20vh, 180px);
+    height: clamp(160px, 26vh, 190px);
     gap: 0.5rem;
-  }
-
-  @media (max-width: 650px) {
-    width: 85%;
-    height: auto;
-    padding: 20px;
-    flex-direction: row;
-    justify-content: flex-start;
-    padding-left: 30px;
   }
 `;
 
 export const TextoCartao = styled.span`
-  font-size: clamp(1.1rem, 2.2vh, 1.7rem);
-  font-weight: 800;
+  font-size: clamp(1.3rem, 2.8vh, 1.8rem);
+  font-weight: 900;
   text-transform: uppercase;
 `;
 
 export const DescricaoCartao = styled.span`
-  font-size: clamp(0.7rem, 1.2vh, 0.9rem);
+  font-size: clamp(0.8rem, 1.5vh, 1rem);
   font-weight: 500;
   opacity: 0.7;
-
-  @media (max-width: 650px) {
-    display: none;
-  }
 `;

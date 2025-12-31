@@ -1,6 +1,6 @@
 import React, { useCallback } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { Eye, Keyboard, Sparkles } from 'lucide-react';
+import { Eye, Keyboard } from 'lucide-react';
 
 import { 
   ConteinerPrincipal, AreaConteudo, SecaoCabecalho,
@@ -26,10 +26,7 @@ const Controle: React.FC = () => {
       <Menu />
       <AreaConteudo>
         <SecaoCabecalho>
-          <TituloJogo>
-            JUMPAI
-            <Sparkles className="icone-decorativo" size={40} />
-          </TituloJogo>
+          <TituloJogo>JUMPAI</TituloJogo>
 
           <TextoDescricao>
             Um jogo educativo e acessível para todos! Explore mundos incríveis 
