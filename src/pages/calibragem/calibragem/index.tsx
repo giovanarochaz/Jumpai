@@ -1,309 +1,202 @@
 import React, { useRef, useEffect, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
-import {
-  FaceLandmarker,
-  FilesetResolver,
-} from "@mediapipe/tasks-vision";
-import type { FaceLandmarkerResult } from "@mediapipe/tasks-vision";
+import { FaceLandmarker, FilesetResolver } from "@mediapipe/tasks-vision";
 
-// Importando os componentes estilizados da tela
-import {
-  ContainerDaTela,
-  BlocoDeDescricao,
-  Titulo,
-  Paragrafo,
-  MensagemDeErro,
-  ContainerVideo,
-  VideoCam,
-  CanvasSobreposicao,
-  BotaoCalibrar,
-  OverlayContagem,
-  TextoContagem,
-  BolinhaDeFoco,
-  Flash,
-  GlobalStyle
+import { 
+  ConteinerPrincipal, AreaCamera, ElementoVideo, 
+  BotaoIniciar, Titulo, TextoInstrucao, 
+  BlocoPreparacao, TelaFocoAtivo, ConteinerAlvo, CirculoProgresso, 
+  PontoCentro, TextoStatus, CamadaContagem, NumeroContagem, Flash 
 } from './styles';
+
 import { lojaOlho } from '../../../lojas/lojaOlho';
-import { lojaIluminacao } from '../../../lojas/lojaIluminacao';
-import ModalGenerico from '../../../componentes/ModalGenerico';
+import { EstiloGlobal } from '../../../estilos/global';
 
-const TEMPO_SEM_ROSTO_PARA_AVISO = 3000;
-const TOTAL_AMOSTRAS_CALIBRAGEM = 150;
-
-interface EstadoModal {
-  estaAberto: boolean;
-  imagemSrc: string;
-  titulo: string;
-  descricao: string;
-}
+const TOTAL_AMOSTRAS = 150;
 
 const CalibragemOcular: React.FC = () => {
-
-  const imagens = {
-    semRosto: '/assets/modal/aviso.png',
-    permissaoCamera: '/assets/modal/camera.png'
-  };
-
-  const navigate = useNavigate();
-
+  const navegar = useNavigate();
   const videoRef = useRef<HTMLVideoElement>(null);
-  const canvasRef = useRef<HTMLCanvasElement>(null);
   const faceLandmarkerRef = useRef<FaceLandmarker | null>(null);
-  const isCalibrandoRef = useRef(false);
   
-  const alturasOlhoEsquerdoRef = useRef<number[]>([]);
-  const alturasOlhoDireitoRef = useRef<number[]>([]);
-  const temporizadorSemRostoRef = useRef<number | null>(null);
+  const streamRef = useRef<MediaStream | null>(null);
+  
+  const amostrasERef = useRef<number[]>([]);
+  const amostrasDRef = useRef<number[]>([]);
+  const calibrandoRef = useRef(false);
 
-  const [carregando, setCarregando] = useState(true);
-  const [erro, setErro] = useState<string | null>(null);
-  const [isCalibrando, setIsCalibrando] = useState(false);
-  const [contagem, setContagem] = useState<number | null>(null);
-  const [mostrarBolinha, setMostrarBolinha] = useState(false);
-  const [mostrarFlashDeEfeito, setMostrarFlashDeEfeito] = useState(false);
-  const [estadoDoModal, setEstadoDoModal] = useState<EstadoModal>({
-    estaAberto: false,
-    imagemSrc: '',
-    titulo: '',
-    descricao: '',
-  });
+  const [iaPronta, setIaPronta] = useState(false);
+  const [fase, setFase] = useState<'prep' | 'contagem' | 'foco'>('prep');
+  const [contagem, setContagem] = useState(3);
+  const [progresso, setProgresso] = useState(0);
+  const [exibirFlash, setExibirFlash] = useState(false);
 
-  const exibirModal = (tipo: 'semRosto' | 'permissaoCamera') => {
-    let dadosModal = { imagemSrc: '', titulo: '', descricao: '' };
-    if (tipo === 'semRosto') {
-      dadosModal = {
-        imagemSrc: imagens.semRosto,
-        titulo: 'Rosto não Detectado',
-        descricao: 'Por favor, posicione seu rosto no centro da câmera.',
-      };
-    } else if (tipo === 'permissaoCamera') {
-      dadosModal = {
-        imagemSrc: imagens.permissaoCamera,
-        titulo: 'Acesso à Câmera Necessário',
-        descricao: 'Você precisa permitir o acesso à câmera no seu navegador para continuar.',
-      };
+  const desligarCamera = () => {
+    if (streamRef.current) {
+      streamRef.current.getTracks().forEach(track => {
+        track.stop(); 
+        track.enabled = false;
+      });
+      streamRef.current = null;
     }
-    setEstadoDoModal({ ...dadosModal, estaAberto: true });
+    if (videoRef.current) {
+      videoRef.current.srcObject = null;
+    }
   };
 
   useEffect(() => {
-    const iniciarMediaPipe = async () => {
+    const carregarIA = async () => {
       try {
-        const filesetResolver = await FilesetResolver.forVisionTasks("https://cdn.jsdelivr.net/npm/@mediapipe/tasks-vision/wasm");
-        faceLandmarkerRef.current = await FaceLandmarker.createFromOptions(filesetResolver, {
-          baseOptions: { modelAssetPath: "https://storage.googleapis.com/mediapipe-assets/face_landmarker.task", delegate: "GPU" },
-          runningMode: "VIDEO", numFaces: 1,
+        const vision = await FilesetResolver.forVisionTasks(
+          "https://cdn.jsdelivr.net/npm/@mediapipe/tasks-vision/wasm"
+        );
+        faceLandmarkerRef.current = await FaceLandmarker.createFromOptions(vision, {
+          baseOptions: { 
+            modelAssetPath: "https://storage.googleapis.com/mediapipe-assets/face_landmarker.task", 
+            delegate: "GPU" 
+          },
+          runningMode: "VIDEO", 
+          numFaces: 1
         });
         await iniciarCamera();
-        setCarregando(false);
+        setIaPronta(true);
       } catch (err) {
-        console.error("Erro ao inicializar MediaPipe:", err);
-        setErro("Não foi possível carregar o sistema de detecção.");
+        console.error("Erro ao carregar IA:", err);
       }
     };
 
     const iniciarCamera = async () => {
       if (!videoRef.current) return;
       try {
-        const stream = await navigator.mediaDevices.getUserMedia({ video: { width: 640, height: 480 } });
+        const stream = await navigator.mediaDevices.getUserMedia({ 
+          video: { width: 640, height: 480 } 
+        });
+        
+        streamRef.current = stream;
         videoRef.current.srcObject = stream;
+        
         videoRef.current.onloadeddata = () => {
           videoRef.current?.play();
-          requestAnimationFrame(detectar);
+          requestAnimationFrame(processar);
         };
       } catch (err) {
         console.error("Erro ao acessar câmera:", err);
-        setErro("Você precisa permitir o acesso à câmera.");
-        exibirModal('permissaoCamera');
       }
     };
 
-    iniciarMediaPipe();
+    carregarIA();
+
     return () => {
-      if (videoRef.current?.srcObject) {
-        (videoRef.current.srcObject as MediaStream).getTracks().forEach(track => track.stop());
-        videoRef.current.srcObject = null;
-      }
+      desligarCamera();
+      calibrandoRef.current = false; 
     };
   }, []);
 
-  const detectar = () => {
-    const { current: faceLandmarker } = faceLandmarkerRef;
-    const video = videoRef.current;
-    const { current: canvas } = canvasRef;
-
-    if (!faceLandmarker || !video || !canvas || video.readyState < 2) {
-      requestAnimationFrame(detectar);
-      return;
-    }
-
-    const ctx = canvas.getContext("2d");
-    if (!ctx) return;
-
-    canvas.width = video.videoWidth;
-    canvas.height = video.videoHeight;
-    const resultado: FaceLandmarkerResult = faceLandmarker.detectForVideo(video, performance.now());
-    
-    ctx.clearRect(0, 0, canvas.width, canvas.height);
-    ctx.save();
-    ctx.scale(-1, 1);
-    ctx.drawImage(video, -canvas.width, 0, canvas.width, canvas.height);
-    ctx.restore();
-
-    if (resultado.faceLandmarks.length > 0) {
-      if (temporizadorSemRostoRef.current) {
-        clearTimeout(temporizadorSemRostoRef.current);
-        temporizadorSemRostoRef.current = null;
-      }
-
-      const pontos = resultado.faceLandmarks[0];
-      const olhoEsquerdoTopo = pontos[159];
-      const olhoEsquerdoBase = pontos[145];
-      const olhoDireitoTopo = pontos[386];
-      const olhoDireitoBase = pontos[374];
-
-      if (olhoEsquerdoTopo && olhoEsquerdoBase && olhoDireitoTopo && olhoDireitoBase) {
-        // --- CÓDIGO DE DESENHO HARMONIZADO ---
-        // Desenha linha no olho esquerdo (do usuário)
-        ctx.beginPath();
-        ctx.strokeStyle = "lime";
-        ctx.lineWidth = 2;
-        ctx.moveTo(canvas.width - olhoEsquerdoTopo.x * canvas.width, olhoEsquerdoTopo.y * canvas.height);
-        ctx.lineTo(canvas.width - olhoEsquerdoBase.x * canvas.width, olhoEsquerdoBase.y * canvas.height);
-        ctx.stroke();
-        
-        // Desenha linha no olho direito (do usuário)
-        ctx.beginPath();
-        ctx.strokeStyle = "cyan"; // Mudado para cyan para consistência com a tela de teste
-        ctx.lineWidth = 2;
-        ctx.moveTo(canvas.width - olhoDireitoTopo.x * canvas.width, olhoDireitoTopo.y * canvas.height);
-        ctx.lineTo(canvas.width - olhoDireitoBase.x * canvas.width, olhoDireitoBase.y * canvas.height);
-        ctx.stroke();
-        
-        const alturaOlhoEsquerdo = Math.abs(olhoEsquerdoBase.y - olhoEsquerdoTopo.y);
-        const alturaOlhoDireito = Math.abs(olhoDireitoBase.y - olhoDireitoTopo.y);
-
-        if (isCalibrandoRef.current && alturasOlhoEsquerdoRef.current.length < TOTAL_AMOSTRAS_CALIBRAGEM) {
-          alturasOlhoEsquerdoRef.current.push(alturaOlhoEsquerdo);
-          alturasOlhoDireitoRef.current.push(alturaOlhoDireito);
-
-          if (alturasOlhoEsquerdoRef.current.length >= TOTAL_AMOSTRAS_CALIBRAGEM) {
-            finalizarCalibragem();
-          }
-        }
-      }
-    } else {
-      if (!temporizadorSemRostoRef.current && !isCalibrandoRef.current) {
-        temporizadorSemRostoRef.current = window.setTimeout(() => {
-          exibirModal('semRosto');
-          temporizadorSemRostoRef.current = null;
-        }, TEMPO_SEM_ROSTO_PARA_AVISO);
-      }
-    }
-
-    requestAnimationFrame(detectar);
-  };
-  
-  const finalizarCalibragem = () => {
-    isCalibrandoRef.current = false;
-
-    if (alturasOlhoEsquerdoRef.current.length > 0 && alturasOlhoDireitoRef.current.length > 0) {
+  const processar = () => {
+    // Verifica se a IA e o vídeo ainda estão ativos antes de processar
+    if (faceLandmarkerRef.current && videoRef.current && videoRef.current.readyState >= 2 && streamRef.current) {
+      const resultado = faceLandmarkerRef.current.detectForVideo(videoRef.current, performance.now());
       
-      const calcularMediana = (alturas: number[]): number => {
-        const alturasOrdenadas = [...alturas].sort((a, b) => a - b);
-        const meio = Math.floor(alturasOrdenadas.length / 2);
-        return alturasOrdenadas.length % 2 !== 0
-          ? alturasOrdenadas[meio]
-          : (alturasOrdenadas[meio - 1] + alturasOrdenadas[meio]) / 2;
-      };
+      if (resultado.faceLandmarks && resultado.faceLandmarks.length > 0 && calibrandoRef.current) {
+        const pontos = resultado.faceLandmarks[0];
+        
+        const hE = Math.abs(pontos[145].y - pontos[159].y);
+        const hD = Math.abs(pontos[374].y - pontos[386].y);
 
-      const medianaEsquerda = calcularMediana(alturasOlhoEsquerdoRef.current);
-      const medianaDireita = calcularMediana(alturasOlhoDireitoRef.current);
-      const mediaCombinada = (medianaEsquerda + medianaDireita) / 2;
+        amostrasERef.current.push(hE);
+        amostrasDRef.current.push(hD);
+        
+        const perc = Math.min((amostrasERef.current.length / TOTAL_AMOSTRAS) * 100, 100);
+        setProgresso(perc);
 
-      lojaOlho.getState().setAlturaMediaEsquerda(medianaEsquerda);
-      lojaOlho.getState().setAlturaMediaDireita(medianaDireita);
-      lojaOlho.getState().setAlturaMedia(mediaCombinada);
+        if (amostrasERef.current.length >= TOTAL_AMOSTRAS) {
+          finalizar();
+          return;
+        }
+      }
+      requestAnimationFrame(processar);
     }
-
-    alturasOlhoEsquerdoRef.current = [];
-    alturasOlhoDireitoRef.current = [];
-    setIsCalibrando(false);
-    setMostrarBolinha(false);
-
-    lojaIluminacao.getState().desligarIluminacao();
-    
-    navigate("/calibragem-teste");
   };
 
-  const handleCalibrar = () => {
-    setContagem(3);
-    setMostrarBolinha(true);
-    alturasOlhoEsquerdoRef.current = [];
-    alturasOlhoDireitoRef.current = [];
-    setIsCalibrando(false);
-
-    const intervalo = setInterval(() => {
-      setContagem(prev => {
-        if (prev === null) return null;
-        if (prev <= 1) {
-          clearInterval(intervalo);
-          setMostrarFlashDeEfeito(true);
-          setTimeout(() => setMostrarFlashDeEfeito(false), 300);
-          isCalibrandoRef.current = true;
-          setIsCalibrando(true);
-          return null;
-        }
-        return prev - 1;
-      });
+  const iniciarFluxo = () => {
+    setFase('contagem');
+    let c = 3;
+    const interval = setInterval(() => {
+      c--;
+      setContagem(c);
+      if (c <= 0) {
+        clearInterval(interval);
+        setFase('foco');
+        setTimeout(() => {
+          calibrandoRef.current = true;
+        }, 500);
+      }
     }, 1000);
   };
 
-  const estaProcessando = carregando || isCalibrando || contagem !== null;
+  const finalizar = () => {
+    calibrandoRef.current = false;
+    setExibirFlash(true);
+    
+    const calcularMediana = (arr: number[]) => {
+      const s = [...arr].sort((a, b) => a - b);
+      return s[Math.floor(s.length / 2)];
+    };
+
+    const medE = calcularMediana(amostrasERef.current);
+    const medD = calcularMediana(amostrasDRef.current);
+    
+    lojaOlho.getState().setAlturaMediaEsquerda(medE);
+    lojaOlho.getState().setAlturaMediaDireita(medD);
+    lojaOlho.getState().setAlturaMedia((medE + medD) / 2);
+
+    setTimeout(() => navegar("/calibragem-teste"), 800);
+  };
 
   return (
-    <>
-      <GlobalStyle />
-      
-      <ModalGenerico
-        estaAberto={estadoDoModal.estaAberto}
-        aoFechar={() => setEstadoDoModal(prev => ({ ...prev, estaAberto: false }))}
-        imagemSrc={estadoDoModal.imagemSrc}
-        titulo={estadoDoModal.titulo}
-        descricao={estadoDoModal.descricao}
-      />
-      
-      <ContainerDaTela>
-        <BlocoDeDescricao>
-          <Titulo>Calibragem Ocular</Titulo>
-          <Paragrafo>
-            Vamos ajustar o sensor para o seu piscar. Clique no botão abaixo,
-            e quando a contagem terminar, olhe fixamente para a bolinha branca que aparecerá na tela.
-            Mantenha os olhos abertos normalmente.
-          </Paragrafo>
-        </BlocoDeDescricao>
+    <ConteinerPrincipal>
+      <EstiloGlobal />
+      {exibirFlash && <Flash />}
 
-        {erro && <MensagemDeErro>{erro}</MensagemDeErro>}
+      <AreaCamera visivel={fase === 'prep'}>
+        <ElementoVideo ref={videoRef} autoPlay muted playsInline />
+      </AreaCamera>
 
-        <ContainerVideo>
-          <VideoCam ref={videoRef} autoPlay playsInline muted />
-          <CanvasSobreposicao ref={canvasRef} />
-          {mostrarBolinha && <BolinhaDeFoco />}
-        </ContainerVideo>
+      {fase === 'prep' && (
+        <BlocoPreparacao>
+          <Titulo>Prepare seu Olhar</Titulo>
+          <TextoInstrucao>
+            Centralize seu rosto. Ao começar, olhe fixamente para o alvo 
+            e mantenha os olhos abertos normalmente até completar 100%.
+          </TextoInstrucao>
+          <BotaoIniciar onClick={iniciarFluxo} disabled={!iaPronta}>
+            {iaPronta ? "Começar Calibragem" : "Carregando Sensor..."}
+          </BotaoIniciar>
+        </BlocoPreparacao>
+      )}
 
-        {contagem !== null && contagem > 0 && (
-          <OverlayContagem>
-            <TextoContagem>{contagem}</TextoContagem>
-          </OverlayContagem>
-        )}
-        
-        {mostrarFlashDeEfeito && <Flash />}
+      {fase === 'contagem' && (
+        <CamadaContagem>
+          <NumeroContagem>{contagem}</NumeroContagem>
+        </CamadaContagem>
+      )}
 
-        <BotaoCalibrar onClick={handleCalibrar} disabled={estaProcessando}>
-          {isCalibrando ? "Calibrando..." : "Calibrar Altura do Olho"}
-        </BotaoCalibrar>
-      </ContainerDaTela>
-    </>
+      {fase === 'foco' && (
+        <TelaFocoAtivo>
+          <ConteinerAlvo>
+            <CirculoProgresso>
+              <circle 
+                cx="90" cy="90" r="70" 
+                style={{ strokeDashoffset: 440 - (440 * progresso) / 100 }} 
+              />
+            </CirculoProgresso>
+            <PontoCentro />
+          </ConteinerAlvo>
+          <TextoStatus>Calibrando... Mantenha o Foco</TextoStatus>
+          <TextoInstrucao style={{marginTop: '10px'}}>{Math.round(progresso)}%</TextoInstrucao>
+        </TelaFocoAtivo>
+      )}
+    </ConteinerPrincipal>
   );
 };
 
