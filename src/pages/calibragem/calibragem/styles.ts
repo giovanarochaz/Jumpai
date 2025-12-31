@@ -44,7 +44,7 @@ export const TextoInstrucao = styled.p`
   opacity: 0.9;
 `;
 
-export const AreaCamera = styled.div<{ visivel: boolean }>`
+export const AreaCamera = styled.div<{ $visivel: boolean }>`
   position: relative;
   width: clamp(280px, 40vw, 500px);
   aspect-ratio: 4 / 3;
@@ -54,7 +54,7 @@ export const AreaCamera = styled.div<{ visivel: boolean }>`
   background-color: ${cores.preto};
   box-shadow: 0 10px 30px rgba(0,0,0,0.3);
   margin-bottom: 20px;
-  display: ${props => props.visivel ? 'block' : 'none'};
+  display: ${props => props.$visivel ? 'block' : 'none'};
 `;
 
 export const ElementoVideo = styled.video`

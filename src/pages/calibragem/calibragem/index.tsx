@@ -158,7 +158,7 @@ const CalibragemOcular: React.FC = () => {
       <EstiloGlobal />
       {exibirFlash && <Flash />}
 
-      <AreaCamera visivel={fase === 'prep'}>
+      <AreaCamera $visivel={fase === 'prep'}>
         <ElementoVideo ref={videoRef} autoPlay muted playsInline />
       </AreaCamera>
 
