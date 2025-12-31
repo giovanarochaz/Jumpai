@@ -64,7 +64,7 @@ export const CardDoJogo = styled.div<{ $estaAtivo: boolean }>`
   position: relative;
   flex-shrink: 0;
   width: ${CONFIG_CARROSSEL.larguraCard};
-  height: clamp(400px, 62vh, 520px);
+  height: clamp(380px, 58vh, 420px); 
   background-color: ${cores.branco};
   border-radius: 35px;
   padding: 15px;
@@ -83,12 +83,15 @@ export const CardDoJogo = styled.div<{ $estaAtivo: boolean }>`
 
 export const ContainerImagemCard = styled.div`
   width: 100%;
-  height: 220px; 
+  height: 160px; 
   border-radius: 22px;
   border: 3px solid ${cores.preto};
   overflow: hidden;
-  background-color: ${cores.cinza};
+  background-color: ${cores.cinza}; 
   position: relative;
+  display: flex;
+  align-items: center;
+  justify-content: center;
 
   img {
     width: 100%;
@@ -117,7 +120,7 @@ export const BlocoTexto = styled.div`
 `;
 
 export const TituloCard = styled.h2`
-  font-size: 1.8rem;
+  font-size: 1.6rem; 
   font-weight: 900;
   color: ${cores.roxoPrincipal};
   margin: 0;
