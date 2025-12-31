@@ -5,12 +5,13 @@ import App from './App';
 import { EstiloGlobal } from './estilos/global';
 
 import Controle from './pages/controle';
-import Jogo from './pages/jogo';
 import SistemaSolar from './jogos/sistemaSolar/app';
 import CalibragemOcular from './pages/calibragem/calibragem';
 import CalibragemTeste from './pages/calibragem/teste';
 import PiramideDoSabor from './jogos/piramideSabor/app';
 import SaltoAlfabetico from './jogos/saltoAlfabetico/app';
+import FestivalDasCores from './jogos/festivalDasCores/app';
+import SelecaoJogos from './pages/selecaoJogos';
 
 const router = createBrowserRouter([
   {
@@ -23,7 +24,7 @@ const router = createBrowserRouter([
       },
       {
         path: '/jogos',
-        element: <Jogo />,
+        element: <SelecaoJogos />,
       },
       {
         path: '/sistemaSolar', 
