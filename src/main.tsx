@@ -38,7 +38,10 @@ const router = createBrowserRouter([
         path: '/saltoAlfabetico', 
         element: <SaltoAlfabetico />,
       },
-
+      {
+        path: '/festivalDasCores',
+        element: <FestivalDasCores />,
+      },
       {
         path: '/calibragemOcular',
         element: <CalibragemOcular />,
