@@ -3,59 +3,57 @@ import { useNavigate } from 'react-router-dom';
 import { Eye, Keyboard, Sparkles } from 'lucide-react';
 
 import { 
-  MainContainer, ContentWrapper, HeaderSection,
-  GameTitle, SubtitleWrapper, DescriptionText,
-  NavigationSection, SelectionCard, CardText, CardDescription
+  ConteinerPrincipal, AreaConteudo, SecaoCabecalho,
+  TituloJogo, EnvoltorioSubtitulo, TextoDescricao,
+  SecaoNavegacao, CartaoSelecao, TextoCartao, DescricaoCartao
 } from './styles';
+
 import Menu from '../../componentes/Menu';
 
 const Controle: React.FC = () => {
-  const navigate = useNavigate();
+  const navegar = useNavigate();
 
-  const handleNavigateToEyeControl = useCallback(() => {
-    navigate('/calibragemOcular');
-  }, [navigate]);
+  const irParaCalibragem = useCallback(() => {
+    navegar('/calibragemOcular');
+  }, [navegar]);
 
-  const handleNavigateToKeyboardControl = useCallback(() => {
-    navigate('/jogos');
-  }, [navigate]);
+  const irParaJogos = useCallback(() => {
+    navegar('/jogos');
+  }, [navegar]);
 
   return (
-    <MainContainer>
-      
+    <ConteinerPrincipal>
       <Menu />
-
-      <ContentWrapper>
-        <HeaderSection>
-          <GameTitle>
+      <AreaConteudo>
+        <SecaoCabecalho>
+          <TituloJogo>
             JUMPAI
-            <Sparkles className="decor-icon" size={40} />
-          </GameTitle>
+            <Sparkles className="icone-decorativo" size={40} />
+          </TituloJogo>
 
-          <DescriptionText>
+          <TextoDescricao>
             Um jogo educativo e acessível para todos! Explore mundos incríveis 
             usando o poder dos seus olhos ou a agilidade dos seus dedos.
-          </DescriptionText>
+          </TextoDescricao>
 
-          <SubtitleWrapper>Como você quer jogar hoje?</SubtitleWrapper>
-        </HeaderSection>
+          <EnvoltorioSubtitulo>Como você quer jogar hoje?</EnvoltorioSubtitulo>
+        </SecaoCabecalho>
 
-        <NavigationSection>
-          <SelectionCard onClick={handleNavigateToEyeControl}>
-            <Eye size={56} />
-            <CardText>Controle Ocular</CardText>
-            <CardDescription>Pisque para jogar</CardDescription>
-          </SelectionCard>
+        <SecaoNavegacao>
+          <CartaoSelecao onClick={irParaCalibragem}>
+            <Eye />
+            <TextoCartao>Controle Ocular</TextoCartao>
+            <DescricaoCartao>Pisque para jogar</DescricaoCartao>
+          </CartaoSelecao>
 
-          <SelectionCard onClick={handleNavigateToKeyboardControl}>
-            <Keyboard size={56} />
-            <CardText>Controle Teclado</CardText>
-            <CardDescription>Use as setas</CardDescription>
-          </SelectionCard>
-        </NavigationSection>
-      </ContentWrapper>
-
-    </MainContainer>
+          <CartaoSelecao onClick={irParaJogos}>
+            <Keyboard />
+            <TextoCartao>Controle Teclado</TextoCartao>
+            <DescricaoCartao>Use as setas</DescricaoCartao>
+          </CartaoSelecao>
+        </SecaoNavegacao>
+      </AreaConteudo>
+    </ConteinerPrincipal>
   );
 };
 
