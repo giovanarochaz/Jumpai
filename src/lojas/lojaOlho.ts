@@ -72,12 +72,11 @@ export const lojaOlho = create<EstadoOlho>((set, get) => ({
     baseDireito: null
   },
 
-  // --- Implementação das Ações ---
   setAlturaMedia: (altura) => set({ alturaMedia: altura }),
   setAlturaMediaEsquerda: (altura) => set({ alturaMediaEsquerda: altura }),
   setAlturaMediaDireita: (altura) => set({ alturaMediaDireita: altura }),
   
-  setLeitorAtivo: (ativo) => set({ leitorAtivo: ativo }), // Salva preferência do usuário
+  setLeitorAtivo: (ativo) => set({ leitorAtivo: ativo }), 
 
   setEstaPiscando: (piscando) => {
     if (get().estaPiscando !== piscando) {

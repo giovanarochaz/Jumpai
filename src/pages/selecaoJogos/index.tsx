@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useCallback } from 'react';
+import React, { useState, useEffect, useCallback, useRef } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { ArrowLeft, ArrowRight, Play } from 'lucide-react';
 import { useStore } from 'zustand';
@@ -19,16 +19,16 @@ const DADOS_JOGOS = [
 const SelecaoJogos: React.FC = () => {
   const navegar = useNavigate();
   const totalJogos = DADOS_JOGOS.length;
-  
-  // Criamos uma lista gigante para o carrossel ser virtualmente infinito e sem "pulos"
   const MULTIPLICADOR = 20; 
   const listaInfinita = Array(MULTIPLICADOR).fill(DADOS_JOGOS).flat();
 
-  // Começamos no meio da lista gigante para permitir navegação livre para ambos os lados
+  const { mostrarCameraFlutuante, estaPiscando, leitorAtivo } = useStore(lojaOlho);
+
   const [indiceAtual, setIndiceAtual] = useState(Math.floor(listaInfinita.length / 2));
   const [semTransicao, setSemTransicao] = useState(false);
-
-  const { mostrarCameraFlutuante, estaPiscando } = useStore(lojaOlho);
+  const [podeInteragir, setPodeInteragir] = useState(false);
+  
+  const timerRef = useRef<NodeJS.Timeout | null>(null);
   const indiceReal = indiceAtual % totalJogos;
   const jogoAtivo = DADOS_JOGOS[indiceReal];
 
@@ -37,8 +37,7 @@ const SelecaoJogos: React.FC = () => {
     setIndiceAtual(prev => direcao === 'proximo' ? prev + 1 : prev - 1);
   }, []);
 
-  // Reset silencioso: quando o usuário chega perto do fim da lista gigante, 
-  // voltamos para o meio sem animação (imperceptível)
+  // Loop infinito do carrossel
   useEffect(() => {
     if (indiceAtual > listaInfinita.length - 10 || indiceAtual < 10) {
       setSemTransicao(true);
@@ -46,20 +45,65 @@ const SelecaoJogos: React.FC = () => {
     }
   }, [indiceAtual, totalJogos, listaInfinita.length]);
 
-  // Narrador Ocular: Lê o título e descrição e move o carrossel se o modo ocular estiver ativo
-  useLeitorOcular(`${jogoAtivo.titulo}. ${jogoAtivo.descricao}`, [indiceReal], () => {
-    if (mostrarCameraFlutuante) {
-      setTimeout(() => mover('proximo'), 3000);
+  // Função para estimar o tempo de fala (90ms por caractere + margem)
+  const estimarTempoDeLeitura = (texto: string) => {
+    const tempoCalculado = texto.length * 95; 
+    return Math.max(tempoCalculado, 4500); // Garante no mínimo 4.5s
+  };
+
+  // CICLO AUTOMÁTICO (CONTROLE OCULAR)
+  useEffect(() => {
+    if (!mostrarCameraFlutuante) {
+      setPodeInteragir(true);
+      return;
     }
-  });
+
+    if (timerRef.current) clearTimeout(timerRef.current);
+
+    const textoCompleto = `${jogoAtivo.titulo}. Categoria ${jogoAtivo.categoria}. ${jogoAtivo.descricao}`;
+
+    if (leitorAtivo) {
+      setPodeInteragir(false);
+      const tempoLeitura = estimarTempoDeLeitura(textoCompleto);
+      
+      // Timer da leitura
+      timerRef.current = setTimeout(() => {
+        setPodeInteragir(true); // Libera o clique/piscada
+
+        // Aguarda 2.5 segundos em estado "pronto" antes de passar para o próximo
+        timerRef.current = setTimeout(() => {
+          mover('proximo');
+        }, 2500);
+
+      }, tempoLeitura);
+
+    } else {
+      // Se o leitor estiver desligado, apenas espera 3s e move
+      setPodeInteragir(true);
+      timerRef.current = setTimeout(() => {
+        mover('proximo');
+      }, 3000);
+    }
+
+    return () => {
+      if (timerRef.current) clearTimeout(timerRef.current);
+    };
+  }, [indiceAtual, mostrarCameraFlutuante, leitorAtivo, mover, jogoAtivo]);
+
+  // Hook do Narrador Ocular
+  useLeitorOcular(
+    `${jogoAtivo.titulo}. Categoria ${jogoAtivo.categoria}. ${jogoAtivo.descricao}`, 
+    [indiceReal]
+  );
 
   // Seleção por piscada
   useEffect(() => {
-    if (estaPiscando && mostrarCameraFlutuante) {
+    if (estaPiscando && mostrarCameraFlutuante && podeInteragir) {
+      if (timerRef.current) clearTimeout(timerRef.current);
       pararNarracao();
       navegar(jogoAtivo.rota);
     }
-  }, [estaPiscando, mostrarCameraFlutuante, jogoAtivo, navegar]);
+  }, [estaPiscando, mostrarCameraFlutuante, podeInteragir, jogoAtivo, navegar]);
 
   return (
     <S.ContainerPrincipal>
@@ -75,32 +119,44 @@ const SelecaoJogos: React.FC = () => {
           </S.BotaoNavegacao>
 
           <S.TrilhaCarrossel $indiceAtual={indiceAtual} $semTransicao={semTransicao}>
-            {listaInfinita.map((jogo, index) => (
-              <S.CardDoJogo 
-                key={`${jogo.id}-${index}`} 
-                $estaAtivo={index === indiceAtual}
-                onClick={() => {
-                  if (index === indiceAtual) navegar(jogo.rota);
-                  else setIndiceAtual(index);
-                }}
-              >
-                <S.ContainerImagemCard>
-                  <ImageWithLoader src={jogo.imagem} alt={jogo.titulo} />
-                </S.ContainerImagemCard>
+            {listaInfinita.map((jogo, index) => {
+              const estaAtivo = index === indiceAtual;
+              return (
+                <S.CardDoJogo 
+                  key={`${jogo.id}-${index}`} 
+                  $estaAtivo={estaAtivo}
+                  $podeInteragir={estaAtivo ? podeInteragir : true}
+                  onClick={() => {
+                    if (estaAtivo) {
+                      if (!mostrarCameraFlutuante || podeInteragir) navegar(jogo.rota);
+                    } else {
+                      setIndiceAtual(index);
+                    }
+                  }}
+                >
+                  <S.TagCategoria>{jogo.categoria}</S.TagCategoria>
+                  
+                  <S.ContainerImagemCard>
+                    <ImageWithLoader src={jogo.imagem} alt={jogo.titulo} />
+                  </S.ContainerImagemCard>
 
-                <S.ConteudoCard>
-                  <S.BlocoTexto>
-                    <S.TituloCard>{jogo.titulo}</S.TituloCard>
-                    <S.DescricaoCard>{jogo.descricao}</S.DescricaoCard>
-                  </S.BlocoTexto>
+                  <S.ConteudoCard>
+                    <S.BlocoTexto>
+                      <S.TituloCard>{jogo.titulo}</S.TituloCard>
+                      <S.DescricaoCard>{jogo.descricao}</S.DescricaoCard>
+                    </S.BlocoTexto>
 
-                  <S.BotaoJogar $estaAtivo={index === indiceAtual}>
-                    <Play fill="currentColor" size={20} />
-                    {index === indiceAtual ? 'JOGAR AGORA' : 'SELECIONAR'}
-                  </S.BotaoJogar>
-                </S.ConteudoCard>
-              </S.CardDoJogo>
-            ))}
+                    <S.BotaoJogar 
+                      $estaAtivo={estaAtivo} 
+                      $podeInteragir={estaAtivo ? podeInteragir : true}
+                    >
+                      <Play fill="currentColor" size={20} />
+                      {estaAtivo ? (podeInteragir ? 'JOGAR AGORA' : 'OUVINDO...') : 'SELECIONAR'}
+                    </S.BotaoJogar>
+                  </S.ConteudoCard>
+                </S.CardDoJogo>
+              );
+            })}
           </S.TrilhaCarrossel>
 
           <S.BotaoNavegacao $direcao="direita" onClick={() => mover('proximo')}>

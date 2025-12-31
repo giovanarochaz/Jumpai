@@ -1,10 +1,16 @@
-import styled from "styled-components";
+import styled, { keyframes, css } from "styled-components";
 import { cores } from "../../estilos/cores";
 
 const CONFIG_CARROSSEL = {
   larguraCard: "380px", 
   gap: "35px",
 };
+
+const pulsar = keyframes`
+  0% { transform: scale(1); box-shadow: 0 0 0 0 rgba(255, 215, 0, 0.7); }
+  70% { transform: scale(1.03); box-shadow: 0 0 0 15px rgba(255, 215, 0, 0); }
+  100% { transform: scale(1); box-shadow: 0 0 0 0 rgba(255, 215, 0, 0); }
+`;
 
 export const ContainerPrincipal = styled.main`
   display: flex;
@@ -60,7 +66,7 @@ export const TrilhaCarrossel = styled.div<{ $indiceAtual: number, $semTransicao?
   ));
 `;
 
-export const CardDoJogo = styled.div<{ $estaAtivo: boolean }>`
+export const CardDoJogo = styled.div<{ $estaAtivo: boolean; $podeInteragir: boolean }>`
   position: relative;
   flex-shrink: 0;
   width: ${CONFIG_CARROSSEL.larguraCard};
@@ -77,8 +83,28 @@ export const CardDoJogo = styled.div<{ $estaAtivo: boolean }>`
   transform: ${({ $estaAtivo }) => $estaAtivo ? "scale(1.05)" : "scale(0.85)"};
   opacity: ${({ $estaAtivo }) => ($estaAtivo ? 1 : 0.4)};
   filter: ${({ $estaAtivo }) => $estaAtivo ? "none" : "grayscale(80%) blur(1px)"};
-  box-shadow: ${({ $estaAtivo }) => $estaAtivo ? `15px 15px 0px ${cores.preto}` : "0 8px 30px rgba(0,0,0,0.3)"};
+  
+  box-shadow: ${({ $estaAtivo, $podeInteragir }) => 
+    ($estaAtivo && $podeInteragir) ? `15px 15px 0px ${cores.preto}` : 
+    $estaAtivo ? `5px 5px 0px ${cores.preto}` : "0 8px 30px rgba(0,0,0,0.3)"};
+  
   z-index: ${({ $estaAtivo }) => ($estaAtivo ? 10 : 1)};
+`;
+
+export const TagCategoria = styled.span`
+  position: absolute;
+  top: 15px;
+  right: 15px;
+  background-color: ${cores.amarelo};
+  color: ${cores.preto};
+  font-size: 0.75rem;
+  font-weight: 800;
+  padding: 5px 12px;
+  border-radius: 12px;
+  border: 3px solid ${cores.preto};
+  text-transform: uppercase;
+  z-index: 5;
+  box-shadow: 3px 3px 0px ${cores.preto};
 `;
 
 export const ContainerImagemCard = styled.div`
@@ -135,11 +161,11 @@ export const DescricaoCard = styled.p`
   max-width: 90%;
 `;
 
-export const BotaoJogar = styled.div<{ $estaAtivo?: boolean }>`
+export const BotaoJogar = styled.div<{ $estaAtivo?: boolean; $podeInteragir?: boolean }>`
   width: 100%;
   padding: 12px;
-  background-color: ${({ $estaAtivo }) => $estaAtivo ? cores.amarelo : cores.roxoPrincipal};
-  color: ${({ $estaAtivo }) => $estaAtivo ? cores.preto : cores.branco};
+  background-color: ${({ $estaAtivo, $podeInteragir }) => ($estaAtivo && $podeInteragir) ? cores.amarelo : cores.roxoPrincipal};
+  color: ${({ $estaAtivo, $podeInteragir }) => ($estaAtivo && $podeInteragir) ? cores.preto : cores.branco};
   font-weight: 800;
   border-radius: 18px;
   border: 3px solid ${cores.preto};
@@ -150,10 +176,9 @@ export const BotaoJogar = styled.div<{ $estaAtivo?: boolean }>`
   gap: 10px;
   transition: 0.2s;
 
-  ${CardDoJogo}:hover & {
-    background-color: ${cores.amarelo};
-    color: ${cores.preto};
-  }
+  ${({ $estaAtivo, $podeInteragir }) => ($estaAtivo && $podeInteragir) && css`
+    animation: ${pulsar} 1.5s infinite;
+  `}
 `;
 
 export const BotaoNavegacao = styled.button<{ $direcao: "esquerda" | "direita" }>`
