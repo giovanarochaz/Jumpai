@@ -205,7 +205,6 @@ const CalibragemTeste: React.FC = () => {
     
     if (acertos >= 2) {
       exibirMensagem('sucesso', () => {
-        // Passo 2: Após fechar o sucesso, pergunta do leitor
         setMostrarPerguntaLeitor(true);
       });
     } else {
