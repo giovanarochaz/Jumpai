@@ -1,29 +1,36 @@
-// src/hooks/useLeitorOcular.ts
 import { useEffect } from 'react';
 import { useStore } from 'zustand';
 import { lojaOlho } from '../lojas/lojaOlho';
 import { narrarParaOcular, pararNarracao } from '../servicos/acessibilidade';
 
+/**
+ * Hook para narrar textos automaticamente
+ * @param texto Texto a ser lido
+ * @param dependencias Array de dependências para disparar a leitura
+ * @param aoTerminar Callback opcional após o fim da fala
+ */
 export const useLeitorOcular = (
   texto: string | null, 
   dependencias: any[], 
   aoTerminar?: () => void
 ) => {
-  const mostrarCameraFlutuante = useStore(lojaOlho, (state) => state.mostrarCameraFlutuante);
+  // Acessa os estados da loja Zustand
+  const { mostrarCameraFlutuante, leitorAtivo } = useStore(lojaOlho);
 
   useEffect(() => {
-    // Só narra se o modo ocular estiver ativo e houver texto
-    if (mostrarCameraFlutuante && texto) {
+    // Condição de ouro: Câmera flutuante ativa + Usuário permitiu leitor + Existe texto
+    if (mostrarCameraFlutuante && leitorAtivo && texto) {
       const timer = setTimeout(() => {
         narrarParaOcular(texto, aoTerminar);
-      }, 600); // Aguarda o fim da animação de deslize do carrossel
+      }, 600); // Pequeno delay para fluidez visual (ex: trocas de tela)
       
       return () => {
         clearTimeout(timer);
         pararNarracao();
       };
-    } else if (!mostrarCameraFlutuante) {
+    } else {
+      // Se qualquer condição falhar, para a narração imediatamente
       pararNarracao();
     }
-  }, [mostrarCameraFlutuante, texto, ...dependencias]);
+  }, [mostrarCameraFlutuante, leitorAtivo, texto, ...dependencias]);
 };
