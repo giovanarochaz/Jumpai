@@ -1,11 +1,5 @@
 import React, { useEffect } from 'react';
-import {
-  FundoDoModal,
-  ConteudoDoModal,
-  ImagemDoModal,
-  TituloDoModal,
-  DescricaoDoModal
-} from './estilos';
+import * as S from './estilos';
 
 interface ModalGenericoProps {
   estaAberto: boolean;
@@ -23,7 +17,7 @@ const ModalGenerico: React.FC<ModalGenericoProps> = ({
   imagemSrc,
   titulo,
   descricao,
-  duracaoEmSegundos = 5,
+  duracaoEmSegundos = 4, 
   acaoAposFechar,
 }) => {
   useEffect(() => {
@@ -38,18 +32,16 @@ const ModalGenerico: React.FC<ModalGenericoProps> = ({
     }
   }, [estaAberto, aoFechar, acaoAposFechar, duracaoEmSegundos]);
 
-  if (!estaAberto) {
-    return null;
-  }
+  if (!estaAberto) return null;
 
   return (
-    <FundoDoModal>
-      <ConteudoDoModal>
-        <ImagemDoModal src={imagemSrc} alt="Ícone do modal" />
-        <TituloDoModal>{titulo}</TituloDoModal>
-        <DescricaoDoModal>{descricao}</DescricaoDoModal>
-      </ConteudoDoModal>
-    </FundoDoModal>
+    <S.FundoDoModal>
+      <S.ConteudoDoModal>
+        <S.ImagemDoModal src={imagemSrc} alt="Ícone" />
+        <S.TituloDoModal>{titulo}</S.TituloDoModal>
+        <S.DescricaoDoModal>{descricao}</S.DescricaoDoModal>
+      </S.ConteudoDoModal>
+    </S.FundoDoModal>
   );
 };
 
