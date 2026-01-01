@@ -1,24 +1,13 @@
-import React, { useRef, useEffect } from 'react';
-import {
-  FaceLandmarker,
-  FilesetResolver,
-} from "@mediapipe/tasks-vision";
-import type { FaceLandmarkerResult } from "@mediapipe/tasks-vision";
+import { useRef, useEffect } from 'react';
+import { FaceLandmarker, FilesetResolver } from "@mediapipe/tasks-vision";
 import { lojaOlho } from '../lojas/lojaOlho';
 
-// Constantes para os índices dos pontos dos olhos
-const PONTO_TOPO_ESQUERDO = 159;
-const PONTO_BASE_ESQUERDO = 145;
-const PONTO_TOPO_DIREITO = 386;
-const PONTO_BASE_DIREITO = 374;
-const LIMIAR_PISCADA = 0.5;
+// Constantes unificadas de Intencionalidade
+const LIMIAR_PISCADA = 0.55;
+const DURACAO_MINIMA = 250; 
+const DURACAO_MAXIMA = 900; 
+const COOLDOWN = 600; 
 
-/**
- * Hook customizado para encapsular a lógica de detecção facial e de piscada com MediaPipe.
- * @param videoRef A referência para o elemento <video> que exibe a câmera.
- * @param onRostoDetectado Callback opcional executado quando um rosto é encontrado.
- * @param onNenhumRosto Callback opcional executado quando nenhum rosto é encontrado.
- */
 export const useRastreamentoOcular = (
   videoRef: React.RefObject<HTMLVideoElement | null>,
   onRostoDetectado?: () => void,
@@ -26,9 +15,12 @@ export const useRastreamentoOcular = (
 ) => {
   const faceLandmarkerRef = useRef<FaceLandmarker | null>(null);
   const requestRef = useRef<number | null>(null);
-  const isPiscandoRef = useRef(false);
   
-  const { alturaMedia, setPontosDoOlho, setEstaPiscando } = lojaOlho.getState();
+  const tempoInicioFechado = useRef<number | null>(null);
+  const ultimoCliqueTime = useRef<number>(0);
+
+  // Acessamos o estado da loja
+  const { alturaMedia, setEstaPiscando, setPontosDoOlho } = lojaOlho.getState();
 
   const detectar = async () => {
     const video = videoRef.current;
@@ -37,77 +29,75 @@ export const useRastreamentoOcular = (
       return;
     }
 
-    const resultado: FaceLandmarkerResult = faceLandmarkerRef.current.detectForVideo(video, performance.now());
+    const resultado = faceLandmarkerRef.current.detectForVideo(video, performance.now());
 
-    if (resultado.faceLandmarks.length > 0) {
-      if (onRostoDetectado) {
-        onRostoDetectado();
-      }
-      
+    if (resultado.faceLandmarks?.[0]) {
+      onRostoDetectado?.();
       const pontos = resultado.faceLandmarks[0];
-      // Olho esquerdo
-      const olhoTopoEsquerdo = pontos[PONTO_TOPO_ESQUERDO];
-      const olhoBaseEsquerdo = pontos[PONTO_BASE_ESQUERDO];
-      // Olho direito
-      const olhoTopoDireito = pontos[PONTO_TOPO_DIREITO];
-      const olhoBaseDireito = pontos[PONTO_BASE_DIREITO];
+      
+      // Cálculo da altura média atual (Esquerdo + Direito / 2)
+      const hE = Math.abs(pontos[145].y - pontos[159].y);
+      const hD = Math.abs(pontos[374].y - pontos[386].y);
+      const alturaAtual = (hE + hD) / 2;
 
-      if (olhoTopoEsquerdo && olhoBaseEsquerdo && olhoTopoDireito && olhoBaseDireito) {
-        setPontosDoOlho({
-          topoEsquerdo: olhoTopoEsquerdo,
-          baseEsquerdo: olhoBaseEsquerdo,
-          topoDireito: olhoTopoDireito,
-          baseDireito: olhoBaseDireito
-        });
+      const agora = performance.now();
+      const estaFechado = alturaMedia > 0 && alturaAtual < (alturaMedia * LIMIAR_PISCADA);
 
-        // Calcular altura média dos dois olhos
-        const alturaEsquerdo = Math.abs(olhoBaseEsquerdo.y - olhoTopoEsquerdo.y);
-        const alturaDireito = Math.abs(olhoBaseDireito.y - olhoTopoDireito.y);
-        const alturaMediaOlhos = (alturaEsquerdo + alturaDireito) / 2;
-        const piscou = alturaMedia > 0 && alturaMediaOlhos < alturaMedia * LIMIAR_PISCADA;
+      if (estaFechado) {
+        // Olho acabou de fechar
+        if (tempoInicioFechado.current === null) {
+          tempoInicioFechado.current = agora;
+        }
+      } else {
+        // Olho abriu, validar a duração do fechamento
+        if (tempoInicioFechado.current !== null) {
+          const duracao = agora - tempoInicioFechado.current;
 
-        if (piscou && !isPiscandoRef.current) {
-          isPiscandoRef.current = true;
-        } else if (!piscou && isPiscandoRef.current) {
-          isPiscandoRef.current = false;
-          setEstaPiscando(true);
-          setTimeout(() => setEstaPiscando(false), 100);
+          // REGRAS DE INTENCIONALIDADE
+          if (
+            duracao >= DURACAO_MINIMA && 
+            duracao <= DURACAO_MAXIMA &&
+            (agora - ultimoCliqueTime.current) > COOLDOWN
+          ) {
+            setEstaPiscando(true);
+            ultimoCliqueTime.current = agora;
+            // Feedback de 200ms para a detecção ser percebida pelo sistema
+            setTimeout(() => setEstaPiscando(false), 200);
+          }
+          tempoInicioFechado.current = null;
         }
       }
-    } else {
-      if (onNenhumRosto) {
-        onNenhumRosto();
-      }
-      setPontosDoOlho({
-        topoEsquerdo: null,
-        baseEsquerdo: null,
-        topoDireito: null,
-        baseDireito: null
-      });
-    }
 
+      // Atualiza landmarks para a câmera flutuante (opcional)
+      setPontosDoOlho({
+        topoEsquerdo: pontos[159], baseEsquerdo: pontos[145],
+        topoDireito: pontos[386], baseDireito: pontos[374]
+      });
+    } else {
+      onNenhumRosto?.();
+      tempoInicioFechado.current = null;
+    }
     requestRef.current = requestAnimationFrame(detectar);
   };
 
   useEffect(() => {
-    const iniciarMediaPipe = async () => {
+    const carregar = async () => {
       try {
-        const filesetResolver = await FilesetResolver.forVisionTasks("https://cdn.jsdelivr.net/npm/@mediapipe/tasks-vision/wasm");
-        faceLandmarkerRef.current = await FaceLandmarker.createFromOptions(filesetResolver, {
-          baseOptions: { modelAssetPath: "https://storage.googleapis.com/mediapipe-assets/face_landmarker.task", delegate: "GPU" },
-          runningMode: "VIDEO", numFaces: 1,
+        const vision = await FilesetResolver.forVisionTasks("https://cdn.jsdelivr.net/npm/@mediapipe/tasks-vision/wasm");
+        faceLandmarkerRef.current = await FaceLandmarker.createFromOptions(vision, {
+          baseOptions: { 
+            modelAssetPath: "https://storage.googleapis.com/mediapipe-assets/face_landmarker.task", 
+            delegate: "GPU" 
+          },
+          runningMode: "VIDEO", 
+          numFaces: 1,
         });
         requestRef.current = requestAnimationFrame(detectar);
       } catch (err) {
-        console.error("Falha ao inicializar MediaPipe:", err);
+        console.error("Erro ao carregar MediaPipe no Hook:", err);
       }
     };
-    iniciarMediaPipe();
-
-    return () => {
-      if (requestRef.current) {
-        cancelAnimationFrame(requestRef.current);
-      }
-    };
-  }, []);
+    carregar();
+    return () => { if (requestRef.current) cancelAnimationFrame(requestRef.current); };
+  }, [alturaMedia]); // Recarrega se a altura média mudar (recalibragem)
 };
