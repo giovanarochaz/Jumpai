@@ -1,3 +1,4 @@
+// src/paginas/CalibragemOcular/index.tsx
 import React, { useRef, useEffect, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { FaceLandmarker, FilesetResolver } from "@mediapipe/tasks-vision";
@@ -12,6 +13,8 @@ import {
 import { lojaOlho } from '../../../lojas/lojaOlho';
 import { EstiloGlobal } from '../../../estilos/global';
 import ModalInstrucao from '../../../componentes/ModalInstrucao';
+// Importação da configuração centralizada
+import { CONFIG_OCULAR, calcularAlturaMediaOlhos } from '../../../config/rastreamentoConfig';
 
 const TOTAL_AMOSTRAS = 150;
 
@@ -28,8 +31,7 @@ const CalibragemOcular: React.FC = () => {
   const requestRef = useRef<number | null>(null);
   
   // Dados de Calibragem
-  const amostrasERef = useRef<number[]>([]);
-  const amostrasDRef = useRef<number[]>([]);
+  const amostrasMediasRef = useRef<number[]>([]);
   const calibrandoRef = useRef(false);
 
   // Estados de UI
@@ -55,12 +57,10 @@ const CalibragemOcular: React.FC = () => {
   const ativarSensores = async () => {
     setCarregandoIA(true);
     try {
-      const vision = await FilesetResolver.forVisionTasks(
-        "https://cdn.jsdelivr.net/npm/@mediapipe/tasks-vision/wasm"
-      );
+      const vision = await FilesetResolver.forVisionTasks(CONFIG_OCULAR.WASM_PATH);
       faceLandmarkerRef.current = await FaceLandmarker.createFromOptions(vision, {
         baseOptions: { 
-          modelAssetPath: "https://storage.googleapis.com/mediapipe-assets/face_landmarker.task", 
+          modelAssetPath: CONFIG_OCULAR.MODEL_ASSET_PATH, 
           delegate: "GPU" 
         },
         runningMode: "VIDEO", 
@@ -71,11 +71,12 @@ const CalibragemOcular: React.FC = () => {
         video: { width: 640, height: 480 } 
       });
 
-      if (videoRef.current) {
+      const video = videoRef.current;
+      if (video) {
         streamRef.current = stream;
-        videoRef.current.srcObject = stream;
-        videoRef.current.onloadeddata = () => {
-          videoRef.current?.play();
+        video.srcObject = stream;
+        video.onloadeddata = () => {
+          video.play();
           requestRef.current = requestAnimationFrame(processar);
           setIaPronta(true);
           setCarregandoIA(false);
@@ -83,7 +84,7 @@ const CalibragemOcular: React.FC = () => {
       }
     } catch (err) {
       console.error("Erro ao ativar sensores:", err);
-      alert("Não conseguimos acessar sua câmera. Verifique as permissões.");
+      alert("Não conseguimos acessar sua câmera.");
       setCarregandoIA(false);
     }
   };
@@ -102,18 +103,18 @@ const CalibragemOcular: React.FC = () => {
 
     if (detector && video && video.readyState >= 2 && streamRef.current) {
       const resultado = detector.detectForVideo(video, performance.now());
-      if (resultado.faceLandmarks && resultado.faceLandmarks.length > 0 && calibrandoRef.current) {
+      
+      if (resultado.faceLandmarks?.[0] && calibrandoRef.current) {
         const pontos = resultado.faceLandmarks[0];
-        const hE = Math.abs(pontos[145].y - pontos[159].y);
-        const hD = Math.abs(pontos[374].y - pontos[386].y);
-
-        amostrasERef.current.push(hE);
-        amostrasDRef.current.push(hD);
         
-        const perc = Math.min((amostrasERef.current.length / TOTAL_AMOSTRAS) * 100, 100);
+        const alturaMediaAtual = calcularAlturaMediaOlhos(pontos);
+
+        amostrasMediasRef.current.push(alturaMediaAtual);
+        
+        const perc = Math.min((amostrasMediasRef.current.length / TOTAL_AMOSTRAS) * 100, 100);
         setProgresso(perc);
 
-        if (amostrasERef.current.length >= TOTAL_AMOSTRAS) {
+        if (amostrasMediasRef.current.length >= TOTAL_AMOSTRAS) {
           finalizar();
           return;
         }
@@ -139,16 +140,17 @@ const CalibragemOcular: React.FC = () => {
   const finalizar = () => {
     calibrandoRef.current = false;
     setExibirFlash(true);
+
     const calcularMediana = (arr: number[]) => {
       const s = [...arr].sort((a, b) => a - b);
       return s[Math.floor(s.length / 2)];
     };
-    const medE = calcularMediana(amostrasERef.current);
-    const medD = calcularMediana(amostrasDRef.current);
+
+    const alturaFinalCalibrada = calcularMediana(amostrasMediasRef.current);
+
     const store = lojaOlho.getState();
-    store.setAlturaMediaEsquerda(medE);
-    store.setAlturaMediaDireita(medD);
-    store.setAlturaMedia((medE + medD) / 2);
+    store.setAlturaMedia(alturaFinalCalibrada);
+
     setTimeout(() => navegar("/calibragem-teste"), 800);
   };
 
