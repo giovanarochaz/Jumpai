@@ -7,16 +7,47 @@ import { useLeitorOcular } from '../../../hooks/useLeitorOcular';
 import { pararNarracao } from '../../../servicos/acessibilidade';
 
 const planetasInfo = [
-   { nome: 'Mercúrio', imagem: '/assets/sistemaSolar/mercurio.png', descricao: "Eu sou o 'ligeirinho'! Sou o menor planeta e o que gira mais rápido em volta do Sol." },
-   { nome: 'Vênus', imagem: '/assets/sistemaSolar/venus.png', descricao: "Sou o planeta mais brilhante e quente! Minhas nuvens seguram o calor como um cobertor." },
-   { nome: 'Terra', imagem: '/assets/sistemaSolar/terra.png', descricao: "Nosso lar azul! Sou o único lugar conhecido com água líquida e muita vida." },
-   { nome: 'Marte', imagem: '/assets/sistemaSolar/marte.png', descricao: "O Planeta Vermelho! Tenho poeira de ferro e o maior vulcão do universo, o Monte Olimpo." },
-   { nome: 'Júpiter', imagem: '/assets/sistemaSolar/jupiter.png', descricao: "Eu sou o Rei dos Planetas! Sou um gigante feito de gás e tempestades espaciais." },
-   { nome: 'Saturno', imagem: '/assets/sistemaSolar/saturno.png', descricao: "O senhor dos anéis! Meus anéis são feitos de pedaços brilhantes de gelo e rocha." },
-   { nome: 'Urano', imagem: '/assets/sistemaSolar/urano.png', descricao: "O planeta que gira deitado! Sou um gigante de gelo azul e muito, muito gelado." },
-   { nome: 'Netuno', imagem: '/assets/sistemaSolar/netuno.png', descricao: "O mestre dos ventos! Sou o mais distante do Sol e meus ventos são ultra velozes." },
+   { 
+      nome: 'Mercúrio', 
+      imagem: '/assets/sistemaSolar/mercurio.png', 
+      descricao: "O 'Papa-Léguas' do espaço! Sou o menor planeta e o mais rápido de todos. Um ano aqui dura apenas 88 dias! Mas cuidado: de dia eu sou quente como um forno e de noite sou mais frio que um freezer." 
+   },
+   { 
+      nome: 'Vênus', 
+      imagem: '/assets/sistemaSolar/venus.png', 
+      descricao: "O planeta 'estufa'! Sou o lugar mais quente do Sistema Solar, com nuvens que prendem o calor. Sou tão brilhante que pareço uma estrela no céu, e aqui o Sol nasce do lado contrário: no Oeste!" 
+   },
+   { 
+      nome: 'Terra', 
+      imagem: '/assets/sistemaSolar/terra.png', 
+      descricao: "A nossa nave mãe azul! Sou o único lugar conhecido com o 'combo da vida': água, oxigênio e a temperatura perfeita. Tenho um escudo magnético invisível que nos protege das tempestades do Sol." 
+   },
+   { 
+      nome: 'Marte', 
+      imagem: '/assets/sistemaSolar/marte.png', 
+      descricao: "O mundo de ferrugem! Sou vermelho porque meu solo é cheio de ferro oxidado. Sabia que tenho o maior vulcão do Universo? O Monte Olimpo é três vezes mais alto que o Monte Everest!" 
+   },
+   { 
+      nome: 'Júpiter', 
+      imagem: '/assets/sistemaSolar/jupiter.png', 
+      descricao: "O gigante protetor! Sou tão grande que todos os outros planetas caberiam dentro de mim. Minha 'Grande Mancha Vermelha' é, na verdade, uma tempestade gigante que dura mais de 300 anos!" 
+   },
+   { 
+      nome: 'Saturno', 
+      imagem: '/assets/sistemaSolar/saturno.png', 
+      descricao: "A joia do sistema! Meus anéis são feitos de bilhões de pedaços de gelo e poeira. Curiosidade: eu sou tão leve que, se você encontrasse uma banheira gigante o suficiente, eu flutuaria na água!" 
+   },
+   { 
+      nome: 'Urano', 
+      imagem: '/assets/sistemaSolar/urano.png', 
+      descricao: "O gigante rebelde! Diferente de todos os outros, eu giro 'deitado'. Sou um mundo gelado de cor azul-esverdeada por causa do gás metano e sou o planeta mais frio de toda a vizinhança." 
+   },
+   { 
+      nome: 'Netuno', 
+      imagem: '/assets/sistemaSolar/netuno.png', 
+      descricao: "O mestre dos ventos! Sou o último planeta e o mais distante do Sol. Aqui os ventos são tão furiosos que ultrapassam a velocidade de um avião a jato! Sou um mundo azul profundo, frio e sombrio." 
+   },
 ];
-
 export type VelocidadeGeracao = 'lenta' | 'normal' | 'rapida';
 export interface ConfiguracoesJogo { velocidade: VelocidadeGeracao; penalidade: boolean; sons: boolean; }
 interface ManualSistemaSolarProps { aoIniciarMissao: (configuracoes: ConfiguracoesJogo) => void; }
