@@ -117,7 +117,7 @@ export const DeslizadorInterruptor = styled.span`
 export const NavegacaoCarrossel = styled.div`
    display: flex; justify-content: space-between; align-items: center;
    margin-top: auto; padding-top: 1.5vh;
-   span { font-family: 'monospace'; color: ${TEMA.azulIon}; font-size: clamp(1rem, 1.5vw, 1.2rem); font-weight: bold; letter-spacing: 2px; }
+   span { color: ${TEMA.azulIon}; font-size: clamp(1rem, 1.5vw, 1.2rem); font-weight: bold; letter-spacing: 2px; }
 `;
 
 export const BotaoNavegacao = styled.button<{ $isFocusedManual?: boolean }>`
