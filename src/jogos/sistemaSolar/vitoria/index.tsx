@@ -55,33 +55,45 @@ const TelaVitoria: React.FC<TelaVitoriaProps> = ({ aoReiniciar }) => {
         setBotaoFocado(prev => prev === 'reiniciar' ? 'menu' : 'reiniciar');
       }, 3500);
     }
-    return () => { if (timerScanRef.current) clearInterval(timerScanRef.current); };
+
+    return () => {
+      if (timerScanRef.current) clearInterval(timerScanRef.current);
+    };
   }, [modoOcular, podeInteragirOcular]);
 
   const textoParaLeitura = useMemo(() => {
     if (!leitorAtivo) return null;
 
     if (!podeInteragirOcular) {
-      return "Missão Cumprida! Excelente trabalho, Comandante. Você catalogou todo o Sistema Solar. O que deseja fazer agora?";
+      return 'Missão Cumprida! Excelente trabalho, Comandante. Você catalogou todo o Sistema Solar. O que deseja fazer agora?';
     }
 
-    return botaoFocado === 'reiniciar' 
-      ? "Jogar novamente. Pisque agora para reiniciar a aventura!" 
-      : "Voltar para o menu principal. Pisque agora para escolher outro jogo.";
+    return botaoFocado === 'reiniciar'
+      ? 'Jogar novamente. Pisque agora para reiniciar a aventura!'
+      : 'Voltar para o menu principal. Pisque agora para escolher outro jogo.';
   }, [leitorAtivo, podeInteragirOcular, botaoFocado]);
 
   useLeitorOcular(textoParaLeitura, [textoParaLeitura], () => {
     if (modoOcular && leitorAtivo) setPodeInteragirOcular(true);
   });
 
-  const confirmarAcao = useCallback(() => {
+  const irParaMenu = useCallback(() => {
     pararNarracao();
+    navigate('/jogos');
+  }, [navigate]);
+
+  const tentarNovamente = useCallback(() => {
+    pararNarracao();
+    aoReiniciar();
+  }, [aoReiniciar]);
+
+  const confirmarAcao = useCallback(() => {
     if (botaoFocado === 'reiniciar') {
-      aoReiniciar(); 
+      tentarNovamente();
     } else {
-      navigate('/jogos'); 
+      irParaMenu();
     }
-  }, [botaoFocado, aoReiniciar, navigate]);
+  }, [botaoFocado, tentarNovamente, irParaMenu]);
 
   useEffect(() => {
     if (!estaPiscando) {
@@ -89,7 +101,12 @@ const TelaVitoria: React.FC<TelaVitoriaProps> = ({ aoReiniciar }) => {
       return;
     }
 
-    if (estaPiscando && modoOcular && podeInteragirOcular && !piscadaProcessadaRef.current) {
+    if (
+      estaPiscando &&
+      modoOcular &&
+      podeInteragirOcular &&
+      !piscadaProcessadaRef.current
+    ) {
       piscadaProcessadaRef.current = true;
       setPodeInteragirOcular(false);
       confirmarAcao();
@@ -114,9 +131,9 @@ const TelaVitoria: React.FC<TelaVitoriaProps> = ({ aoReiniciar }) => {
       {dadosDosFogos.map(fogo => (
         <S.ContainerFogos key={fogo.id} style={{ top: fogo.top, left: fogo.left }}>
           {Array.from({ length: PARTICULAS_POR_FOGO }).map((_, index) => (
-            <S.ParticulaFogos 
-              key={index} 
-              style={{ '--color': fogo.cor, '--delay': fogo.delay } as any} 
+            <S.ParticulaFogos
+              key={index}
+              style={{ '--color': fogo.cor, '--delay': fogo.delay } as any}
             />
           ))}
         </S.ContainerFogos>
@@ -126,25 +143,31 @@ const TelaVitoria: React.FC<TelaVitoriaProps> = ({ aoReiniciar }) => {
         <S.IconeContainer>
           <Medal size={80} />
         </S.IconeContainer>
-        
+
         <S.TituloVitoria>MISSÃO CUMPRIDA</S.TituloVitoria>
-        
+
         <S.MensagemVitoria>
           Excelente trabalho, Comandante. Você catalogou todo o Sistema Solar na ordem correta.
           A galáxia está segura graças a você.
         </S.MensagemVitoria>
-        
+
         <S.ContainerBotoes>
-          <S.BotaoVitoria 
-            onClick={() => { setBotaoFocado('reiniciar'); confirmarAcao(); }}
-            $isFocused={visualOcularAtivo && botaoFocado === 'reiniciar'} 
+          <S.BotaoVitoria
+            onClick={() => {
+              setBotaoFocado('reiniciar');
+              confirmarAcao();
+            }}
+            $isFocused={visualOcularAtivo && botaoFocado === 'reiniciar'}
           >
             <RotateCcw size={20} /> JOGAR DE NOVO
           </S.BotaoVitoria>
 
-          <S.BotaoVitoria 
-            onClick={() => { setBotaoFocado('menu'); confirmarAcao(); }}
-            $isFocused={visualOcularAtivo && botaoFocado === 'menu'} 
+          <S.BotaoVitoria
+            onClick={() => {
+              setBotaoFocado('menu');
+              confirmarAcao();
+            }}
+            $isFocused={visualOcularAtivo && botaoFocado === 'menu'}
           >
             <Home size={20} /> MENU DE JOGOS
           </S.BotaoVitoria>

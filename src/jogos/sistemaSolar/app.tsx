@@ -33,7 +33,7 @@ function SistemaSolar() {
     jogando: (
       <JogoSistemaSolar 
         aoVencer={() => finalizarJogo('vitoria')} 
-        aoPerder={() => finalizarJogo('vitoria')} 
+        aoPerder={() => finalizarJogo('derrota')} 
         configuracoes={configuracoes} 
       />
     ),
