@@ -70,6 +70,7 @@ const JogoSistemaSolar: React.FC<Jogos> = ({ aoVencer, aoPerder, configuracoes }
     if (!jogoIniciado) {
        return "Prepare-se! A nave está em posição. Pisque os olhos agora para decolar e começar a missão!";
     }
+    
     if (planetaAnunciado) {
        const proximo = planetasDoHudOrdem[proximoPlanetaIndex]?.nome;
        return proximo 
@@ -236,9 +237,11 @@ const JogoSistemaSolar: React.FC<Jogos> = ({ aoVencer, aoPerder, configuracoes }
       <S.AstronautaImg src="/assets/sistemaSolar/astronauta.png" $colidindo={estaColidindo} />
    </S.AstronautaWrapper>
 
-   {!jogoIniciado && (
-      <S.NomePlanetaAnuncio>PISQUE PARA COMEÇAR</S.NomePlanetaAnuncio>
-   )}
+    {!jogoIniciado && (
+      <S.NomePlanetaAnuncio>
+          {modoOcular ? 'PISQUE PARA COMEÇAR' : 'APERTE UMA TECLA DE CONTROLE PARA COMEÇAR'}
+      </S.NomePlanetaAnuncio>
+    )}
 
    {faiscas && (
     <S.ContainerFaiscas top={faiscas.top} left={faiscas.left}>

@@ -243,14 +243,23 @@ const ManualSistemaSolar: React.FC<BaseManualProps<ConfiguracoesJogo>> = ({ aoIn
               <S.RotuloConfiguracao><Zap /><h3>Potência</h3></S.RotuloConfiguracao>
               <S.GrupoBotoes>
                 {VELOCIDADES.map(v => (
-                  <S.BotaoOpcao key={v} $ativo={configuracoes.velocidade === v} $isFocused={feedbackVisual && focoConfig === 'velocidade' && configuracoes.velocidade === v}>
+                  <S.BotaoOpcao 
+                    key={v} 
+                    $ativo={configuracoes.velocidade === v} 
+                    $isFocused={feedbackVisual && focoConfig === 'velocidade' && configuracoes.velocidade === v}
+                    onClick={() => setConfiguracoes(prev => ({ ...prev, velocidade: v }))}
+                  >
                     {v}
                   </S.BotaoOpcao>
                 ))}
               </S.GrupoBotoes>
             </S.LinhaConfiguracao>
 
-            <S.LinhaConfiguracao $isFocused={feedbackVisual && focoConfig === 'penalidade'}>
+            <S.LinhaConfiguracao 
+                $isFocused={feedbackVisual && focoConfig === 'penalidade'}
+                onClick={() => setConfiguracoes(prev => ({ ...prev, penalidade: !prev.penalidade }))}
+                style={{ cursor: 'pointer' }}
+            >
               <S.RotuloConfiguracao><ShieldOff /><h3>Reiniciar?</h3></S.RotuloConfiguracao>
               <S.ContainerInterruptor>
                 <S.InputInterruptor type="checkbox" checked={configuracoes.penalidade} readOnly />
@@ -258,7 +267,11 @@ const ManualSistemaSolar: React.FC<BaseManualProps<ConfiguracoesJogo>> = ({ aoIn
               </S.ContainerInterruptor>
             </S.LinhaConfiguracao>
 
-            <S.LinhaConfiguracao $isFocused={feedbackVisual && focoConfig === 'sons'}>
+            <S.LinhaConfiguracao 
+                $isFocused={feedbackVisual && focoConfig === 'sons'}
+                onClick={() => setConfiguracoes(prev => ({ ...prev, sons: !prev.sons }))}
+                style={{ cursor: 'pointer' }}
+            >
               <S.RotuloConfiguracao><Music /><h3>Áudio</h3></S.RotuloConfiguracao>
               <S.ContainerInterruptor>
                 <S.InputInterruptor type="checkbox" checked={configuracoes.sons} readOnly />
