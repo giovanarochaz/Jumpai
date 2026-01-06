@@ -148,10 +148,22 @@ export const BotaoIniciarMissao = styled.button<{ $isFocused: boolean }>`
 `;
 
 export const NomePlanetaAnuncio = styled.div`
-   position: fixed; top: 40%; left: 50%; transform: translate(-50%, -50%);
-   color: ${TEMA.brancoEstrela}; font-size: clamp(2.5rem, 8vw, 5rem); font-weight: 900;
-   text-transform: uppercase; letter-spacing: 5px; z-index: 150; pointer-events: none;
+   position: fixed; 
+   top: 40%; 
+   left: 50%; 
+   transform: translate(-50%, -50%);
+   color: ${TEMA.brancoEstrela}; 
+   font-size: clamp(2.5rem, 8vw, 5rem); 
+   font-weight: 900;
+   text-transform: uppercase; 
+   letter-spacing: 5px; 
+   z-index: 150; 
+   pointer-events: none;
    text-shadow: 0 0 20px ${TEMA.azulIon}, 0 0 40px ${TEMA.azulIon};
+   
+   text-align: center; 
+   
+   width: 100%;
 `;
 
 export const ContainerFaiscas = styled.div<{ top: number; left: number }>`

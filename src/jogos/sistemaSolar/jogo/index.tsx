@@ -1,10 +1,12 @@
-import React, { useState, useEffect, useCallback, useRef } from 'react';
+import React, { useState, useEffect, useCallback, useRef, useMemo } from 'react';
 import * as S from './styles';
-import type { ConfiguracoesJogo, VelocidadeGeracao } from '../manual';
 import { useStore } from 'zustand'; 
 import { lojaOlho } from '../../../lojas/lojaOlho'; 
 import { pararNarracao } from '../../../servicos/acessibilidade';
+import { useLeitorOcular } from '../../../hooks/useLeitorOcular';
+import type { EstadoPlaneta, Jogos, VelocidadeGeracao } from '../../../interface/types';
 
+// --- CONSTANTES ---
 const planetasDoHudOrdem = [
  { nome: 'Mercúrio', imagem: '/assets/sistemaSolar/mercurio.png' },
  { nome: 'Vênus', imagem: '/assets/sistemaSolar/venus.png' },
@@ -27,17 +29,10 @@ const MAPA_VELOCIDADE: Record<VelocidadeGeracao, { min: number; max: number }> =
 const POSICAO_TOPO = '12vh';
 const POSICAO_BASE = '70vh';
 
-interface EstadoPlaneta { id: number; nome: string; imagem: string; top: number; duracao: number; tamanho: number; }
-
-interface JogoSistemaSolarProps { 
-  aoVencer: () => void; 
-  aoPerder: () => void; 
-  configuracoes: ConfiguracoesJogo; 
-}
-
-const JogoSistemaSolar: React.FC<JogoSistemaSolarProps> = ({ aoVencer, aoPerder, configuracoes }) => {
- const { estaPiscando } = useStore(lojaOlho); 
+const JogoSistemaSolar: React.FC<Jogos> = ({ aoVencer, aoPerder, configuracoes }) => {
+ const { estaPiscando, mostrarCameraFlutuante: modoOcular, leitorAtivo } = useStore(lojaOlho); 
   
+ const [jogoIniciado, setJogoIniciado] = useState(false);
  const [planetasVisiveis, setPlanetasVisiveis] = useState<EstadoPlaneta[]>([]);
  const [posicaoAstronauta, setPosicaoAstronauta] = useState(POSICAO_BASE); 
  const [posicaoHorizontal, setPosicaoHorizontal] = useState('-20vw'); 
@@ -49,59 +44,66 @@ const JogoSistemaSolar: React.FC<JogoSistemaSolarProps> = ({ aoVencer, aoPerder,
  const [proximoPlanetaIndex, setProximoPlanetaIndex] = useState(0);
  const [planetaAnunciado, setPlanetaAnunciado] = useState<{ nome: string; id: number } | null>(null);
 
+ const [podeInteragirOcular, setPodeInteragirOcular] = useState(false);
+ const piscadaProcessadaRef = useRef(false);
+ const timerDebounceRef = useRef<NodeJS.Timeout | null>(null);
  const proximoIdRef = useRef(0);
  const astronautaRef = useRef<HTMLDivElement>(null);
  const containerRef = useRef<HTMLDivElement>(null);
  const musicaFundoRef = useRef<HTMLAudioElement | null>(null);
  const somColetaRef = useRef<HTMLAudioElement | null>(null);
 
- // Visibilidade
  useEffect(() => {
-    const manipularVisibilidade = () => {
-       const visivel = !document.hidden;
-       setEstaVisivel(visivel);
-       if (!visivel) { musicaFundoRef.current?.pause(); pararNarracao(); }
-       else if (configuracoes.sons) musicaFundoRef.current?.play().catch(() => {});
-    };
-    document.addEventListener('visibilitychange', manipularVisibilidade);
-    return () => document.removeEventListener('visibilitychange', manipularVisibilidade);
- }, [configuracoes.sons]);
+    if (!modoOcular) { setPodeInteragirOcular(true); return; }
+    setPodeInteragirOcular(false);
+    if (timerDebounceRef.current) clearTimeout(timerDebounceRef.current);
+    
+    if (!leitorAtivo) {
+       timerDebounceRef.current = setTimeout(() => setPodeInteragirOcular(true), 1200);
+    }
+ }, [modoOcular, leitorAtivo]);
 
- // Animação de Entrada Cinematográfica (Sem Jato)
+
+ const textoParaLeitura = useMemo(() => {
+    if (!leitorAtivo) return null;
+    
+    if (!jogoIniciado) {
+       return "Prepare-se! A nave está em posição. Pisque os olhos agora para decolar e começar a missão!";
+    }
+    if (planetaAnunciado) {
+       const proximo = planetasDoHudOrdem[proximoPlanetaIndex]?.nome;
+       return proximo 
+          ? `${planetaAnunciado.nome} coletado! Agora busque por ${proximo}.` 
+          : "Parabéns! Você coletou todos os planetas!";
+    }
+    return "";
+ }, [leitorAtivo, jogoIniciado, proximoPlanetaIndex, planetaAnunciado]);
+
+ useLeitorOcular(textoParaLeitura, [textoParaLeitura], () => {
+    if (modoOcular && leitorAtivo) setPodeInteragirOcular(true);
+ });
+
  useEffect(() => {
-    setTimeout(() => {
-       setPosicaoHorizontal('50vw');
-    }, 100);
- }, []);
+    if (!estaPiscando) { 
+       piscadaProcessadaRef.current = false; 
+       return; 
+    }
 
- const removerPlaneta = useCallback((id: number) => { 
-    setPlanetasVisiveis(p => p.filter(pl => pl.id !== id)); 
- }, []);
+    if (estaPiscando && modoOcular && podeInteragirOcular && !piscadaProcessadaRef.current) {
+       piscadaProcessadaRef.current = true;
+       
+       if (!jogoIniciado) {
+          setJogoIniciado(true);
+       } else {
+          setPosicaoAstronauta(p => p === POSICAO_BASE ? POSICAO_TOPO : POSICAO_BASE);
+       }
+    }
+ }, [estaPiscando, modoOcular, podeInteragirOcular, jogoIniciado]);
 
- // Vitória com Saída Cinematográfica (Sem Jato)
  useEffect(() => {
-  if (proximoPlanetaIndex === planetasDoHudOrdem.length) {
-     setTimeout(() => {
-        setPosicaoHorizontal('120vw');
-        setTimeout(aoVencer, 1500);
-     }, 500);
-  }
- }, [proximoPlanetaIndex, aoVencer]);
+  if (!jogoIniciado || !estaVisivel || proximoPlanetaIndex === planetasDoHudOrdem.length) return;
 
- // Áudio
- useEffect(() => {
-  musicaFundoRef.current = new Audio('/assets/sistemaSolar/sounds/ambiente.mp3');
-  musicaFundoRef.current.loop = true;
-  musicaFundoRef.current.volume = 0.2;
-  somColetaRef.current = new Audio('/assets/sistemaSolar/sounds/coleta.mp3');
-  if (configuracoes.sons && estaVisivel) musicaFundoRef.current.play().catch(() => {});
-  return () => musicaFundoRef.current?.pause();
- }, [configuracoes.sons, estaVisivel]);
-
- // Geração de Planetas
- useEffect(() => {
   const gerarCorpo = () => {
-   if (!estaVisivel || proximoPlanetaIndex === planetasDoHudOrdem.length) return;
    const lote = planetasDoHudOrdem.slice(proximoPlanetaIndex, proximoPlanetaIndex + 3);
    const corposParaGerar = [...lote, ...meteorosParaGerar];
    const corpoAleatorio = corposParaGerar[Math.floor(Math.random() * corposParaGerar.length)];
@@ -119,30 +121,67 @@ const JogoSistemaSolar: React.FC<JogoSistemaSolarProps> = ({ aoVencer, aoPerder,
      tamanho: tamanho
    }]);
   };
+
   const intervalo = setInterval(gerarCorpo, 2800);
   return () => clearInterval(intervalo);
- }, [proximoPlanetaIndex, configuracoes.velocidade, estaVisivel]);
+ }, [jogoIniciado, proximoPlanetaIndex, configuracoes.velocidade, estaVisivel]);
 
- // Movimento
  useEffect(() => {
-    if (estaPiscando && estaVisivel) setPosicaoAstronauta(p => p === POSICAO_BASE ? POSICAO_TOPO : POSICAO_BASE);
- }, [estaPiscando, estaVisivel]);
+    const manipularVisibilidade = () => {
+       const visivel = !document.hidden;
+       setEstaVisivel(visivel);
+       if (!visivel) { musicaFundoRef.current?.pause(); pararNarracao(); }
+       else if (configuracoes.sons) musicaFundoRef.current?.play().catch(() => {});
+    };
+    document.addEventListener('visibilitychange', manipularVisibilidade);
+    return () => document.removeEventListener('visibilitychange', manipularVisibilidade);
+ }, [configuracoes.sons]);
+
+ useEffect(() => { setTimeout(() => { setPosicaoHorizontal('50vw'); }, 100); }, []);
+
+ const removerPlaneta = useCallback((id: number) => { 
+    setPlanetasVisiveis(p => p.filter(pl => pl.id !== id)); 
+ }, []);
+
+ useEffect(() => {
+  if (proximoPlanetaIndex === planetasDoHudOrdem.length) {
+     setTimeout(() => { setPosicaoHorizontal('120vw'); setTimeout(aoVencer, 1500); }, 500);
+  }
+ }, [proximoPlanetaIndex, aoVencer]);
+
+ useEffect(() => {
+  musicaFundoRef.current = new Audio('/assets/sistemaSolar/sounds/ambiente.mp3');
+  musicaFundoRef.current.loop = true;
+  musicaFundoRef.current.volume = 0.2;
+  somColetaRef.current = new Audio('/assets/sistemaSolar/sounds/coleta.mp3');
+  if (configuracoes.sons && estaVisivel) musicaFundoRef.current.play().catch(() => {});
+  return () => musicaFundoRef.current?.pause();
+ }, [configuracoes.sons, estaVisivel]);
 
  useEffect(() => {
   const tratarTecla = (e: KeyboardEvent) => {
    if (!estaVisivel) return;
-   if (e.key === 'ArrowUp') setPosicaoAstronauta(POSICAO_TOPO);
-   else if (e.key === 'ArrowDown') setPosicaoAstronauta(POSICAO_BASE);
+   if (['ArrowUp', 'ArrowDown', ' '].includes(e.key)) {
+      if (!jogoIniciado) {
+         setJogoIniciado(true);
+      } else {
+         if (e.key === 'ArrowUp') setPosicaoAstronauta(POSICAO_TOPO);
+         else if (e.key === 'ArrowDown') setPosicaoAstronauta(POSICAO_BASE);
+         else if (e.key === ' ') setPosicaoAstronauta(p => p === POSICAO_BASE ? POSICAO_TOPO : POSICAO_BASE);
+      }
+   }
   };
   window.addEventListener('keydown', tratarTecla);
   return () => window.removeEventListener('keydown', tratarTecla);
- }, [estaVisivel]);
+ }, [estaVisivel, jogoIniciado]);
 
- // Loop de Jogo
  useEffect(() => {
   let idFrame: number;
   const loop = () => {
-   if (!estaVisivel || !astronautaRef.current || !containerRef.current) { idFrame = requestAnimationFrame(loop); return; }
+   if (!estaVisivel || !astronautaRef.current || !containerRef.current || !jogoIniciado) { 
+      idFrame = requestAnimationFrame(loop); return; 
+   }
+   
    const astroRect = astronautaRef.current.getBoundingClientRect();
    const planetasDOM = containerRef.current.querySelectorAll<HTMLElement>('.planeta');
    
@@ -175,7 +214,7 @@ const JogoSistemaSolar: React.FC<JogoSistemaSolarProps> = ({ aoVencer, aoPerder,
   };
   idFrame = requestAnimationFrame(loop);
   return () => cancelAnimationFrame(idFrame);
- }, [proximoPlanetaIndex, configuracoes.penalidade, configuracoes.sons, aoPerder, removerPlaneta, estaVisivel]);
+ }, [proximoPlanetaIndex, configuracoes.penalidade, configuracoes.sons, aoPerder, removerPlaneta, estaVisivel, jogoIniciado]);
 
  return (
   <S.FundoEspacial ref={containerRef}>
@@ -196,6 +235,10 @@ const JogoSistemaSolar: React.FC<JogoSistemaSolarProps> = ({ aoVencer, aoPerder,
    <S.AstronautaWrapper ref={astronautaRef} $top={posicaoAstronauta} $left={posicaoHorizontal}>
       <S.AstronautaImg src="/assets/sistemaSolar/astronauta.png" $colidindo={estaColidindo} />
    </S.AstronautaWrapper>
+
+   {!jogoIniciado && (
+      <S.NomePlanetaAnuncio>PISQUE PARA COMEÇAR</S.NomePlanetaAnuncio>
+   )}
 
    {faiscas && (
     <S.ContainerFaiscas top={faiscas.top} left={faiscas.left}>
