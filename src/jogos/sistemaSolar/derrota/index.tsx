@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useCallback, useRef } from 'react';
+import React, { useState, useEffect, useCallback, useRef, useMemo } from 'react';
 import * as S from './styles';
 import { ShieldX, RotateCcw, Home } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
@@ -7,83 +7,83 @@ import { lojaOlho } from '../../../lojas/lojaOlho';
 import { useLeitorOcular } from '../../../hooks/useLeitorOcular';
 import { pararNarracao } from '../../../servicos/acessibilidade';
 
-const CORES_DETRITOS = ['#94a3b8', '#f97316', '#ef4444', '#1e293b'];
-const NUMERO_DETRITOS = 15;
-
 interface TelaDerrotaSistemaSolarProps {
   aoReiniciar: () => void;
 }
 
+const CORES_DETRITOS = ['#94a3b8', '#f97316', '#ef4444', '#1e293b'];
+const NUMERO_DETRITOS = 15;
+
 const TelaDerrotaSistemaSolar: React.FC<TelaDerrotaSistemaSolarProps> = ({ aoReiniciar }) => {
-  const { estaPiscando, mostrarCameraFlutuante, leitorAtivo } = useStore(lojaOlho);
-  const [detritos, setDetritos] = useState<any[]>([]);
-  const [botaoFocado, setBotaoFocado] = useState<'reiniciar' | 'outroJogo'>('reiniciar');
-  const [podeInteragirOcular, setPodeInteragirOcular] = useState(false);
-  const [introConcluida, setIntroConcluida] = useState(false);
-  
+  const { estaPiscando, mostrarCameraFlutuante: modoOcular, leitorAtivo } = useStore(lojaOlho);
   const navigate = useNavigate();
-  const timerRef = useRef<NodeJS.Timeout | null>(null);
 
-  const obterTextoParaLeitura = useCallback(() => {
-    if (!leitorAtivo) return null;
-    if (!introConcluida) return "Falha na Missão. Houston, temos um problema. A nave sofreu danos ou a rota foi perdida. Reiniciar sistemas?";
-    return botaoFocado === 'reiniciar' ? "Reiniciar missão." : "Voltar para o menu.";
-  }, [introConcluida, botaoFocado, leitorAtivo]);
+  const [detritos, setDetritos] = useState<any[]>([]);
+  const [botaoFocado, setBotaoFocado] = useState<'reiniciar' | 'menu'>('reiniciar');
+  const [podeInteragirOcular, setPodeInteragirOcular] = useState(false);
+  
+  const timerDebounceRef = useRef<NodeJS.Timeout | null>(null);
+  const timerScanRef = useRef<NodeJS.Timeout | null>(null);
+  const piscadaProcessadaRef = useRef(false);
 
   useEffect(() => {
-    if (!mostrarCameraFlutuante) { setPodeInteragirOcular(true); return; }
+    if (!modoOcular) { setPodeInteragirOcular(true); return; }
     setPodeInteragirOcular(false);
-    if (timerRef.current) clearTimeout(timerRef.current);
-
+    if (timerDebounceRef.current) clearTimeout(timerDebounceRef.current);
     if (!leitorAtivo) {
-      timerRef.current = setTimeout(() => {
-        setPodeInteragirOcular(true);
-        setIntroConcluida(true);
-      }, 2000);
+      timerDebounceRef.current = setTimeout(() => setPodeInteragirOcular(true), 1200);
     }
-  }, [mostrarCameraFlutuante, leitorAtivo]);
+  }, [modoOcular, leitorAtivo]);
 
   useEffect(() => {
-    if (mostrarCameraFlutuante && podeInteragirOcular && introConcluida) {
-      const interval = setInterval(() => {
-        setBotaoFocado(prev => prev === 'reiniciar' ? 'outroJogo' : 'reiniciar');
-      }, 3000);
-      return () => clearInterval(interval);
+    if (modoOcular && podeInteragirOcular) {
+      timerScanRef.current = setInterval(() => {
+        setBotaoFocado(prev => prev === 'reiniciar' ? 'menu' : 'reiniciar');
+      }, 3500);
     }
-  }, [mostrarCameraFlutuante, podeInteragirOcular, introConcluida]);
+    return () => { if (timerScanRef.current) clearInterval(timerScanRef.current); };
+  }, [modoOcular, podeInteragirOcular]);
 
-  const lidarComFimDaLeitura = useCallback(() => {
-    if (mostrarCameraFlutuante) {
-      if (!introConcluida) setIntroConcluida(true);
-      setPodeInteragirOcular(true);
-    }
-  }, [mostrarCameraFlutuante, introConcluida]);
+  const irParaMenu = useCallback(() => {
+    pararNarracao();
+    navigate('/jogos'); 
+  }, [navigate]);
 
-  useLeitorOcular(obterTextoParaLeitura(), [introConcluida, botaoFocado], lidarComFimDaLeitura);
+  const tentarNovamente = useCallback(() => {
+    pararNarracao();
+    aoReiniciar(); 
+  }, [aoReiniciar]);
 
   const confirmarAcao = useCallback(() => {
-    pararNarracao();
-    if (botaoFocado === 'reiniciar') aoReiniciar();
-    else navigate('/jogos');
-  }, [botaoFocado, aoReiniciar, navigate]);
+    if (botaoFocado === 'reiniciar') tentarNovamente();
+    else irParaMenu();
+  }, [botaoFocado, tentarNovamente, irParaMenu]);
+
+  const textoParaLeitura = useMemo(() => {
+    if (!leitorAtivo) return null;
+    if (!podeInteragirOcular) return "Falha na Missão. Tivemos um problema. Deseja reiniciar ou sair?";
+    return botaoFocado === 'reiniciar' ? "Reiniciar missão." : "Voltar para o menu de jogos.";
+  }, [leitorAtivo, podeInteragirOcular, botaoFocado]);
+
+  useLeitorOcular(textoParaLeitura, [textoParaLeitura], () => {
+    if (modoOcular && leitorAtivo) setPodeInteragirOcular(true);
+  });
 
   useEffect(() => {
-    if (estaPiscando && mostrarCameraFlutuante && podeInteragirOcular) {
+    if (!estaPiscando) { piscadaProcessadaRef.current = false; return; }
+    if (estaPiscando && modoOcular && podeInteragirOcular && !piscadaProcessadaRef.current) {
+      piscadaProcessadaRef.current = true;
       setPodeInteragirOcular(false);
       confirmarAcao();
     }
-  }, [estaPiscando, mostrarCameraFlutuante, podeInteragirOcular, confirmarAcao]);
+  }, [estaPiscando, modoOcular, podeInteragirOcular, confirmarAcao]);
 
   useEffect(() => {
-    const dados = Array.from({ length: NUMERO_DETRITOS }).map((_, i) => ({
-      id: i,
-      top: `${Math.random() * 100}%`,
-      left: `${Math.random() * 100}%`,
-      delay: `${Math.random() * 2}s`,
-      size: `${Math.random() * 15 + 5}px`,
+    setDetritos(Array.from({ length: NUMERO_DETRITOS }).map((_, i) => ({
+      id: i, top: `${Math.random() * 100}%`, left: `${Math.random() * 100}%`,
+      delay: `${Math.random() * 2}s`, size: `${Math.random() * 15 + 5}px`,
       cor: CORES_DETRITOS[Math.floor(Math.random() * CORES_DETRITOS.length)],
-    }));
-    setDetritos(dados);
+    })));
   }, []);
 
   return (
@@ -92,32 +92,24 @@ const TelaDerrotaSistemaSolar: React.FC<TelaDerrotaSistemaSolarProps> = ({ aoRei
       {detritos.map(d => (
         <S.Detrito key={d.id} style={{ top: d.top, left: d.left, backgroundColor: d.cor, width: d.size, height: d.size, animationDelay: d.delay } as any} />
       ))}
-
       <S.ConteudoDerrota>
-        <S.IconeContainer>
-          <ShieldX size={80} />
-        </S.IconeContainer>
-        
+        <S.IconeContainer><ShieldX size={80} /></S.IconeContainer>
         <S.TituloDerrota>FALHA NA MISSÃO</S.TituloDerrota>
-        
-        <S.MensagemDerrota>
-          Houston, temos um problema! A nave sofreu danos ou a rota foi perdida.
-          Deseja reiniciar os sistemas e tentar novamente?
-        </S.MensagemDerrota>
+        <S.MensagemDerrota>A nave sofreu danos críticos. Deseja reiniciar os sistemas?</S.MensagemDerrota>
         
         <S.ContainerBotoes>
           <S.BotaoDerrota 
-            onClick={() => { setBotaoFocado('reiniciar'); confirmarAcao(); }}
-            $isFocused={mostrarCameraFlutuante && podeInteragirOcular && botaoFocado === 'reiniciar'} 
+            onClick={tentarNovamente} 
+            $isFocused={modoOcular && podeInteragirOcular && botaoFocado === 'reiniciar'}
           >
             <RotateCcw size={20} /> REINICIAR
           </S.BotaoDerrota>
 
           <S.BotaoDerrota 
-            onClick={() => { setBotaoFocado('outroJogo'); confirmarAcao(); }}
-            $isFocused={mostrarCameraFlutuante && podeInteragirOcular && botaoFocado === 'outroJogo'} 
+            onClick={irParaMenu} 
+            $isFocused={modoOcular && podeInteragirOcular && botaoFocado === 'menu'}
           >
-            <Home size={20} /> CANCELAR
+            <Home size={20} /> MENU
           </S.BotaoDerrota>
         </S.ContainerBotoes>
       </S.ConteudoDerrota>

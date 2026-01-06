@@ -24,8 +24,8 @@ function SistemaSolar() {
     setEstado(resultado);
   }, []);
 
-  const reiniciar = useCallback(() => {
-    setEstado('manual');
+  const voltarAoManual = useCallback(() => {
+    setEstado('manual'); 
   }, []);
 
   const Telas = useMemo(() => ({
@@ -33,13 +33,13 @@ function SistemaSolar() {
     jogando: (
       <JogoSistemaSolar 
         aoVencer={() => finalizarJogo('vitoria')} 
-        aoPerder={() => finalizarJogo('derrota')} 
+        aoPerder={() => finalizarJogo('vitoria')} 
         configuracoes={configuracoes} 
       />
     ),
-    vitoria: <TelaVitoria aoReiniciar={reiniciar} />,
-    derrota: <TelaDerrotaSistemaSolar aoReiniciar={reiniciar} />,
-  }), [iniciarMissao, finalizarJogo, reiniciar, configuracoes]);
+    vitoria: <TelaVitoria aoReiniciar={voltarAoManual} />,
+    derrota: <TelaDerrotaSistemaSolar aoReiniciar={voltarAoManual} />,
+  }), [iniciarMissao, finalizarJogo, voltarAoManual, configuracoes]);
 
   return (
     <main className="game-container">

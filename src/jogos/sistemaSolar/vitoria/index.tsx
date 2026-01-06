@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useCallback, useRef } from 'react';
+import React, { useState, useEffect, useCallback, useRef, useMemo } from 'react';
 import * as S from './styles';
 import { Medal, Home, RotateCcw } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
@@ -23,82 +23,79 @@ interface TelaVitoriaProps {
   aoReiniciar: () => void;
 }
 
-type BotaoFoco = 'reiniciar' | 'outroJogo';
-
 const TelaVitoria: React.FC<TelaVitoriaProps> = ({ aoReiniciar }) => {
-  const { estaPiscando, mostrarCameraFlutuante, leitorAtivo } = useStore(lojaOlho);
-  const [dadosDosFogos, setDadosDosFogos] = useState<DadosFogos[]>([]);
-  const [botaoFocado, setBotaoFocado] = useState<BotaoFoco>('reiniciar');
-  const [podeInteragirOcular, setPodeInteragirOcular] = useState(false);
-  const [introConcluida, setIntroConcluida] = useState(false);
-  
+  const { estaPiscando, mostrarCameraFlutuante: modoOcular, leitorAtivo } = useStore(lojaOlho);
   const navigate = useNavigate();
-  const timerRef = useRef<NodeJS.Timeout | null>(null);
 
-  // --- LÓGICA DE TEXTO ---
-  const obterTextoParaLeitura = useCallback(() => {
-    if (!leitorAtivo) return null;
-    if (!introConcluida) {
-      return "Missão Cumprida. Excelente trabalho, Comandante. Você catalogou todo o Sistema Solar na ordem correta. A galáxia está segura.";
-    }
-    if (botaoFocado === 'reiniciar') return "Jogar novamente.";
-    if (botaoFocado === 'outroJogo') return "Voltar para o menu de jogos.";
-    return null;
-  }, [introConcluida, botaoFocado, leitorAtivo]);
+  const [dadosDosFogos, setDadosDosFogos] = useState<DadosFogos[]>([]);
+  const [botaoFocado, setBotaoFocado] = useState<'reiniciar' | 'menu'>('reiniciar');
+  const [podeInteragirOcular, setPodeInteragirOcular] = useState(false);
+  
+  const timerDebounceRef = useRef<NodeJS.Timeout | null>(null);
+  const timerScanRef = useRef<NodeJS.Timeout | null>(null);
+  const piscadaProcessadaRef = useRef(false);
 
-  // --- CONTROLE DE LIBERAÇÃO E SCANNER ---
   useEffect(() => {
-    if (!mostrarCameraFlutuante) {
+    if (!modoOcular) {
       setPodeInteragirOcular(true);
       return;
     }
 
     setPodeInteragirOcular(false);
-    if (timerRef.current) clearTimeout(timerRef.current);
-
+    if (timerDebounceRef.current) clearTimeout(timerDebounceRef.current);
+    
     if (!leitorAtivo) {
-      // Sem leitor: espera 2s para liberar e começar a alternar
-      timerRef.current = setTimeout(() => {
-        setPodeInteragirOcular(true);
-        setIntroConcluida(true);
-      }, 2000);
+      timerDebounceRef.current = setTimeout(() => setPodeInteragirOcular(true), 1200);
     }
-  }, [mostrarCameraFlutuante, leitorAtivo, botaoFocado]);
+  }, [modoOcular, leitorAtivo]);
 
-  // Scanner Ocular: Só alterna se a câmera estiver ativa
   useEffect(() => {
-    if (mostrarCameraFlutuante && podeInteragirOcular && introConcluida) {
-      const interval = setInterval(() => {
-        setBotaoFocado(prev => prev === 'reiniciar' ? 'outroJogo' : 'reiniciar');
-      }, 3000);
-      return () => clearInterval(interval);
+    if (modoOcular && podeInteragirOcular) {
+      timerScanRef.current = setInterval(() => {
+        setBotaoFocado(prev => prev === 'reiniciar' ? 'menu' : 'reiniciar');
+      }, 3500);
     }
-  }, [mostrarCameraFlutuante, podeInteragirOcular, introConcluida]);
+    return () => { if (timerScanRef.current) clearInterval(timerScanRef.current); };
+  }, [modoOcular, podeInteragirOcular]);
 
-  const lidarComFimDaLeitura = useCallback(() => {
-    if (mostrarCameraFlutuante) {
-      if (!introConcluida) setIntroConcluida(true);
-      setPodeInteragirOcular(true);
+  const textoParaLeitura = useMemo(() => {
+    if (!leitorAtivo) return null;
+
+    if (!podeInteragirOcular) {
+      return "Missão Cumprida! Excelente trabalho, Comandante. Você catalogou todo o Sistema Solar. O que deseja fazer agora?";
     }
-  }, [mostrarCameraFlutuante, introConcluida]);
 
-  useLeitorOcular(obterTextoParaLeitura(), [introConcluida, botaoFocado], lidarComFimDaLeitura);
+    return botaoFocado === 'reiniciar' 
+      ? "Jogar novamente. Pisque agora para reiniciar a aventura!" 
+      : "Voltar para o menu principal. Pisque agora para escolher outro jogo.";
+  }, [leitorAtivo, podeInteragirOcular, botaoFocado]);
+
+  useLeitorOcular(textoParaLeitura, [textoParaLeitura], () => {
+    if (modoOcular && leitorAtivo) setPodeInteragirOcular(true);
+  });
 
   const confirmarAcao = useCallback(() => {
     pararNarracao();
-    if (botaoFocado === 'reiniciar') aoReiniciar();
-    else navigate('/jogos');
+    if (botaoFocado === 'reiniciar') {
+      aoReiniciar(); 
+    } else {
+      navigate('/jogos'); 
+    }
   }, [botaoFocado, aoReiniciar, navigate]);
 
-  // Efeito Piscada
   useEffect(() => {
-    if (estaPiscando && mostrarCameraFlutuante && podeInteragirOcular) {
+    if (!estaPiscando) {
+      piscadaProcessadaRef.current = false;
+      return;
+    }
+
+    if (estaPiscando && modoOcular && podeInteragirOcular && !piscadaProcessadaRef.current) {
+      piscadaProcessadaRef.current = true;
       setPodeInteragirOcular(false);
       confirmarAcao();
     }
-  }, [estaPiscando, mostrarCameraFlutuante, podeInteragirOcular, confirmarAcao]);
+  }, [estaPiscando, modoOcular, podeInteragirOcular, confirmarAcao]);
 
-  // Efeito Fogos
   useEffect(() => {
     const dados: DadosFogos[] = Array.from({ length: NUMERO_FOGOS }).map((_, i) => ({
       id: i,
@@ -110,14 +107,17 @@ const TelaVitoria: React.FC<TelaVitoriaProps> = ({ aoReiniciar }) => {
     setDadosDosFogos(dados);
   }, []);
 
-  const fVisual = mostrarCameraFlutuante && podeInteragirOcular;
+  const visualOcularAtivo = modoOcular && podeInteragirOcular;
 
   return (
     <S.FundoVitoria>
       {dadosDosFogos.map(fogo => (
         <S.ContainerFogos key={fogo.id} style={{ top: fogo.top, left: fogo.left }}>
           {Array.from({ length: PARTICULAS_POR_FOGO }).map((_, index) => (
-            <S.ParticulaFogos key={index} style={{ '--color': fogo.cor, '--delay': fogo.delay } as any} />
+            <S.ParticulaFogos 
+              key={index} 
+              style={{ '--color': fogo.cor, '--delay': fogo.delay } as any} 
+            />
           ))}
         </S.ContainerFogos>
       ))}
@@ -137,14 +137,14 @@ const TelaVitoria: React.FC<TelaVitoriaProps> = ({ aoReiniciar }) => {
         <S.ContainerBotoes>
           <S.BotaoVitoria 
             onClick={() => { setBotaoFocado('reiniciar'); confirmarAcao(); }}
-            $isFocused={fVisual && botaoFocado === 'reiniciar'} 
+            $isFocused={visualOcularAtivo && botaoFocado === 'reiniciar'} 
           >
             <RotateCcw size={20} /> JOGAR DE NOVO
           </S.BotaoVitoria>
 
           <S.BotaoVitoria 
-            onClick={() => { setBotaoFocado('outroJogo'); confirmarAcao(); }}
-            $isFocused={fVisual && botaoFocado === 'outroJogo'} 
+            onClick={() => { setBotaoFocado('menu'); confirmarAcao(); }}
+            $isFocused={visualOcularAtivo && botaoFocado === 'menu'} 
           >
             <Home size={20} /> MENU DE JOGOS
           </S.BotaoVitoria>

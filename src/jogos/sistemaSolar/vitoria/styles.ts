@@ -53,6 +53,9 @@ export const IconeContainer = styled.div`
    color: ${TEMA.azulIon};
    margin-bottom: 20px;
    filter: drop-shadow(0 0 15px ${TEMA.azulIon});
+   display: flex;
+   justify-content: center;
+   align-items: center;
 `;
 
 export const TituloVitoria = styled.h1`
