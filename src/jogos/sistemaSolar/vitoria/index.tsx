@@ -1,6 +1,6 @@
 import React, { useState, useEffect, useCallback, useRef } from 'react';
 import * as S from './styles';
-import { Medal, ChevronRight, Home, RotateCcw } from 'lucide-react';
+import { Medal, Home, RotateCcw } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
 import { useStore } from 'zustand'; 
 import { lojaOlho } from '../../../lojas/lojaOlho';
@@ -24,7 +24,6 @@ interface TelaVitoriaProps {
 }
 
 type BotaoFoco = 'reiniciar' | 'outroJogo';
-const BOTOES_ORDEM: BotaoFoco[] = ['reiniciar', 'outroJogo'];
 
 const TelaVitoria: React.FC<TelaVitoriaProps> = ({ aoReiniciar }) => {
   const { estaPiscando, mostrarCameraFlutuante, leitorAtivo } = useStore(lojaOlho);

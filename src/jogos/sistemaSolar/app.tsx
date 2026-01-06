@@ -1,56 +1,50 @@
-import { useState } from 'react';
-import type { ConfiguracoesJogo } from './manual';
+import { useState, useCallback, useMemo } from 'react';
 import ManualSistemaSolar from './manual';
 import JogoSistemaSolar from './jogo';
 import TelaVitoria from './vitoria';
 import TelaDerrotaSistemaSolar from './derrota';
+import type { ConfiguracoesJogo, EstadoJogo } from '../../interface/types';
+
+const CONFIG_INICIAL: ConfiguracoesJogo = {
+  velocidade: 'normal',
+  penalidade: true,
+  sons: true,
+};
 
 function SistemaSolar() {
-  const [estadoDoJogo, setEstadoDoJogo] = useState<'manual' | 'jogando' | 'derrota' | 'vitoria'>('manual');
-  
-  const [configuracoesDoJogo, setConfiguracoesDoJogo] = useState<ConfiguracoesJogo>({
-    velocidade: 'normal',
-    penalidade: true,
-    sons: true,
-  });
+  const [estado, setEstado] = useState<EstadoJogo>('manual');
+  const [configuracoes, setConfiguracoes] = useState<ConfiguracoesJogo>(CONFIG_INICIAL);
 
-  const tratarInicioMissao = (configuracoes: ConfiguracoesJogo) => {
-    setConfiguracoesDoJogo(configuracoes);
-    setEstadoDoJogo('jogando');      
-  };
+  const iniciarMissao = useCallback((novasConfiguracoes: ConfiguracoesJogo) => {
+    setConfiguracoes(novasConfiguracoes);
+    setEstado('jogando');
+  }, []);
 
-  const tratarVitoria = () => {
-    setEstadoDoJogo('vitoria');
-  };
+  const finalizarJogo = useCallback((resultado: 'vitoria' | 'derrota') => {
+    setEstado(resultado);
+  }, []);
 
-  const tratatDerrota = () => {
-    setEstadoDoJogo('derrota');
-  };
+  const reiniciar = useCallback(() => {
+    setEstado('manual');
+  }, []);
 
-  
-  const tratarReiniciar = () => {
-    setEstadoDoJogo('manual');
-  };
-
-  const renderizarTela = () => {
-    switch (estadoDoJogo) {
-      case 'manual':
-        return <ManualSistemaSolar aoIniciarMissao={tratarInicioMissao} />; 
-      case 'jogando':
-        return <JogoSistemaSolar aoVencer={tratarVitoria} aoPerder={tratatDerrota} configuracoes={configuracoesDoJogo} />;  
-      case 'vitoria':
-        return <TelaVitoria aoReiniciar={tratarReiniciar} />;   
-      case 'derrota':
-        return <TelaDerrotaSistemaSolar aoReiniciar={tratarReiniciar} />;     
-      default:
-        return <ManualSistemaSolar aoIniciarMissao={tratarInicioMissao} />;
-    }
-  };
+  const Telas = useMemo(() => ({
+    manual: <ManualSistemaSolar aoIniciar={iniciarMissao} />,
+    jogando: (
+      <JogoSistemaSolar 
+        aoVencer={() => finalizarJogo('vitoria')} 
+        aoPerder={() => finalizarJogo('derrota')} 
+        configuracoes={configuracoes} 
+      />
+    ),
+    vitoria: <TelaVitoria aoReiniciar={reiniciar} />,
+    derrota: <TelaDerrotaSistemaSolar aoReiniciar={reiniciar} />,
+  }), [iniciarMissao, finalizarJogo, reiniciar, configuracoes]);
 
   return (
-    <>
-      {renderizarTela()}
-    </>
+    <main className="game-container">
+      {Telas[estado] || Telas.manual}
+    </main>
   );
 }
 
