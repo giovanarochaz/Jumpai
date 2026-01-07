@@ -6,6 +6,7 @@ import { useStore } from 'zustand';
 import { lojaOlho } from '../../../lojas/lojaOlho';
 import { useLeitorOcular } from '../../../hooks/useLeitorOcular';
 import { pararNarracao } from '../../../servicos/acessibilidade';
+import type { ConfiguracoesJogo } from '../../../interface/types';
 
 const CORES_FOGOS = ['#22d3ee', '#f97316', '#ffffff', '#fb923c'];
 const NUMERO_FOGOS = 12;
@@ -21,9 +22,10 @@ interface DadosFogos {
 
 interface TelaVitoriaProps {
   aoReiniciar: () => void;
+  configuracoes: ConfiguracoesJogo;
 }
 
-const TelaVitoria: React.FC<TelaVitoriaProps> = ({ aoReiniciar }) => {
+const TelaVitoria: React.FC<TelaVitoriaProps> = ({ aoReiniciar, configuracoes }) => {
   const { estaPiscando, mostrarCameraFlutuante: modoOcular, leitorAtivo } = useStore(lojaOlho);
   const navigate = useNavigate();
 
@@ -61,6 +63,21 @@ const TelaVitoria: React.FC<TelaVitoriaProps> = ({ aoReiniciar }) => {
     };
   }, [modoOcular, podeInteragirOcular]);
 
+  useEffect(() => {
+    if (configuracoes.sons) {
+      const audio = new Audio('/assets/efeitos/vitoria.mp3');
+
+      audio.play().catch(erro => {
+        console.warn("O navegador bloqueou o áudio ou o arquivo não foi encontrado:", erro);
+      });
+
+      return () => {
+        audio.pause();
+        audio.currentTime = 0;
+      };
+    }
+  }, [configuracoes.sons]);
+  
   const textoParaLeitura = useMemo(() => {
     if (!leitorAtivo) return null;
 

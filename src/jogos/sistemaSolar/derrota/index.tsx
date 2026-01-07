@@ -6,15 +6,17 @@ import { useStore } from 'zustand';
 import { lojaOlho } from '../../../lojas/lojaOlho';
 import { useLeitorOcular } from '../../../hooks/useLeitorOcular';
 import { pararNarracao } from '../../../servicos/acessibilidade';
+import type { ConfiguracoesJogo } from '../../../interface/types';
 
 interface TelaDerrotaSistemaSolarProps {
   aoReiniciar: () => void;
+  configuracoes: ConfiguracoesJogo;
 }
 
 const CORES_DETRITOS = ['#94a3b8', '#f97316', '#ef4444', '#1e293b'];
 const NUMERO_DETRITOS = 15;
 
-const TelaDerrotaSistemaSolar: React.FC<TelaDerrotaSistemaSolarProps> = ({ aoReiniciar }) => {
+const TelaDerrotaSistemaSolar: React.FC<TelaDerrotaSistemaSolarProps> = ({ aoReiniciar, configuracoes }) => {
   const { estaPiscando, mostrarCameraFlutuante: modoOcular, leitorAtivo } = useStore(lojaOlho);
   const navigate = useNavigate();
 
@@ -43,6 +45,21 @@ const TelaDerrotaSistemaSolar: React.FC<TelaDerrotaSistemaSolarProps> = ({ aoRei
     }
     return () => { if (timerScanRef.current) clearInterval(timerScanRef.current); };
   }, [modoOcular, podeInteragirOcular]);
+
+  useEffect(() => {
+    if (configuracoes.sons) {
+      const audio = new Audio('/assets/efeitos/derrota.mp3');
+
+      audio.play().catch(erro => {
+        console.warn("O navegador bloqueou o áudio ou o arquivo não foi encontrado:", erro);
+      });
+
+      return () => {
+        audio.pause();
+        audio.currentTime = 0;
+      };
+    }
+  }, [configuracoes.sons]);
 
   const irParaMenu = useCallback(() => {
     pararNarracao();

@@ -37,8 +37,8 @@ function SistemaSolar() {
         configuracoes={configuracoes} 
       />
     ),
-    vitoria: <TelaVitoria aoReiniciar={voltarAoManual} />,
-    derrota: <TelaDerrotaSistemaSolar aoReiniciar={voltarAoManual} />,
+    vitoria: <TelaVitoria aoReiniciar={voltarAoManual} configuracoes={configuracoes}  />,
+    derrota: <TelaDerrotaSistemaSolar aoReiniciar={voltarAoManual} configuracoes={configuracoes}  />,
   }), [iniciarMissao, finalizarJogo, voltarAoManual, configuracoes]);
 
   return (
