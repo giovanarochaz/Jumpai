@@ -1,279 +1,181 @@
-import React, { useState, useEffect, useCallback, useRef } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import * as S from './styles';
-import type { ConfiguracoesJogo, VelocidadeGeracao } from '../manual';
 import { useStore } from 'zustand';
 import { lojaOlho } from '../../../lojas/lojaOlho';
+import type { ConfiguracoesJogo } from '../../../interface/types';
 
-// --- BANCO DE DADOS E CONFIGURAÇÕES DE JOGO ---
 const PAO_BASE = { nome: 'pao_base', imagem: '/assets/piramideSabor/pao_base.png' };
 const PAO_TOPO = { nome: 'pao_topo', imagem: '/assets/piramideSabor/pao_topo.png' };
-const RECHEIOS_POSSIVEIS = [
+const RECHEIOS = [
   { nome: 'hamburguer', imagem: '/assets/piramideSabor/carne.png' },
   { nome: 'queijo', imagem: '/assets/piramideSabor/queijo.png' },
   { nome: 'salada', imagem: '/assets/piramideSabor/salada.png' },
 ];
-const COMIDAS_INIMIGAS = [
+const INIMIGOS = [
   { nome: 'inimigo', imagem: '/assets/piramideSabor/donut.png' },
   { nome: 'inimigo', imagem: '/assets/piramideSabor/fritas.png' },
 ];
-const MAPA_VELOCIDADE_ITENS: Record<VelocidadeGeracao, { min: number; max: number }> = {
-  lenta: { min: 7, max: 12 },
-  normal: { min: 5, max: 7 },
-  rapida: { min: 2.5, max: 3.5 },
-};
-const MAPA_INTERVALO_GERACAO: Record<VelocidadeGeracao, { min: number; max: number }> = {
-  lenta: { min: 4000, max: 4000 },
-  normal: { min: 4000, max: 4000 },
-  rapida: { min: 4000, max: 4000 },
-};
 
-// --- CONSTANTES DE JOGABILIDADE ---
-const LIMITE_ESQUERDA_CHEF = 15;
-const LIMITE_DIREITA_CHEF = 85;
-const HITBOX_LARGURA_PERCENTUAL = 0.1;
-const HITBOX_ALTURA_PERCENTUAL = 0.2;
-const HITBOX_VERTICAL_OFFSET_PERCENTUAL = 0.3;
-
-// --- TIPOS E INTERFACES ---
-interface IngredienteDaReceita { nome: string; imagem: string; quantidade: number; coletados: number; }
-type Receita = IngredienteDaReceita[];
-interface EstadoItem { id: number; nome: string; imagem: string; left: number; duracao: number; tamanho: number; }
-interface JogoPiramideSaborProps {
-  aoVencer: () => void;
-  aoPerder: () => void;
-  configuracoes: ConfiguracoesJogo;
-}
-
-// --- FUNÇÃO AUXILIAR ---
-const gerarReceitaAleatoria = (): Receita => {
-  const novaReceita: Receita = [{ ...PAO_BASE, quantidade: 1, coletados: 1 }];
-  const numTiposDeRecheio = Math.floor(Math.random() * 2) + 2;
-  const recheiosEmbaralhados = [...RECHEIOS_POSSIVEIS].sort(() => 0.5 - Math.random());
-  for (let i = 0; i < numTiposDeRecheio; i++) {
-    const recheio = recheiosEmbaralhados[i];
-    const quantidade = Math.floor(Math.random() * 2) + 1;
-    novaReceita.push({ ...recheio, quantidade, coletados: 0 });
-  }
-  novaReceita.push({ ...PAO_TOPO, quantidade: 1, coletados: 0 });
-  return novaReceita;
-};
-
-// --- COMPONENTE PRINCIPAL ---
-const JogoPiramideSabor: React.FC<JogoPiramideSaborProps> = ({ aoVencer, aoPerder, configuracoes }) => {
+const JogoPiramideSabor: React.FC<{ aoVencer: () => void; aoPerder: () => void; configuracoes: ConfiguracoesJogo }> = ({ aoVencer, aoPerder, configuracoes }) => {
   const { estaPiscando } = useStore(lojaOlho);
-
-  const [receitaAtual, setReceitaAtual] = useState<Receita>([]);
-  const [ingredientesMontados, setIngredientesMontados] = useState<({ nome: string, imagem: string })[]>([]);
-  const [itensVisiveis, setItensVisiveis] = useState<EstadoItem[]>([]);
+  
+  const [receitaAtual, setReceitaAtual] = useState<any[]>([]);
+  const [ingredientesMontados, setIngredientesMontados] = useState<any[]>([]);
+  const [itensVisiveis, setItensVisiveis] = useState<any[]>([]);
   const [posicaoChef, setPosicaoChef] = useState(50);
   const [jogoFinalizado, setJogoFinalizado] = useState(false);
-  
-  // Estado para controlar a animação de impacto no prato
   const [animacaoImpacto, setAnimacaoImpacto] = useState(false);
-  
-  const [animacaoFinal, setAnimacaoFinal] = useState({
-    iniciada: false,
-    telaEscura: false,
-    cortinasAbertas: false,
-    revelacaoFinal: false,
-  });
+  const [animacaoFinal, setAnimacaoFinal] = useState({ iniciada: false, telaEscura: false, cortinasAbertas: false, revelacaoFinal: false });
 
   const proximoIdRef = useRef(0);
   const chefRef = useRef<HTMLImageElement>(null);
-  const somColetaRef = useRef<HTMLAudioElement | null>(null);
-  const somAmbienteRef = useRef<HTMLAudioElement | null>(null);
-  const somPedidoCompletoRef = useRef<HTMLAudioElement | null>(null);
-  const somBateriaRef = useRef<HTMLAudioElement | null>(null);
-  const timeoutGeradorRef = useRef<number | undefined>(0);
-  const itensProcessadosRef = useRef(new Set<number>());
-  const ultimoLadoGeradoRef = useRef<'esquerda' | 'direita'>('direita');
-  const receitaAtualRef = useRef(receitaAtual);
-  const avaliarPedidoRef = useRef<(() => void) | null>(null);
+  const timerRef = useRef<NodeJS.Timeout | null>(null);
+  const receitaRef = useRef<any[]>([]);
+  const itensProcessados = useRef(new Set<number>());
+
+  const sons = useRef({
+    coleta: new Audio('/assets/piramideSabor/sounds/coleta.mp3'),
+    sucesso: new Audio('/assets/piramideSabor/sounds/pedidoCompleto.mp3'),
+    ambiente: new Audio('/assets/piramideSabor/sounds/ambiente.mp3'),
+  });
 
   useEffect(() => {
-    const novaReceita = gerarReceitaAleatoria();
-    console.log('--- PEDIDO CORRETO ---');
-    console.table(novaReceita.map(i => ({ Ingrediente: i.nome, Quantidade: i.quantidade })));
-    setReceitaAtual(novaReceita);
-    setIngredientesMontados([{ ...PAO_BASE }]);
-    somColetaRef.current = new Audio('/assets/piramideSabor/sounds/coleta.mp3');
-    somPedidoCompletoRef.current = new Audio('/assets/piramideSabor/sounds/pedidoCompleto.mp3');
-    somBateriaRef.current = new Audio('/assets/piramideSabor/sounds/bateria_suspense.mp3');
-  }, []);
+    const r = [
+      { ...PAO_BASE, quantidade: 1, coletados: 1 },
+      ...RECHEIOS.sort(() => Math.random() - 0.5).slice(0, 2).map(i => ({ ...i, quantidade: 2, coletados: 0 })),
+      { ...PAO_TOPO, quantidade: 1, coletados: 0 }
+    ];
+    setReceitaAtual(r);
+    setIngredientesMontados([PAO_BASE]);
 
-  useEffect(() => {
-    if (configuracoes.sons && !jogoFinalizado) {
-      somAmbienteRef.current = new Audio('/assets/piramideSabor/sounds/ambiente.mp3');
-      somAmbienteRef.current.loop = true;
-      somAmbienteRef.current.volume = 0.3;
-      somAmbienteRef.current.play();
+    if (configuracoes.sons) {
+      sons.current.ambiente.loop = true;
+      sons.current.ambiente.play().catch(() => {});
     }
-    return () => { somAmbienteRef.current?.pause(); };
-  }, [configuracoes.sons, jogoFinalizado]);
-
-  useEffect(() => {
-    if (animacaoFinal.iniciada) {
-      setTimeout(() => setAnimacaoFinal(prev => ({ ...prev, telaEscura: true })), 500);
-      setTimeout(() => {
-        if (configuracoes.sons) somBateriaRef.current?.play();
-        setAnimacaoFinal(prev => ({ ...prev, cortinasAbertas: true, revelacaoFinal: true }));
-      }, 2500);
-      setTimeout(() => avaliarPedidoRef.current?.(), 5500);
-    }
-  }, [animacaoFinal.iniciada, configuracoes.sons]);
-
-  useEffect(() => {
-    const agendarProximoItem = () => {
-      const gerarItem = () => {
-        if (jogoFinalizado) return;
-        const itensPossiveis = [...RECHEIOS_POSSIVEIS, PAO_TOPO, ...COMIDAS_INIMIGAS, ...RECHEIOS_POSSIVEIS];
-        const itemAleatorio = itensPossiveis[Math.floor(Math.random() * itensPossiveis.length)];
-        const proximoLado = ultimoLadoGeradoRef.current === 'esquerda' ? 'direita' : 'esquerda';
-        
-        // --- AJUSTE AQUI: MUDANÇA NAS COORDENADAS DE GERAÇÃO ---
-        // Antes era 10-40 (Esq) e 60-90 (Dir). Muito perto das bordas.
-        // Agora é 20-45 (Esq) e 55-80 (Dir). Garantido que o chef alcança.
-        let novoLeft;
-        if (proximoLado === 'esquerda') { 
-            novoLeft = 20 + Math.random() * 25; 
-        } else { 
-            novoLeft = 55 + Math.random() * 25; 
-        }
-        // --------------------------------------------------------
-
-        ultimoLadoGeradoRef.current = proximoLado;
-        const velocidadeConfig = MAPA_VELOCIDADE_ITENS[configuracoes.velocidade];
-        const duracao = Math.random() * (velocidadeConfig.max - velocidadeConfig.min) + velocidadeConfig.min;
-        const tamanho = window.innerWidth / 12;
-        setItensVisiveis(atuais => [...atuais, { id: proximoIdRef.current++, ...itemAleatorio, left: novoLeft, duracao, tamanho }]);
-        agendarProximoItem();
-      };
-      const intervaloConfig = MAPA_INTERVALO_GERACAO[configuracoes.velocidade];
-      const delayAleatorio = Math.random() * (intervaloConfig.max - intervaloConfig.min) + intervaloConfig.min;
-      timeoutGeradorRef.current = window.setTimeout(gerarItem, delayAleatorio);
+    return () => {
+      sons.current.ambiente.pause();
+      if (timerRef.current) clearTimeout(timerRef.current);
     };
-    if (!jogoFinalizado) {
-        agendarProximoItem();
-    }
-    return () => clearTimeout(timeoutGeradorRef.current);
+  }, [configuracoes.sons]);
+
+  useEffect(() => { receitaRef.current = receitaAtual; }, [receitaAtual]);
+
+  // Gerador de um item por vez em 20% ou 80%
+  useEffect(() => {
+    const gerar = () => {
+      if (jogoFinalizado) return;
+      const delay = { lenta: 4000, normal: 3000, rapida: 1800 }[configuracoes.velocidade];
+      
+      timerRef.current = setTimeout(() => {
+        if (jogoFinalizado) return;
+        const proximo = receitaRef.current.find(i => i.coletados < i.quantidade);
+        const rand = Math.random();
+        
+        let item = rand < 0.6 && proximo ? proximo : 
+                   rand < 0.85 ? RECHEIOS[Math.floor(Math.random() * RECHEIOS.length)] : 
+                   INIMIGOS[Math.floor(Math.random() * INIMIGOS.length)];
+
+        const novoLeft = Math.random() < 0.5 ? 20 : 80;
+        setItensVisiveis(prev => [...prev, { id: proximoIdRef.current++, ...item, left: novoLeft, duracao: 5 }]);
+        gerar();
+      }, delay);
+    };
+    gerar();
+    return () => { if (timerRef.current) clearTimeout(timerRef.current); };
   }, [configuracoes.velocidade, jogoFinalizado]);
 
+  // Colisão e Penalidade
   useEffect(() => {
-    if (!estaPiscando) return;
-    setPosicaoChef(p => (p < 50 ? LIMITE_DIREITA_CHEF : LIMITE_ESQUERDA_CHEF));
+    let animId: number;
+    const loop = () => {
+      if (jogoFinalizado || !chefRef.current) return;
+      const chefRect = chefRef.current.getBoundingClientRect();
+      const hX = chefRect.left + chefRect.width * 0.3;
+      const hY = chefRect.top + chefRect.height * 0.3;
+      const hW = chefRect.width * 0.4;
+      const hH = chefRect.height * 0.1;
+
+      document.querySelectorAll<HTMLElement>('.item-caindo').forEach(el => {
+        const id = Number(el.dataset.id);
+        if (itensProcessados.current.has(id)) return;
+        const r = el.getBoundingClientRect();
+
+        if (!(hX + hW < r.left || hX > r.right || hY + hH < r.top || hY > r.bottom)) {
+          itensProcessados.current.add(id);
+          const nome = el.dataset.nome!;
+          const src = el.getAttribute('src')!;
+          setItensVisiveis(prev => prev.filter(i => i.id !== id));
+
+          // 1. Inimigo
+          if (nome === 'inimigo' && configuracoes.penalidade) { 
+            setJogoFinalizado(true); 
+            aoPerder(); 
+            return; 
+          }
+
+          // 2. Ordem Errada
+          const esperado = receitaRef.current.find(i => i.coletados < i.quantidade);
+          if (nome !== esperado?.nome && nome !== 'inimigo') {
+            if (configuracoes.penalidade) { 
+              setJogoFinalizado(true); 
+              aoPerder(); 
+            }
+            return;
+          }
+
+          // 3. Coleta de Sucesso
+          if (nome !== 'inimigo') {
+            if (configuracoes.sons) sons.current.coleta.play().catch(() => {});
+            setAnimacaoImpacto(true);
+            setTimeout(() => setAnimacaoImpacto(false), 200);
+            setIngredientesMontados(prev => [...prev, { nome, imagem: src }]);
+            setReceitaAtual(prev => prev.map(i => i.nome === nome ? { ...i, coletados: i.coletados + 1 } : i));
+
+            if (nome === 'pao_topo') { setJogoFinalizado(true); vencer(); }
+          }
+        }
+      });
+      animId = requestAnimationFrame(loop);
+    };
+    animId = requestAnimationFrame(loop);
+    return () => cancelAnimationFrame(animId);
+  }, [jogoFinalizado, configuracoes, aoPerder]);
+
+  const vencer = () => {
+    setAnimacaoFinal(prev => ({ ...prev, iniciada: true }));
+    setTimeout(() => setAnimacaoFinal(prev => ({ ...prev, telaEscura: true })), 500);
+    setTimeout(() => {
+      if (configuracoes.sons) sons.current.sucesso.play().catch(() => {});
+      setAnimacaoFinal(prev => ({ ...prev, cortinasAbertas: true, revelacaoFinal: true }));
+    }, 2200);
+    setTimeout(aoVencer, 6500);
+  };
+
+  useEffect(() => {
+    if (estaPiscando) setPosicaoChef(p => (p < 50 ? 80 : 20));
+    const handle = (e: KeyboardEvent) => {
+      if (e.key === 'ArrowLeft') setPosicaoChef(20);
+      if (e.key === 'ArrowRight') setPosicaoChef(80);
+    };
+    window.addEventListener('keydown', handle);
+    return () => window.removeEventListener('keydown', handle);
   }, [estaPiscando]);
 
-  useEffect(() => {
-    const tratarTecla = (e: KeyboardEvent) => {
-      if (e.key === 'ArrowLeft') setPosicaoChef(LIMITE_ESQUERDA_CHEF);
-      else if (e.key === 'ArrowRight') setPosicaoChef(LIMITE_DIREITA_CHEF);
-    };
-    window.addEventListener('keydown', tratarTecla);
-    return () => window.removeEventListener('keydown', tratarTecla);
-  }, []);
-
-  const avaliarPedido = useCallback(() => {
-    const receitaMaisRecente = receitaAtualRef.current;
-    const sucesso = receitaMaisRecente.every(item => item.coletados >= item.quantidade);
-    setTimeout(() => {
-      if (sucesso) aoVencer();
-      else aoPerder();
-    }, 1500);
-  }, [aoVencer, aoPerder]);
-
-  const removerItemForaDaTela = useCallback((id: number) => {
-    setItensVisiveis(prev => prev.filter(item => item.id !== id));
-    if (itensProcessadosRef.current.has(id)) {
-        itensProcessadosRef.current.delete(id);
-    }
-  }, []);
-
-  useEffect(() => { receitaAtualRef.current = receitaAtual; }, [receitaAtual]);
-  useEffect(() => { avaliarPedidoRef.current = avaliarPedido; }, [avaliarPedido]);
-
-  useEffect(() => {
-    let animacaoId: number;
-    const loopJogo = () => {
-      animacaoId = requestAnimationFrame(loopJogo);
-      if (!chefRef.current || jogoFinalizado) return;
-      
-      const chefRetangulo = chefRef.current.getBoundingClientRect();
-      const hitboxLargura = chefRetangulo.width * HITBOX_LARGURA_PERCENTUAL;
-      const hitboxOffset = (chefRetangulo.width - hitboxLargura) / 2;
-      const hitboxLeft = chefRetangulo.left + hitboxOffset;
-      const hitboxRight = chefRetangulo.right - hitboxOffset;
-      const hitboxAltura = chefRetangulo.height * HITBOX_ALTURA_PERCENTUAL;
-      const hitboxVerticalOffset = chefRetangulo.height * HITBOX_VERTICAL_OFFSET_PERCENTUAL;
-      const hitboxTop = chefRetangulo.top + hitboxVerticalOffset;
-      const hitboxBottom = hitboxTop + hitboxAltura;
-
-      for (const itemEl of document.querySelectorAll<HTMLElement>('.item-caindo')) {
-        const itemId = Number(itemEl.dataset.id);
-        if (itensProcessadosRef.current.has(itemId)) continue;
-
-        const itemRetangulo = itemEl.getBoundingClientRect();
-        
-        if (!(hitboxRight < itemRetangulo.left || hitboxLeft > itemRetangulo.right || hitboxBottom < itemRetangulo.top || hitboxTop > itemRetangulo.bottom)) {
-          itensProcessadosRef.current.add(itemId);
-          const itemNome = itemEl.dataset.nome!;
-          const itemImagem = itemEl.getAttribute('src')!;
-          
-          setItensVisiveis(prev => prev.filter(i => i.id !== itemId));
-
-          if (itemNome === 'inimigo') {
-            if (configuracoes.penalidade) aoPerder();
-            return;
-          }
-          
-          if (itemNome === 'pao_topo') {
-            setJogoFinalizado(true);
-            somAmbienteRef.current?.pause();
-            if (configuracoes.sons) somPedidoCompletoRef.current?.play();
-            const pedidoFinal = [...ingredientesMontados, { nome: itemNome, imagem: itemImagem }];
-            console.log('--- PEDIDO FINAL ---');
-            console.table(pedidoFinal.map((item, index) => ({ 'Ordem': index + 1, 'Ingrediente': item.nome })));
-            setIngredientesMontados(pedidoFinal);
-            setReceitaAtual(prev => prev.map(ing => ing.nome === 'pao_topo' ? { ...ing, coletados: 1 } : ing));
-            setAnimacaoFinal(prev => ({ ...prev, iniciada: true }));
-            return;
-          }
-
-          const ehRecheioValido = RECHEIOS_POSSIVEIS.some(r => r.nome === itemNome);
-
-          if (ehRecheioValido) {
-            if (configuracoes.sons) somColetaRef.current?.play();
-            
-            // Dispara a animação (suave no CSS)
-            setAnimacaoImpacto(true);
-            setTimeout(() => setAnimacaoImpacto(false), 300);
-
-            setIngredientesMontados(prev => [...prev, { nome: itemNome, imagem: itemImagem }]);
-            
-            setReceitaAtual(prev => prev.map(ing => 
-              ing.nome === itemNome 
-                ? { ...ing, coletados: ing.coletados + 1 } 
-                : ing
-            ));
-          }
-          return;
-        }
-      }
-    };
-    loopJogo();
-    return () => cancelAnimationFrame(animacaoId);
-  }, [configuracoes.penalidade, configuracoes.sons, aoPerder, jogoFinalizado, avaliarPedido, ingredientesMontados]);
-  
   return (
     <S.FundoLanchonete>
       {!animacaoFinal.iniciada && (
         <>
           <S.Comanda>
-            <h3>Pedido do Mestre:</h3>
+            <h3>Ordem do Mestre:</h3>
             <ul>
-              {receitaAtual.map(item => (
-                <S.ItemDaLista key={item.nome} $concluido={item.coletados >= item.quantidade}>
+              {receitaAtual.map((item, idx) => (
+                <S.ItemDaLista 
+                  key={idx} 
+                  $concluido={item.coletados >= item.quantidade} 
+                  $proximo={item.coletados < item.quantidade && (idx === 0 || receitaAtual[idx-1].coletados >= receitaAtual[idx-1].quantidade)}
+                >
                   <img src={item.imagem} alt={item.nome} />
-                  <span>{item.quantidade}x {item.nome.replace(/_/g, ' ')}</span>
+                  <span>{Math.max(0, item.quantidade - item.coletados)}x {item.nome.replace('_', ' ')}</span>
                 </S.ItemDaLista>
               ))}
             </ul>
@@ -285,24 +187,20 @@ const JogoPiramideSabor: React.FC<JogoPiramideSaborProps> = ({ aoVencer, aoPerde
               data-id={item.id} 
               data-nome={item.nome} 
               src={item.imagem} 
-              alt={item.nome}
               $left={item.left} 
-              $duracao={item.duracao} 
-              $tamanho={item.tamanho}
-              onAnimationEnd={() => removerItemForaDaTela(item.id)}
+              $duracao={item.duracao}
+              onAnimationEnd={() => setItensVisiveis(prev => prev.filter(i => i.id !== item.id))}
             />
           ))}
           <S.Balcao />
           <S.PratoMontagem $animando={animacaoImpacto}>
-            {ingredientesMontados.map((item, index) => (
-              <S.IngredienteEmpilhado key={index} src={item.imagem} alt={item.nome} $index={index} />
+            {ingredientesMontados.map((ing, i) => (
+              <S.IngredienteEmpilhado key={i} src={ing.imagem} $index={i} />
             ))}
           </S.PratoMontagem>
         </>
       )}
-
-      <S.Chef ref={chefRef} src="/assets/piramideSabor/chef.png" alt="Chef Nutri" $left={posicaoChef} $escondido={animacaoFinal.iniciada} />
-      
+      <S.Chef ref={chefRef} src="/assets/piramideSabor/chef.png" $left={posicaoChef} $escondido={animacaoFinal.iniciada} />
       {animacaoFinal.iniciada && (
         <>
           <S.TelaEscura $ativa={animacaoFinal.telaEscura} />
@@ -314,8 +212,8 @@ const JogoPiramideSabor: React.FC<JogoPiramideSaborProps> = ({ aoVencer, aoPerde
             <S.PalcoFinal>
               <S.Spotlight />
               <S.PratoMontagem $finalizado>
-                {ingredientesMontados.map((item, index) => (
-                  <S.IngredienteEmpilhado key={index} src={item.imagem} alt={item.nome} $index={index} />
+                {ingredientesMontados.map((ing, i) => (
+                  <S.IngredienteEmpilhado key={i} src={ing.imagem} $index={i} />
                 ))}
               </S.PratoMontagem>
             </S.PalcoFinal>

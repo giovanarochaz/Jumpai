@@ -37,7 +37,6 @@ const TelaVitoriaPiramideSabor: React.FC<TelaVitoriaProps> = ({ aoReiniciar, con
   const timerScanRef = useRef<NodeJS.Timeout | null>(null);
   const piscadaProcessadaRef = useRef(false);
 
-  // Inicialização de foco: No mouse é null, no ocular começa no reiniciar
   useEffect(() => {
     if (modoOcular) setBotaoFocado('reiniciar');
     else setBotaoFocado(null);
