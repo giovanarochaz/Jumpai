@@ -1,7 +1,7 @@
 // Configurações de Intencionalidade (Essencial para AME/ELA)
 export const CONFIG_OCULAR = {
-  LIMIAR_PISCADA: 0.55,
-  DURACAO_MIN_PISCADA: 250,  // Descarta reflexos
+  LIMIAR_PISCADA: 0.60,
+  DURACAO_MIN_PISCADA: 350,  // Descarta reflexos
   DURACAO_MAX_PISCADA: 1000, // Descarta se o olho ficar fechado por cansaço
   COOLDOWN_CLIQUE: 600,      // Evita cliques duplos acidentais
   
