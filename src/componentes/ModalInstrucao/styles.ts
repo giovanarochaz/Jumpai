@@ -1,4 +1,4 @@
-import styled, { keyframes } from 'styled-components';
+import styled, { keyframes, css } from 'styled-components';
 import { cores } from '../../estilos/cores';
 
 const aparecer = keyframes`
@@ -46,6 +46,7 @@ export const Titulo = styled.h2`
 `;
 
 export const ContainerVideo = styled.div`
+  position: relative;
   width: 100%;
   border-radius: 15px;
   overflow: hidden;
@@ -53,12 +54,45 @@ export const ContainerVideo = styled.div`
   background: #000;
   margin-bottom: 25px;
   line-height: 0;
+  display: flex;
+  justify-content: center;
+  align-items: center;
 `;
 
 export const VideoInstrucao = styled.video`
   width: 100%;
   aspect-ratio: 16 / 9;
   object-fit: cover;
+`;
+
+export const BotaoPlayCentral = styled.button`
+  position: absolute;
+  width: 80px;
+  height: 80px;
+  background-color: ${cores.amarelo};
+  border: 3px solid ${cores.preto};
+  border-radius: 50%;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  cursor: pointer;
+  z-index: 10;
+  box-shadow: 0 4px 0 ${cores.preto};
+  transition: all 0.2s;
+
+  &:hover {
+    transform: scale(1.1);
+    background-color: ${cores.branco};
+  }
+`;
+
+export const IconePlay = styled.div`
+  width: 0; 
+  height: 0; 
+  border-top: 15px solid transparent;
+  border-bottom: 15px solid transparent;
+  border-left: 25px solid ${cores.preto};
+  margin-left: 8px;
 `;
 
 export const ListaInstrucoes = styled.div`
@@ -98,10 +132,6 @@ export const ItemInstrucao = styled.div`
     margin: 0;
     line-height: 1.3;
   }
-
-  strong {
-    color: ${cores.amarelo};
-  }
 `;
 
 export const ContainerBotoes = styled.div`
@@ -112,7 +142,7 @@ export const ContainerBotoes = styled.div`
   width: 100%;
 `;
 
-export const BotaoEntendi = styled.button`
+export const BotaoEntendi = styled.button<{ disabled?: boolean }>`
   width: 100%;
   max-width: 350px;
   height: 60px;
@@ -127,12 +157,27 @@ export const BotaoEntendi = styled.button`
   transition: all 0.2s;
   text-transform: uppercase;
 
-  &:hover {
+  ${props => props.disabled && css`
+    background-color: #666;
+    color: #999;
+    border-color: #444;
+    box-shadow: 0 5px 0 #333;
+    cursor: not-allowed;
+    filter: grayscale(1);
+    opacity: 0.7;
+
+    &:hover {
+      transform: none;
+      box-shadow: 0 5px 0 #333;
+    }
+  `}
+
+  &:hover:not(:disabled) {
     transform: translateY(-2px);
     box-shadow: 0 7px 0 ${cores.preto};
   }
 
-  &:active {
+  &:active:not(:disabled) {
     transform: translateY(3px);
     box-shadow: 0 2px 0 ${cores.preto};
   }
