@@ -1,6 +1,6 @@
 import React, { useState, useEffect, useCallback, useRef, useMemo } from 'react';
 import * as S from './styles';
-import { Gamepad2, AlertTriangle, Trophy, Bomb, Zap, Music, ShieldOff, ChefHat, ChevronRight, ChevronLeft } from 'lucide-react';
+import { Gamepad2, Bomb, Zap, Music, ShieldOff, ChefHat, ChevronRight, ChevronLeft } from 'lucide-react';
 import { useStore } from 'zustand';
 import { lojaOlho } from '../../../lojas/lojaOlho';
 import { useLeitorOcular } from '../../../hooks/useLeitorOcular';
