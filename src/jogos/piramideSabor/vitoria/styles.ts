@@ -1,182 +1,77 @@
 import styled, { keyframes, css } from 'styled-components';
 
-// --- PALETA TEMÁTICA (Consistência com o Manual) ---
 const TEMA = {
-   vermelho: '#ef4444',
-   vermelhoEscuro: '#b91c1c',
-   amarelo: '#fbbf24',
-   marrom: '#78350f',
-   branco: '#ffffff',
-   fundoRosa: '#fff1f2',
-   grid: 'rgba(239, 68, 68, 0.2)'
+  vermelho: '#ef4444',
+  marrom: '#78350f',
+  amarelo: '#fbbf24',
+  branco: '#ffffff',
+  grid: 'rgba(239, 68, 68, 0.15)'
 };
 
-// --- ANIMAÇÕES ---
+// 1. Defina uma interface para as props dos botões
+interface BotaoProps {
+  $isFocused: boolean;
+}
 
-const popIn = keyframes`
-  0% { transform: scale(0.5); opacity: 0; }
-  60% { transform: scale(1.1); opacity: 1; }
-  100% { transform: scale(1); opacity: 1; }
+const pulse = keyframes`
+  0% { transform: scale(1); box-shadow: 0 0 0 0px ${TEMA.amarelo}; }
+  50% { transform: scale(1.08); box-shadow: 0 0 20px 8px rgba(251, 191, 36, 0.4); }
+  100% { transform: scale(1); box-shadow: 0 0 0 0px ${TEMA.amarelo}; }
 `;
 
-const cairConfete = keyframes`
-  0% { transform: translateY(-10vh) rotate(0deg); opacity: 1; }
-  100% { transform: translateY(110vh) rotate(720deg); opacity: 0; }
-`;
-
-const brilhoEstrela = keyframes`
-  0%, 100% { transform: scale(1); filter: brightness(1); }
-  50% { transform: scale(1.2); filter: brightness(1.3); drop-shadow(0 0 10px ${TEMA.amarelo}); }
-`;
-
-const flutuarCard = keyframes`
-  0%, 100% { transform: translateY(0px); }
-  50% { transform: translateY(-10px); }
-`;
-
-// --- COMPONENTES ---
-
-export const FundoVitoria = styled.div`
-  position: fixed;
-  top: 0; left: 0;
-  width: 100vw; height: 100vh;
-  /* Gradiente radial para dar foco no centro */
-  background: radial-gradient(circle, rgba(0,0,0,0.6) 0%, rgba(0,0,0,0.9) 100%);
+// 2. Aplique a interface no bloco de CSS
+const EstiloBotao = css<BotaoProps>`
+  padding: 18px 30px;
+  font-size: 1.1rem;
+  font-weight: 900;
+  border-radius: 20px;
+  border: 4px solid ${TEMA.marrom};
+  cursor: pointer;
   display: flex;
-  justify-content: center;
   align-items: center;
-  z-index: 300;
-  overflow: hidden;
-  animation: ${popIn} 0.5s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+  gap: 10px;
+  transition: all 0.2s;
+  background: ${TEMA.branco};
+  color: ${TEMA.marrom};
+  box-shadow: 5px 5px 0px ${TEMA.marrom};
+
+  &:hover {
+    background: ${TEMA.amarelo};
+    transform: translateY(-3px);
+    box-shadow: 8px 8px 0px ${TEMA.marrom};
+  }
+
+  ${props => props.$isFocused && css`
+    animation: ${pulse} 1.5s infinite;
+    border-color: ${TEMA.vermelho} !important;
+    background: ${TEMA.amarelo} !important;
+    transform: scale(1.1);
+    z-index: 10;
+  `}
 `;
 
-export const ConteudoVitoria = styled.div`
-   /* Fundo Quadriculado Temático */
-   background-color: ${TEMA.fundoRosa};
-   background-image:
-      linear-gradient(${TEMA.grid} 1px, transparent 1px),
-      linear-gradient(90deg, ${TEMA.grid} 1px, transparent 1px);
-   background-size: 30px 30px;
-   
-   color: ${TEMA.marrom};
-   padding: 50px;
-   border-radius: 40px;
-   border: 8px solid ${TEMA.vermelho};
-   text-align: center;
-   position: relative;
-   z-index: 10;
-   box-shadow: 0 20px 50px rgba(0,0,0,0.5), inset 0 0 0 5px ${TEMA.branco};
-   max-width: 600px;
-   width: 90%;
-   animation: ${flutuarCard} 4s ease-in-out infinite;
-
-   /* Faixa decorativa no topo */
-   &::after {
-      content: '';
-      position: absolute;
-      top: -15px; left: 50%; transform: translateX(-50%);
-      width: 60%; height: 15px;
-      background-color: ${TEMA.marrom};
-      border-radius: 10px;
-   }
+// 3. OBRIGATÓRIO: Passe a interface para o styled.button também
+export const BotaoVitoria = styled.button<BotaoProps>`
+  ${EstiloBotao}
 `;
 
-export const EstrelasContainer = styled.div`
-   display: flex;
-   justify-content: center;
-   gap: 15px;
-   margin-bottom: 20px;
+export const BotaoDerrota = styled.button<BotaoProps>`
+  ${EstiloBotao}
 `;
 
-export const IconeEstrela = styled.div<{ $delay: string }>`
-   color: ${TEMA.amarelo};
-   filter: drop-shadow(2px 2px 0px ${TEMA.marrom});
-   
-   /* Animação de entrada e brilho contínuo */
-   animation: 
-      ${popIn} 0.5s cubic-bezier(0.175, 0.885, 0.32, 1.275) backwards,
-      ${brilhoEstrela} 2s infinite ease-in-out;
-      
-   animation-delay: ${({ $delay }) => $delay}, ${({ $delay }) => `calc(${$delay} + 0.5s)`};
-`;
-
-export const TituloVitoria = styled.h1`
-   font-size: 3.5rem;
-   color: ${TEMA.vermelho};
-   font-weight: 900;
-   text-transform: uppercase;
-   letter-spacing: 2px;
-   text-shadow: 4px 4px 0px ${TEMA.branco}, 6px 6px 0px ${TEMA.marrom};
-   margin: 10px 0;
-   transform: rotate(-2deg); /* Leve inclinação divertida */
-`;
-
-export const MensagemVitoria = styled.p`
-   font-size: 1.3rem;
-   font-weight: 500;
-   margin: 20px auto 30px;
-   line-height: 1.6;
-   background: ${TEMA.branco};
-   padding: 15px;
-   border-radius: 15px;
-   border: 2px dashed ${TEMA.marrom};
-   box-shadow: 4px 4px 0 rgba(0,0,0,0.1);
-`;
-
-export const ContainerBotoes = styled.div`
-   display: flex;
-   justify-content: center;
-   gap: 20px;
-   margin-top: 10px;
-`;
-
-export const BotaoVitoria = styled.button<{ $focado?: boolean }>`
-   min-width: 180px;
-   min-height: 60px;
-   background-color: ${({ $focado }) => ($focado ? TEMA.amarelo : TEMA.branco)};
-   color: ${TEMA.marrom};
-   border: 4px solid ${TEMA.marrom};
-   border-radius: 25px;
-   cursor: pointer;
-   box-shadow: 6px 6px 0px ${TEMA.marrom};
-   font-size: 1.1rem;
-   font-weight: 800;
-   text-transform: uppercase;
-   transition: all 0.15s ease-out;
-
-   ${({ $focado }) => $focado && css`
-      transform: scale(1.1);
-      box-shadow: 8px 8px 0px ${TEMA.vermelho};
-      border-color: ${TEMA.vermelho};
-      background-color: ${TEMA.amarelo};
-      z-index: 5;
-   `}
-
-   &:hover {
-      background-color: ${TEMA.amarelo};
-      transform: translate(2px, 2px);
-      box-shadow: 4px 4px 0px ${TEMA.marrom};
-   }
-
-   &:active {
-      transform: translate(6px, 6px);
-      box-shadow: none;
-   }
-`;
-
-// --- CONFETES ---
-
-export const Confete = styled.div`
-   position: absolute;
-   top: -20px;
-   left: var(--left);
-   width: var(--size);
-   height: var(--size);
-   background-color: var(--color);
-   border-radius: var(--radius);
-   opacity: 0;
-   z-index: 1; /* Atrás do card */
-   
-   animation: ${cairConfete} var(--duration) linear infinite;
-   animation-delay: var(--delay);
-`;
+// --- Restante dos estilos permanecem iguais ---
+export const FundoVitoria = styled.div` position: fixed; inset: 0; z-index: 300; background: #fff1f2; display: flex; justify-content: center; align-items: center; overflow: hidden; background-image: linear-gradient(${TEMA.grid} 2px, transparent 2px), linear-gradient(90deg, ${TEMA.grid} 2px, transparent 2px); background-size: 50px 50px; `;
+export const FundoDerrota = styled.div` position: fixed; inset: 0; z-index: 300; background: #2d1b1b; display: flex; justify-content: center; align-items: center; overflow: hidden; background-image: linear-gradient(${TEMA.grid} 2px, transparent 2px), linear-gradient(90deg, ${TEMA.grid} 2px, transparent 2px); background-size: 50px 50px; `;
+export const ConteudoVitoria = styled.div` background: white; border: 8px solid ${TEMA.vermelho}; border-radius: 40px; padding: 50px; width: 90%; max-width: 650px; text-align: center; box-shadow: 12px 12px 0px ${TEMA.marrom}; position: relative; &::before { content: ''; position: absolute; inset: 6px; border: 3px dashed ${TEMA.vermelho}; border-radius: 30px; pointer-events: none; } `;
+export const ConteudoDerrota = styled.div` background: white; border: 8px solid ${TEMA.vermelho}; border-radius: 40px; padding: 50px; width: 90%; max-width: 650px; text-align: center; box-shadow: 12px 12px 0px ${TEMA.marrom}; position: relative; z-index: 310; &::before { content: ''; position: absolute; inset: 6px; border: 3px dashed ${TEMA.vermelho}; border-radius: 30px; pointer-events: none; } `;
+export const TituloVitoria = styled.h1` font-size: 3rem; color: ${TEMA.vermelho}; font-weight: 900; text-transform: uppercase; margin: 15px 0; `;
+export const TituloDerrota = styled.h1` font-size: 2.8rem; color: ${TEMA.vermelho}; font-weight: 900; text-transform: uppercase; margin-bottom: 15px; `;
+export const MensagemVitoria = styled.p` font-size: 1.3rem; color: ${TEMA.marrom}; margin-bottom: 35px; line-height: 1.5; font-weight: bold; `;
+export const MensagemDerrota = styled.p` font-size: 1.2rem; color: ${TEMA.marrom}; line-height: 1.5; margin-bottom: 35px; font-weight: bold; `;
+export const IconeContainer = styled.div` color: ${TEMA.amarelo}; position: relative; display: inline-block; filter: drop-shadow(4px 4px 0px ${TEMA.marrom}); margin-bottom: 10px; `;
+export const BadgeChef = styled.div` position: absolute; bottom: -5px; right: -5px; background: ${TEMA.vermelho}; color: white; border-radius: 50%; padding: 8px; border: 3px solid white; `;
+export const ContainerBotoes = styled.div` display: flex; gap: 20px; justify-content: center; `;
+export const ContainerFogos = styled.div` position: absolute; width: 10px; height: 10px; `;
+export const ParticulaFogos = styled.div` position: absolute; width: 100%; height: 100%; border-radius: 50%; background: var(--color); animation: ${keyframes` 0% { transform: scale(0); opacity: 1; } 100% { transform: scale(2.5); opacity: 0; } `} 2s infinite ease-out; animation-delay: var(--delay); `;
+export const SinalAlertaCozinha = styled.div` position: absolute; inset: 0; background: radial-gradient(circle, transparent 40%, rgba(239, 68, 68, 0.15) 100%); animation: ${keyframes` 0%, 100% { transform: translate(0,0); } 25% { transform: translate(-2px, 2px); } 75% { transform: translate(2px, -2px); } `} 0.5s infinite; pointer-events: none; `;
+export const MigalhaSujeira = styled.div` position: absolute; border-radius: 4px; opacity: 0.5; `;

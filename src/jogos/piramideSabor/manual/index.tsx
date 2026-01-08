@@ -154,7 +154,7 @@ const ManualPiramideSabor: React.FC<BaseManualProps<ConfiguracoesJogo>> = ({ aoI
       <S.ConteudoModal>
         {tela === 'introducao' && (
           <S.ContainerExplicacao>
-            <S.TextoSlide><h2>Academia de Chefs</h2></S.TextoSlide>
+            <S.TextoSlide><h2>Manual de Chefs</h2></S.TextoSlide>
             <S.SecaoExplicacao>
               <S.WrapperIcone><ChefHat /></S.WrapperIcone>
               <S.WrapperTexto>

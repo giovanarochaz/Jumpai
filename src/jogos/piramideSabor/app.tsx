@@ -1,38 +1,63 @@
-import { useState } from 'react';
-import ManualPiramideSabor, { type ConfiguracoesJogo } from './manual';
-import TelaVitoriaPiramideSabor from './vitoria';
+import { useState, useCallback, useMemo } from 'react';
+import ManualPiramideSabor from './manual';
 import JogoPiramideSabor from './jogo';
+import TelaVitoriaPiramideSabor from './vitoria';
 import TelaDerrotaPiramideSabor from './derrota';
+import type { ConfiguracoesJogo, EstadoJogo } from '../../interface/types';
+
+const CONFIG_INICIAL: ConfiguracoesJogo = {
+  velocidade: 'normal',
+  penalidade: true,
+  sons: true,
+};
 
 function PiramideDoSabor() {
-  const [estadoDoJogo, setEstadoDoJogo] = useState<'manual' | 'jogando' | 'vitoria' | 'derrota'>('manual'); // <-- Adicione 'derrota'
-  const [configuracoes, setConfiguracoes] = useState<ConfiguracoesJogo>({
-    velocidade: 'normal',
-    penalidade: true,
-    sons: true,
-  });
+  const [estado, setEstado] = useState<EstadoJogo>('manual');
+  const [configuracoes, setConfiguracoes] = useState<ConfiguracoesJogo>(CONFIG_INICIAL);
 
-  const tratarInicioMissao = (c: ConfiguracoesJogo) => { setConfiguracoes(c); setEstadoDoJogo('jogando'); };
-  const tratarVitoria = () => setEstadoDoJogo('vitoria');
-  const tratarDerrota = () => setEstadoDoJogo('derrota'); 
-  const tratarReiniciar = () => setEstadoDoJogo('manual');
+  const iniciarMissao = useCallback((novasConfiguracoes: ConfiguracoesJogo) => {
+    setConfiguracoes(novasConfiguracoes);
+    setEstado('jogando');
+  }, []);
 
-  const renderizarTela = () => {
-    switch (estadoDoJogo) {
-      case 'manual':
-        return <ManualPiramideSabor aoIniciarMissao={tratarInicioMissao} />;
-      case 'jogando':
-        return <JogoPiramideSabor configuracoes={configuracoes} aoVencer={tratarVitoria} aoPerder={tratarDerrota} />; // <-- Passe a prop aoPerder
-      case 'vitoria':
-        return <TelaVitoriaPiramideSabor aoReiniciar={tratarReiniciar} />;
-      case 'derrota':
-        return <TelaDerrotaPiramideSabor aoReiniciar={tratarReiniciar} />;
-      default:
-        return <ManualPiramideSabor aoIniciarMissao={tratarInicioMissao} />;
-    }
-  };
+  const finalizarJogo = useCallback((resultado: 'vitoria' | 'derrota') => {
+    setEstado(resultado);
+  }, []);
 
-  return <>{renderizarTela()}</>;
+  const voltarAoManual = useCallback(() => {
+    setEstado('manual'); 
+  }, []);
+
+  const Telas = useMemo(() => ({
+    manual: (
+      <ManualPiramideSabor aoIniciar={iniciarMissao} />
+    ),
+    jogando: (
+      <JogoPiramideSabor 
+        configuracoes={configuracoes} 
+        aoVencer={() => finalizarJogo('vitoria')} 
+        aoPerder={() => finalizarJogo('derrota')} 
+      />
+    ),
+    vitoria: (
+      <TelaVitoriaPiramideSabor 
+        aoReiniciar={voltarAoManual} 
+        configuracoes={configuracoes} 
+      />
+    ),
+    derrota: (
+      <TelaDerrotaPiramideSabor 
+        aoReiniciar={voltarAoManual} 
+        configuracoes={configuracoes} 
+      />
+    ),
+  }), [iniciarMissao, finalizarJogo, voltarAoManual, configuracoes]);
+
+  return (
+    <main className="game-container">
+      {Telas[estado] || Telas.manual}
+    </main>
+  );
 }
 
 export default PiramideDoSabor;

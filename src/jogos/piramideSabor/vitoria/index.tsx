@@ -1,164 +1,164 @@
-import React, { useState, useEffect, useCallback } from 'react';
+import React, { useState, useEffect, useCallback, useRef, useMemo } from 'react';
 import * as S from './styles';
-import { Star } from 'lucide-react';
+import { Trophy, Home, RotateCcw, ChefHat } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
 import { useStore } from 'zustand'; 
 import { lojaOlho } from '../../../lojas/lojaOlho';
 import { useLeitorOcular } from '../../../hooks/useLeitorOcular';
 import { pararNarracao } from '../../../servicos/acessibilidade';
+import type { ConfiguracoesJogo } from '../../../interface/types';
 
-const NUMERO_CONFETES = 50;
-const CORES_CONFETE = ['#ef4444', '#fbbf24', '#22c55e', '#ffffff'];
+const CORES_CELEBRACAO = ['#ef4444', '#fbbf24', '#ffffff', '#f97316'];
+const NUMERO_FOGOS = 12;
+const PARTICULAS_POR_FOGO = 10;
 
-interface DadosConfete {
+interface DadosFogos {
   id: number;
+  top: string;
   left: string;
+  cor: string;
   delay: string;
-  duration: string;
-  color: string;
-  size: string;
-  radius: string;
 }
 
-interface TelaVitoriaPiramideSaborProps {
+interface TelaVitoriaProps {
   aoReiniciar: () => void;
+  configuracoes: ConfiguracoesJogo;
 }
 
-type BotaoFoco = 'reiniciar' | 'outroJogo';
-const BOTOES_ORDEM: BotaoFoco[] = ['reiniciar', 'outroJogo'];
-
-const TelaVitoriaPiramideSabor: React.FC<TelaVitoriaPiramideSaborProps> = ({ aoReiniciar }) => {
-  const { estaPiscando, mostrarCameraFlutuante } = useStore(lojaOlho);
-  const [dadosConfetes, setDadosConfetes] = useState<DadosConfete[]>([]);
-  const [botaoFocado, setBotaoFocado] = useState<BotaoFoco>('reiniciar');
-  const [bloquearPiscada, setBloquearPiscada] = useState(true);
-  const [introConcluida, setIntroConcluida] = useState(false);
-  
+const TelaVitoriaPiramideSabor: React.FC<TelaVitoriaProps> = ({ aoReiniciar, configuracoes }) => {
+  const { estaPiscando, mostrarCameraFlutuante: modoOcular, leitorAtivo } = useStore(lojaOlho);
   const navigate = useNavigate();
 
-  // --- LÓGICA DE TEXTO PARA O LEITOR ---
-  const obterTextoParaLeitura = useCallback(() => {
-    if (!introConcluida) {
-      return "Delicioso! Parabéns, Chef! Você montou um prato lendário seguindo a receita direitinho. Sabor e Saúde nota 10!";
-    }
-    if (botaoFocado === 'reiniciar') {
-      return "Botão: Cozinhar de Novo. Pisque para começar uma nova receita.";
-    }
-    if (botaoFocado === 'outroJogo') {
-      return "Botão: Sair da Cozinha. Pisque para escolher outro jogo.";
-    }
-    return null;
-  }, [introConcluida, botaoFocado]);
+  const [dadosDosFogos, setDadosDosFogos] = useState<DadosFogos[]>([]);
+  const [botaoFocado, setBotaoFocado] = useState<'reiniciar' | 'menu' | null>(null);
+  const [podeInteragirOcular, setPodeInteragirOcular] = useState(false);
+  
+  const timerDebounceRef = useRef<NodeJS.Timeout | null>(null);
+  const timerScanRef = useRef<NodeJS.Timeout | null>(null);
+  const piscadaProcessadaRef = useRef(false);
 
-  // --- SINCRONIA VOZ + FOCO ---
-  const lidarComFimDaLeitura = useCallback(() => {
-    if (!mostrarCameraFlutuante) return;
-
-    if (!introConcluida) {
-      setIntroConcluida(true);
-      setBloquearPiscada(false);
-    } else {
-      setBloquearPiscada(false);
-      // Aguarda 1.5s após a voz terminar para mudar o foco para o próximo botão
-      setTimeout(() => {
-        setBotaoFocado(prev => {
-          const proximoIndex = (BOTOES_ORDEM.indexOf(prev) + 1) % BOTOES_ORDEM.length;
-          return BOTOES_ORDEM[proximoIndex];
-        });
-      }, 1500);
-    }
-  }, [introConcluida, mostrarCameraFlutuante]);
-
-  // Hook de leitura automática
-  useLeitorOcular(obterTextoParaLeitura(), [introConcluida, botaoFocado], lidarComFimDaLeitura);
-
-  // --- AÇÃO AO SELECIONAR ---
-  const executarAcaoFocada = useCallback(() => {
-    pararNarracao();
-    if (botaoFocado === 'reiniciar') {
-      aoReiniciar();
-    } else if (botaoFocado === 'outroJogo') {
-      navigate('/jogos');
-    }
-  }, [botaoFocado, aoReiniciar, navigate]);
-
-  // --- EFEITOS VISUAIS E CONTROLES ---
+  // Inicialização de foco: No mouse é null, no ocular começa no reiniciar
   useEffect(() => {
-    const dados: DadosConfete[] = [];
-    for (let i = 0; i < NUMERO_CONFETES; i++) {
-      dados.push({
-        id: i,
-        left: `${Math.random() * 100}%`,
-        delay: `${Math.random() * 3}s`,
-        duration: `${2 + Math.random() * 3}s`,
-        color: CORES_CONFETE[Math.floor(Math.random() * CORES_CONFETE.length)],
-        size: `${8 + Math.random() * 8}px`,
-        radius: Math.random() > 0.5 ? '50%' : '2px',
-      });
+    if (modoOcular) setBotaoFocado('reiniciar');
+    else setBotaoFocado(null);
+  }, [modoOcular]);
+
+  useEffect(() => {
+    if (!modoOcular) {
+      setPodeInteragirOcular(true);
+      return;
     }
-    setDadosConfetes(dados);
+    setPodeInteragirOcular(false);
+    if (timerDebounceRef.current) clearTimeout(timerDebounceRef.current);
+    if (!leitorAtivo) {
+      timerDebounceRef.current = setTimeout(() => setPodeInteragirOcular(true), 1200);
+    }
+  }, [modoOcular, leitorAtivo]);
+
+  useEffect(() => {
+    if (modoOcular && podeInteragirOcular) {
+      timerScanRef.current = setInterval(() => {
+        setBotaoFocado(prev => prev === 'reiniciar' ? 'menu' : 'reiniciar');
+      }, 3500);
+    }
+    return () => {
+      if (timerScanRef.current) clearInterval(timerScanRef.current);
+    };
+  }, [modoOcular, podeInteragirOcular]);
+
+  useEffect(() => {
+    if (configuracoes.sons) {
+      const audio = new Audio('/assets/efeitos/vitoria.mp3');
+      audio.play().catch(erro => console.warn("Áudio bloqueado:", erro));
+      return () => { audio.pause(); audio.currentTime = 0; };
+    }
+  }, [configuracoes.sons]);
+  
+  const textoParaLeitura = useMemo(() => {
+    if (!leitorAtivo) return null;
+    if (!podeInteragirOcular) {
+      return 'Parabéns, Super Chef! O Hambúrguer Lendário ficou perfeito e nutritivo. O que deseja fazer agora?';
+    }
+    return botaoFocado === 'reiniciar'
+      ? 'Preparar uma nova receita. Pisque agora para jogar de novo!'
+      : 'Voltar para o menu principal. Pisque agora para escolher outro desafio.';
+  }, [leitorAtivo, podeInteragirOcular, botaoFocado]);
+
+  useLeitorOcular(textoParaLeitura, [textoParaLeitura], () => {
+    if (modoOcular && leitorAtivo) setPodeInteragirOcular(true);
+  });
+
+  const irParaMenu = useCallback(() => {
+    pararNarracao();
+    navigate('/jogos');
+  }, [navigate]);
+
+  const tentarNovamente = useCallback(() => {
+    pararNarracao();
+    aoReiniciar();
+  }, [aoReiniciar]);
+
+  const confirmarAcao = useCallback(() => {
+    if (botaoFocado === 'reiniciar') tentarNovamente();
+    else if (botaoFocado === 'menu') irParaMenu();
+  }, [botaoFocado, tentarNovamente, irParaMenu]);
+
+  useEffect(() => {
+    if (!estaPiscando) { piscadaProcessadaRef.current = false; return; }
+    if (estaPiscando && modoOcular && podeInteragirOcular && !piscadaProcessadaRef.current) {
+      piscadaProcessadaRef.current = true;
+      setPodeInteragirOcular(false);
+      confirmarAcao();
+    }
+  }, [estaPiscando, modoOcular, podeInteragirOcular, confirmarAcao]);
+
+  useEffect(() => {
+    const dados = Array.from({ length: NUMERO_FOGOS }).map((_, i) => ({
+      id: i, top: `${Math.random() * 80 + 10}%`, left: `${Math.random() * 80 + 10}%`,
+      cor: CORES_CELEBRACAO[Math.floor(Math.random() * CORES_CELEBRACAO.length)],
+      delay: `${Math.random() * 2}s`,
+    }));
+    setDadosDosFogos(dados);
   }, []);
 
-  // Controle por Piscada
-  useEffect(() => {
-    if (!estaPiscando || bloquearPiscada || !mostrarCameraFlutuante) return;
-    executarAcaoFocada();
-  }, [estaPiscando, bloquearPiscada, mostrarCameraFlutuante, executarAcaoFocada]);
-
-  // Controle por Teclado
-  useEffect(() => {
-    const handleKeyDown = (event: KeyboardEvent) => {
-      if (event.key === 'Enter') {
-        executarAcaoFocada();
-      }
-    };
-    window.addEventListener('keydown', handleKeyDown);
-    return () => window.removeEventListener('keydown', handleKeyDown);
-  }, [executarAcaoFocada]);
+  const visualOcularAtivo = modoOcular && podeInteragirOcular;
 
   return (
     <S.FundoVitoria>
-      {/* Chuva de Confetes */}
-      {dadosConfetes.map(confete => (
-        <S.Confete
-          key={confete.id}
-          style={{
-            '--left': confete.left,
-            '--delay': confete.delay,
-            '--duration': confete.duration,
-            '--color': confete.color,
-            '--size': confete.size,
-            '--radius': confete.radius,
-          } as React.CSSProperties}
-        />
+      {dadosDosFogos.map(fogo => (
+        <S.ContainerFogos key={fogo.id} style={{ top: fogo.top, left: fogo.left }}>
+          {Array.from({ length: PARTICULAS_POR_FOGO }).map((_, index) => (
+            <S.ParticulaFogos key={index} style={{ '--color': fogo.cor, '--delay': fogo.delay } as any} />
+          ))}
+        </S.ContainerFogos>
       ))}
 
       <S.ConteudoVitoria>
-        <S.EstrelasContainer>
-            <S.IconeEstrela $delay="0s"><Star size={60} fill="#fbbf24" strokeWidth={3} stroke="#78350f" /></S.IconeEstrela>
-            <S.IconeEstrela $delay="0.3s"><Star size={80} fill="#fbbf24" strokeWidth={3} stroke="#78350f" /></S.IconeEstrela>
-            <S.IconeEstrela $delay="0.6s"><Star size={60} fill="#fbbf24" strokeWidth={3} stroke="#78350f" /></S.IconeEstrela>
-        </S.EstrelasContainer>
+        <S.IconeContainer>
+          <Trophy size={80} />
+          <S.BadgeChef><ChefHat size={30} /></S.BadgeChef>
+        </S.IconeContainer>
 
-        <S.TituloVitoria>Delicioso!</S.TituloVitoria>
-        
+        <S.TituloVitoria>VITÓRIA SABOROSA!</S.TituloVitoria>
+
         <S.MensagemVitoria>
-          Parabéns, Chef! Você montou um prato lendário seguindo a receita direitinho. <br/>
-          <strong>Sabor e Saúde nota 10!</strong>
+           Parabéns, Super Chef! Você montou um lanche equilibrado e nutritivo. 
+           O Mestre Cuca deu nota dez para o seu Hambúrguer Lendário!
         </S.MensagemVitoria>
-        
+
         <S.ContainerBotoes>
-          <S.BotaoVitoria 
-            onClick={() => { setBotaoFocado('reiniciar'); executarAcaoFocada(); }}
-            $focado={botaoFocado === 'reiniciar'} 
+          <S.BotaoVitoria
+            onClick={() => { setBotaoFocado('reiniciar'); tentarNovamente(); }}
+            $isFocused={visualOcularAtivo && botaoFocado === 'reiniciar'}
           >
-            Cozinhar de Novo
+            <RotateCcw size={20} /> NOVO LANCHE
           </S.BotaoVitoria>
-          <S.BotaoVitoria 
-            onClick={() => { setBotaoFocado('outroJogo'); executarAcaoFocada(); }}
-            $focado={botaoFocado === 'outroJogo'} 
+
+          <S.BotaoVitoria
+            onClick={() => { setBotaoFocado('menu'); irParaMenu(); }}
+            $isFocused={visualOcularAtivo && botaoFocado === 'menu'}
           >
-            Sair da Cozinha
+            <Home size={20} /> MENU
           </S.BotaoVitoria>
         </S.ContainerBotoes>
       </S.ConteudoVitoria>
