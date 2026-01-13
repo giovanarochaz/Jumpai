@@ -26,18 +26,23 @@ const SelecaoJogos: React.FC = () => {
 
   const [indiceAtual, setIndiceAtual] = useState(Math.floor(listaInfinita.length / 2));
   const [semTransicao, setSemTransicao] = useState(false);
-  const [podeInteragir, setPodeInteragir] = useState(false);
+  const [podeInteragir, setPodeInteragir] = useState(false); 
   
   const timerRef = useRef<NodeJS.Timeout | null>(null);
   const indiceReal = indiceAtual % totalJogos;
   const jogoAtivo = DADOS_JOGOS[indiceReal];
+
+  const realizarNavegacao = useCallback((rota: string) => {
+    if (timerRef.current) clearTimeout(timerRef.current);
+    pararNarracao();
+    navegar(rota);
+  }, [navegar]);
 
   const mover = useCallback((direcao: 'proximo' | 'anterior') => {
     setSemTransicao(false);
     setIndiceAtual(prev => direcao === 'proximo' ? prev + 1 : prev - 1);
   }, []);
 
-  // Loop infinito do carrossel
   useEffect(() => {
     if (indiceAtual > listaInfinita.length - 10 || indiceAtual < 10) {
       setSemTransicao(true);
@@ -45,13 +50,11 @@ const SelecaoJogos: React.FC = () => {
     }
   }, [indiceAtual, totalJogos, listaInfinita.length]);
 
-  // Função para estimar o tempo de fala (90ms por caractere + margem)
   const estimarTempoDeLeitura = (texto: string) => {
     const tempoCalculado = texto.length * 95; 
-    return Math.max(tempoCalculado, 4500); // Garante no mínimo 4.5s
+    return Math.max(tempoCalculado, 4500);
   };
 
-  // CICLO AUTOMÁTICO (CONTROLE OCULAR)
   useEffect(() => {
     if (!mostrarCameraFlutuante) {
       setPodeInteragir(true);
@@ -66,19 +69,14 @@ const SelecaoJogos: React.FC = () => {
       setPodeInteragir(false);
       const tempoLeitura = estimarTempoDeLeitura(textoCompleto);
       
-      // Timer da leitura
       timerRef.current = setTimeout(() => {
-        setPodeInteragir(true); // Libera o clique/piscada
-
-        // Aguarda 2.5 segundos em estado "pronto" antes de passar para o próximo
+        setPodeInteragir(true); 
         timerRef.current = setTimeout(() => {
           mover('proximo');
         }, 2500);
-
       }, tempoLeitura);
 
     } else {
-      // Se o leitor estiver desligado, apenas espera 3s e move
       setPodeInteragir(true);
       timerRef.current = setTimeout(() => {
         mover('proximo');
@@ -90,20 +88,17 @@ const SelecaoJogos: React.FC = () => {
     };
   }, [indiceAtual, mostrarCameraFlutuante, leitorAtivo, mover, jogoAtivo]);
 
-  // Hook do Narrador Ocular
   useLeitorOcular(
     `${jogoAtivo.titulo}. Categoria ${jogoAtivo.categoria}. ${jogoAtivo.descricao}`, 
     [indiceReal]
   );
 
-  // Seleção por piscada
+  // Seleção por piscada (Sempre ativo se estiver piscando)
   useEffect(() => {
-    if (estaPiscando && mostrarCameraFlutuante && podeInteragir) {
-      if (timerRef.current) clearTimeout(timerRef.current);
-      pararNarracao();
-      navegar(jogoAtivo.rota);
+    if (estaPiscando && mostrarCameraFlutuante) {
+      realizarNavegacao(jogoAtivo.rota);
     }
-  }, [estaPiscando, mostrarCameraFlutuante, podeInteragir, jogoAtivo, navegar]);
+  }, [estaPiscando, mostrarCameraFlutuante, jogoAtivo.rota, realizarNavegacao]);
 
   return (
     <S.ContainerPrincipal>
@@ -125,10 +120,10 @@ const SelecaoJogos: React.FC = () => {
                 <S.CardDoJogo 
                   key={`${jogo.id}-${index}`} 
                   $estaAtivo={estaAtivo}
-                  $podeInteragir={estaAtivo ? podeInteragir : true}
+                  $podeInteragir={true} // Força o cursor pointer e estilo de interativo
                   onClick={() => {
                     if (estaAtivo) {
-                      if (!mostrarCameraFlutuante || podeInteragir) navegar(jogo.rota);
+                      realizarNavegacao(jogo.rota);
                     } else {
                       setIndiceAtual(index);
                     }
@@ -148,9 +143,10 @@ const SelecaoJogos: React.FC = () => {
 
                     <S.BotaoJogar 
                       $estaAtivo={estaAtivo} 
-                      $podeInteragir={estaAtivo ? podeInteragir : true}
+                      $podeInteragir={true} // Sempre mantém estilo ativo
                     >
                       <Play fill="currentColor" size={20} />
+                      {/* O texto muda para dar feedback, mas o clique funciona */}
                       {estaAtivo ? (podeInteragir ? 'JOGAR AGORA' : 'OUVINDO...') : 'SELECIONAR'}
                     </S.BotaoJogar>
                   </S.ConteudoCard>

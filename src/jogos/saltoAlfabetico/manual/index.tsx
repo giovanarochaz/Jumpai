@@ -1,218 +1,239 @@
-import React, { useState, useEffect, useRef } from 'react';
-import * as S from './styles'; // Importando do arquivo acima
-import { BookOpen, Gamepad2, AlertTriangle, Zap, Music, ShieldOff } from 'lucide-react';
+import React, { useState, useEffect, useRef, useMemo, useCallback } from 'react';
+import * as S from './styles';
+import { BookOpen, Gamepad2, AlertTriangle, Zap, Music, ShieldOff, ChevronRight, ChevronLeft } from 'lucide-react';
 import { useStore } from 'zustand';
 import { lojaOlho } from '../../../lojas/lojaOlho';
+import { useLeitorOcular } from '../../../hooks/useLeitorOcular';
+import { pararNarracao } from '../../../servicos/acessibilidade';
+import type { BaseManualProps, ConfiguracoesJogo } from '../../../interface/types';
+
+const DIFICULDADES = ['fácil', 'médio', 'difícil'];
 
 const slidesEducativos = [
-    {
-      titulo: 'Bem-vindo à Lagoa!',
-      icone: <img src="/assets/saltoAlfabetico/sapo_parado.png" width={80} alt="Sapo" />,
-      texto: "Ajude o sapinho a atravessar a lagoa! Ele precisa pular nas vitórias-régias certas para formar palavras.",
-      destaque: "Mas cuidado para não cair na água!"
-    },
-    {
-      titulo: 'O que são Sílabas?',
-      icone: <BookOpen size={40} />,
-      texto: "Sílabas são os pedacinhos de som das palavras. Quando você fala 'SA-PO', você fala dois pedacinhos.",
-      destaque: "SA + PO = SAPO"
-    },
+  {
+    titulo: 'Bem-vindo à Lagoa!',
+    icone: <img src="/assets/saltoAlfabetico/sapo_parado.png" alt="Sapo" />,
+    texto: "Ajude o sapinho a atravessar a lagoa! Ele precisa pular nas vitórias-régias certas para formar palavras.",
+    destaque: "Mas cuidado para não cair na água!"
+  },
+   {
+   titulo: 'O que são Sílabas?',
+   icone: <BookOpen />,
+   texto: "Sílabas são os pedacinhos de som das palavras. Quando você fala 'SA-PO', você fala dois pedacinhos.",
+   textoParaNarrar: "Sílabas são os pedacinhos de som das palavras. Quando você fala SÁ... PU... Você fala dois pedacinhos.",
+   destaque: "SA + PO = SAPO"
+   }
+
 ];
 
-export type DificuldadeJogo = 'facil' | 'medio' | 'dificil';
+const ManualSaltoAlfabetico: React.FC<BaseManualProps<ConfiguracoesJogo>> = ({ aoIniciar }) => {
+  const { mostrarCameraFlutuante: modoOcular, estaPiscando, leitorAtivo } = useStore(lojaOlho);
 
-export interface ConfiguracoesSalto {
-   dificuldade: DificuldadeJogo;
-   penalidade: boolean;
-   sons: boolean;
-}
+  const [tela, setTela] = useState<'educativo' | 'comoJogar' | 'configuracoes'>('educativo');
+  const [slideIndex, setSlideIndex] = useState(0);
+  const [config, setConfig] = useState<ConfiguracoesJogo>({ velocidade: 'normal', penalidade: true, sons: true });
+  
+  const [focoConfig, setFocoConfig] = useState<'velocidade' | 'penalidade' | 'sons' | 'iniciar'>('velocidade');
+  const [podeInteragirOcular, setPodeInteragirOcular] = useState(false);
 
-interface ManualSaltoProps {
-   aoIniciar: (config: ConfiguracoesSalto) => void;
-}
+  const timerScanRef = useRef<NodeJS.Timeout | null>(null);
+  const timerDebounceRef = useRef<NodeJS.Timeout | null>(null);
+  const piscadaProcessadaRef = useRef(false);
 
-type FocoConfig = 'dificuldade' | 'penalidade' | 'sons' | 'iniciar';
-const DIFICULDADES: DificuldadeJogo[] = ['facil', 'medio', 'dificil'];
+  // --- ACESSIBILIDADE E TIMERS ---
 
-const ManualSaltoAlfabetico: React.FC<ManualSaltoProps> = ({ aoIniciar }) => {
-   const [tela, setTela] = useState<'educativo' | 'comoJogar' | 'configuracoes'>('educativo');
-   const [slideIndex, setSlideIndex] = useState(0);
+  useEffect(() => {
+    if (!modoOcular) { setPodeInteragirOcular(true); return; }
+    setPodeInteragirOcular(false);
+    if (timerDebounceRef.current) clearTimeout(timerDebounceRef.current);
+    if (!leitorAtivo) {
+      timerDebounceRef.current = setTimeout(() => setPodeInteragirOcular(true), 1200);
+    }
+  }, [tela, slideIndex, focoConfig, modoOcular, leitorAtivo]);
 
-   const [config, setConfig] = useState<ConfiguracoesSalto>({
-      dificuldade: 'facil',
-      penalidade: true,
-      sons: true,
-   });
+  useEffect(() => {
+    if (modoOcular && podeInteragirOcular && tela === 'configuracoes') {
+      timerScanRef.current = setInterval(() => {
+        if (focoConfig === 'velocidade') {
+           const nextDif = DIFICULDADES[(DIFICULDADES.indexOf(config.velocidade) + 1) % 3];
+           setConfig(prev => ({ ...prev, velocidade: nextDif as any }));
+        } else if (focoConfig === 'penalidade') {
+          setConfig(prev => ({ ...prev, penalidade: !prev.penalidade }));
+        } else if (focoConfig === 'sons') {
+          setConfig(prev => ({ ...prev, sons: !prev.sons }));
+        }
+      }, 2500);
+    }
+    return () => { if (timerScanRef.current) clearInterval(timerScanRef.current); };
+  }, [tela, focoConfig, podeInteragirOcular, modoOcular, config.velocidade]);
 
-   const { mostrarCameraFlutuante, estaPiscando } = useStore(lojaOlho);
-   const [focoConfig, setFocoConfig] = useState<FocoConfig>('dificuldade');
-   const [bloquearPiscada, setBloquearPiscada] = useState(true);
-   const timerRef = useRef<any>(null);
-   const cicloRef = useRef<any>(null);
+  // --- NARRAÇÃO ---
 
-   const avancar = () => {
-      if (tela === 'educativo') {
-         if (slideIndex < slidesEducativos.length - 1) setSlideIndex(s => s + 1);
-         else setTela('comoJogar');
-      } else if (tela === 'comoJogar') setTela('configuracoes');
-   };
-
-   const voltar = () => {
-      if (tela === 'educativo' && slideIndex > 0) setSlideIndex(s => s - 1);
-      else if (tela === 'comoJogar') { setTela('educativo'); setSlideIndex(0); }
-      else if (tela === 'configuracoes') setTela('comoJogar');
-   };
-
-   // Lógica de Controle Ocular (Padrão)
-   useEffect(() => {
-      timerRef.current = setTimeout(() => setBloquearPiscada(false), 1000);
-      return () => { clearTimeout(timerRef.current); clearInterval(cicloRef.current); };
-   }, []);
-
-   useEffect(() => {
-      if (bloquearPiscada || !mostrarCameraFlutuante || !estaPiscando) return;
-      setBloquearPiscada(true);
-
-      if (tela !== 'configuracoes') {
-         avancar();
-         timerRef.current = setTimeout(() => setBloquearPiscada(false), 800);
+  const textoParaLeitura = useMemo(() => {
+    if (!leitorAtivo) return null;
+    if (tela === 'educativo') {
+      const s = slidesEducativos[slideIndex];
+      return `${s.titulo}. ${s.textoParaNarrar}. Pisque agora para avançar.`;
+      }    
+    if (tela === 'comoJogar') {
+      return "Como jogar. Pule na vitória-régia com a sílaba correta. Se errar, o sapo cai na água. Pisque para ajustar o jogo.";
+    }
+    if (tela === 'configuracoes') {
+      if (!podeInteragirOcular) {
+        if (focoConfig === 'velocidade') return "Qual o nível de dificuldade?";
+        if (focoConfig === 'penalidade') return "Quer reiniciar se errar o pulo?";
+        if (focoConfig === 'sons') return "Quer ouvir os sons da lagoa?";
+        if (focoConfig === 'iniciar') return "Tudo pronto! Vamos começar?";
       } else {
-         switch (focoConfig) {
-            case 'dificuldade':
-                const idx = DIFICULDADES.indexOf(config.dificuldade);
-                setConfig(c => ({...c, dificuldade: DIFICULDADES[(idx + 1) % 3]}));
-                setFocoConfig('penalidade');
-                break;
-            case 'penalidade':
-                setConfig(c => ({...c, penalidade: !c.penalidade}));
-                setFocoConfig('sons');
-                break;
-            case 'sons':
-                setConfig(c => ({...c, sons: !c.sons}));
-                setFocoConfig('iniciar');
-                break;
-            case 'iniciar':
-                aoIniciar(config);
-                break;
-         }
-         timerRef.current = setTimeout(() => setBloquearPiscada(false), 800);
+        if (focoConfig === 'velocidade') return `Nível ${config.velocidade}. Pisque para escolher este.`;
+        if (focoConfig === 'penalidade') return config.penalidade ? "Sim, reiniciar. Pisque para escolher." : "Não, continuar. Pisque para escolher.";
+        if (focoConfig === 'sons') return config.sons ? "Sons ligados. Pisque para escolher." : "Sons desligados. Pisque para escolher.";
+        if (focoConfig === 'iniciar') return "Pisque agora para começar a aventura!";
       }
-   }, [estaPiscando, mostrarCameraFlutuante, bloquearPiscada]);
+    }
+    return "";
+  }, [tela, slideIndex, focoConfig, config, leitorAtivo, podeInteragirOcular]);
 
-   useEffect(() => {
-      if (tela !== 'configuracoes' || !mostrarCameraFlutuante) return;
-      cicloRef.current = setInterval(() => {
-         setFocoConfig(prev => {
-            if (prev === 'dificuldade') return 'penalidade';
-            if (prev === 'penalidade') return 'sons';
-            if (prev === 'sons') return 'iniciar';
-            return 'dificuldade';
-         });
-      }, 2000);
-      return () => clearInterval(cicloRef.current);
-   }, [tela, mostrarCameraFlutuante]);
+  useLeitorOcular(textoParaLeitura, [textoParaLeitura], () => {
+    if (modoOcular && leitorAtivo) setPodeInteragirOcular(true);
+  });
 
-   const renderTela = () => {
-      const isEye = mostrarCameraFlutuante && !bloquearPiscada;
+  // --- AÇÕES ---
 
-      switch(tela) {
-         case 'educativo':
-            const slide = slidesEducativos[slideIndex];
-            return (
-               <S.ContainerInfo>
-                  <S.TituloSlide>{slide.titulo}</S.TituloSlide>
-                  <S.CaixaIcone>{slide.icone}</S.CaixaIcone>
-                  <S.TextoExplicativo>
-                     {slide.texto}
-                     <br/><br/>
-                     <strong>{slide.destaque}</strong>
-                  </S.TextoExplicativo>
-                  <S.BarraNavegacao>
-                     <S.BotaoNav onClick={voltar} disabled={slideIndex === 0}>Voltar</S.BotaoNav>
-                     <S.BotaoNav onClick={avancar} $destaque={isEye}>Próximo</S.BotaoNav>
-                  </S.BarraNavegacao>
-               </S.ContainerInfo>
-            );
-         
-         case 'comoJogar':
-            return (
-               <S.ContainerInfo>
-                  <S.TituloSlide>Missão do Sapo</S.TituloSlide>
-                  <S.InfoRow>
-                     <S.CaixaIcone><Gamepad2 size={32} color="#14532D"/></S.CaixaIcone>
-                     <S.TextoRow>
-                        <h3>Escolha a Vitória-Régia</h3>
-                        <p>A palavra vai aparecer faltando pedaços. Pule na folha que tem a sílaba correta!</p>
-                     </S.TextoRow>
-                  </S.InfoRow>
-                  <S.InfoRow>
-                     <S.CaixaIcone><AlertTriangle size={32} color="#14532D"/></S.CaixaIcone>
-                     <S.TextoRow>
-                        <h3>Cuidado!</h3>
-                        <p>Se escolher a sílaba errada, a folha afunda e o sapo se molha!</p>
-                     </S.TextoRow>
-                  </S.InfoRow>
-                  <S.BarraNavegacao>
-                     <S.BotaoNav onClick={voltar}>Voltar</S.BotaoNav>
-                     <S.BotaoNav onClick={avancar} $destaque={isEye}>Vamos lá!</S.BotaoNav>
-                  </S.BarraNavegacao>
-               </S.ContainerInfo>
-            );
+  const confirmarAcao = useCallback(() => {
+    if (tela === 'educativo') {
+      if (slideIndex < slidesEducativos.length - 1) setSlideIndex(s => s + 1);
+      else setTela('comoJogar');
+    } else if (tela === 'comoJogar') {
+      setTela('configuracoes');
+    } else if (tela === 'configuracoes') {
+      if (modoOcular) {
+        if (focoConfig === 'velocidade') setFocoConfig('penalidade');
+        else if (focoConfig === 'penalidade') setFocoConfig('sons');
+        else if (focoConfig === 'sons') setFocoConfig('iniciar');
+        else aoIniciar(config);
+      } else {
+        aoIniciar(config);
+      }
+    }
+  }, [tela, slideIndex, focoConfig, config, modoOcular, aoIniciar]);
 
-         case 'configuracoes':
-            return (
-               <S.ContainerConfig>
-                  <S.TituloSlide>Ajustes</S.TituloSlide>
-                  
-                  <S.LinhaConfig $focado={focoConfig === 'dificuldade'}>
-                     <S.Label><Zap size={28}/> Nível</S.Label>
-                     <S.GrupoBotoes>
-                        {DIFICULDADES.map(d => (
-                           <S.BotaoOpcao 
-                              key={d}
-                              ativo={config.dificuldade === d}
-                              onClick={() => setConfig(c => ({...c, dificuldade: d}))}
-                           >
-                              {d === 'facil' ? 'Fácil' : d === 'medio' ? 'Médio' : 'Difícil'}
-                           </S.BotaoOpcao>
-                        ))}
-                     </S.GrupoBotoes>
-                  </S.LinhaConfig>
+  useEffect(() => {
+    if (!estaPiscando) { piscadaProcessadaRef.current = false; return; }
+    if (modoOcular && podeInteragirOcular && !piscadaProcessadaRef.current) {
+      piscadaProcessadaRef.current = true;
+      setPodeInteragirOcular(false);
+      pararNarracao();
+      confirmarAcao();
+    }
+  }, [estaPiscando, modoOcular, podeInteragirOcular, confirmarAcao]);
 
-                  <S.LinhaConfig $focado={focoConfig === 'penalidade'}>
-                     <S.Label><ShieldOff size={28}/> Reiniciar se errar</S.Label>
-                     <S.ToggleContainer>
-                        <input type="checkbox" checked={config.penalidade} onChange={e => setConfig(c => ({...c, penalidade: e.target.checked}))} />
-                        <span className="slider"></span>
-                     </S.ToggleContainer>
-                  </S.LinhaConfig>
+  const feedbackVisual = modoOcular && podeInteragirOcular;
 
-                  <S.LinhaConfig $focado={focoConfig === 'sons'}>
-                     <S.Label><Music size={28}/> Sons</S.Label>
-                     <S.ToggleContainer>
-                        <input type="checkbox" checked={config.sons} onChange={e => setConfig(c => ({...c, sons: e.target.checked}))} />
-                        <span className="slider"></span>
-                     </S.ToggleContainer>
-                  </S.LinhaConfig>
+  return (
+    <S.FundoModal>
+      <S.ConteudoModal>
+        {tela === 'educativo' && (
+          <S.ContainerInfo>
+            <S.TituloSlide>{slidesEducativos[slideIndex].titulo}</S.TituloSlide>
+            <S.CaixaIcone>{slidesEducativos[slideIndex].icone}</S.CaixaIcone>
+            <S.TextoExplicativo>
+              {slidesEducativos[slideIndex].texto}
+              <br/><br/>
+              <strong>{slidesEducativos[slideIndex].destaque}</strong>
+            </S.TextoExplicativo>
+            <S.BarraNavegacao>
+              <S.BotaoNav onClick={() => setSlideIndex(0)} disabled={slideIndex === 0}>
+                <ChevronLeft /> Voltar
+              </S.BotaoNav>
+              <S.BotaoNav onClick={confirmarAcao} $destaque={feedbackVisual}>
+                {leitorAtivo && !podeInteragirOcular && modoOcular ? 'OUVINDO...' : 'PRÓXIMO'} <ChevronRight />
+              </S.BotaoNav>
+            </S.BarraNavegacao>
+          </S.ContainerInfo>
+        )}
 
-                  <S.BotaoIniciar 
-                     $focado={focoConfig === 'iniciar'}
-                     onClick={() => aoIniciar(config)}
+        {tela === 'comoJogar' && (
+          <S.ContainerInfo>
+            <S.TituloSlide>Missão do Sapo</S.TituloSlide>
+            <S.InfoRow>
+              <S.CaixaIcone><Gamepad2 /></S.CaixaIcone>
+              <S.TextoRow>
+                <h3>Escolha a Vitória-Régia</h3>
+                <p>A palavra vai aparecer faltando pedaços. Pule na folha que tem a sílaba correta!</p>
+              </S.TextoRow>
+            </S.InfoRow>
+            <S.InfoRow>
+              <S.CaixaIcone><AlertTriangle /></S.CaixaIcone>
+              <S.TextoRow>
+                <h3>Cuidado!</h3>
+                <p>Se escolher a sílaba errada, a folha afunda e o sapo se molha!</p>
+              </S.TextoRow>
+            </S.InfoRow>
+            <S.BarraNavegacao>
+              <S.BotaoNav onClick={() => setTela('educativo')}><ChevronLeft /> Voltar</S.BotaoNav>
+              <S.BotaoNav onClick={confirmarAcao} $destaque={feedbackVisual}>
+                CONFIGURAR <ChevronRight />
+              </S.BotaoNav>
+            </S.BarraNavegacao>
+          </S.ContainerInfo>
+        )}
+
+        {tela === 'configuracoes' && (
+          <S.ContainerConfig>
+            <S.TituloSlide>Ajustes</S.TituloSlide>
+            
+            <S.LinhaConfig $focado={feedbackVisual && focoConfig === 'velocidade'}>
+              <S.Label><Zap size={28}/> Nível</S.Label>
+              <S.GrupoBotoes>
+                {DIFICULDADES.map(d => (
+                  <S.BotaoOpcao 
+                    key={d}
+                    $ativo={config.velocidade === d}
+                    $isFocused={feedbackVisual && focoConfig === 'velocidade' && config.velocidade === d}
+                    onClick={() => setConfig(prev => ({...prev, velocidade: d as any}))}
                   >
-                     COMEÇAR AVENTURA!
-                  </S.BotaoIniciar>
-               </S.ContainerConfig>
-            );
-      }
-   };
+                    {d}
+                  </S.BotaoOpcao>
+                ))}
+              </S.GrupoBotoes>
+            </S.LinhaConfig>
 
-   return (
-      <S.FundoModal>
-         <S.ConteudoModal>
-            {renderTela()}
-         </S.ConteudoModal>
-      </S.FundoModal>
-   );
+            <S.LinhaConfig 
+              $focado={feedbackVisual && focoConfig === 'penalidade'}
+              onClick={() => setConfig(prev => ({ ...prev, penalidade: !prev.penalidade }))}
+              style={{ cursor: 'pointer' }}
+            >
+              <S.Label><ShieldOff size={28}/> Reiniciar se errar</S.Label>
+              <S.ToggleContainer>
+                <S.InputInterruptor type="checkbox" checked={config.penalidade} readOnly />
+                <span className="slider"></span>
+              </S.ToggleContainer>
+            </S.LinhaConfig>
+
+            <S.LinhaConfig 
+              $focado={feedbackVisual && focoConfig === 'sons'}
+              onClick={() => setConfig(prev => ({ ...prev, sons: !prev.sons }))}
+              style={{ cursor: 'pointer' }}
+            >
+              <S.Label><Music size={28}/> Sons</S.Label>
+              <S.ToggleContainer>
+                <S.InputInterruptor type="checkbox" checked={config.sons} readOnly />
+                <span className="slider"></span>
+              </S.ToggleContainer>
+            </S.LinhaConfig>
+
+            <S.BotaoIniciar 
+              $focado={feedbackVisual && focoConfig === 'iniciar'}
+              onClick={confirmarAcao}
+            >
+              {leitorAtivo && !podeInteragirOcular && modoOcular ? 'PREPARANDO...' : 'COMEÇAR AVENTURA!'}
+            </S.BotaoIniciar>
+          </S.ContainerConfig>
+        )}
+      </S.ConteudoModal>
+    </S.FundoModal>
+  );
 };
 
 export default ManualSaltoAlfabetico;
