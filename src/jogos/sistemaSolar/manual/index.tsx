@@ -5,9 +5,9 @@ import { useStore } from 'zustand';
 import { lojaOlho } from '../../../lojas/lojaOlho';
 import { useLeitorOcular } from '../../../hooks/useLeitorOcular';
 import { pararNarracao } from '../../../servicos/acessibilidade';
-import type { BaseManualProps, ConfiguracoesJogo, VelocidadeGeracao } from '../../../interface/types';
+import type { BaseManualProps, ConfiguracoesJogo, DificildadeJogo } from '../../../interface/types';
 
-const VELOCIDADES: VelocidadeGeracao[] = ['lenta', 'normal', 'rapida'];
+const DIFICULDADES: DificildadeJogo[] = ['facil', 'medio', 'dificil'];
 
 const planetasInfo = [
   { 
@@ -57,8 +57,8 @@ const ManualSistemaSolar: React.FC<BaseManualProps<ConfiguracoesJogo>> = ({ aoIn
 
   const [tela, setTela] = useState<'introducao' | 'planetas' | 'comoJogar' | 'perigos' | 'configuracoes'>('introducao');
   const [slideAtual, setSlideAtual] = useState(0);
-  const [configuracoes, setConfiguracoes] = useState<ConfiguracoesJogo>({ velocidade: 'normal', penalidade: true, sons: true });
-  const [focoConfig, setFocoConfig] = useState<'velocidade' | 'penalidade' | 'sons' | 'iniciar'>('velocidade');
+  const [configuracoes, setConfiguracoes] = useState<ConfiguracoesJogo>({ dificuldade: 'facil', penalidade: true, sons: true });
+  const [focoConfig, setFocoConfig] = useState<'dificuldade' | 'penalidade' | 'sons' | 'iniciar'>('dificuldade');
   const [podeInteragirOcular, setPodeInteragirOcular] = useState(false);
   
   const timerScanRef = useRef<NodeJS.Timeout | null>(null);
@@ -82,10 +82,10 @@ const ManualSistemaSolar: React.FC<BaseManualProps<ConfiguracoesJogo>> = ({ aoIn
   useEffect(() => {
     if (modoOcular && podeInteragirOcular && tela === 'configuracoes') {
       timerScanRef.current = setInterval(() => {
-        if (focoConfig === 'velocidade') {
+        if (focoConfig === 'dificuldade') {
           setConfiguracoes(prev => ({
             ...prev,
-            velocidade: VELOCIDADES[(VELOCIDADES.indexOf(prev.velocidade) + 1) % VELOCIDADES.length]
+            dificuldade: DIFICULDADES[(DIFICULDADES.indexOf(prev.dificuldade) + 1) % DIFICULDADES.length]
           }));
         } else if (focoConfig === 'penalidade') {
           setConfiguracoes(prev => ({ ...prev, penalidade: !prev.penalidade }));
@@ -114,14 +114,14 @@ const ManualSistemaSolar: React.FC<BaseManualProps<ConfiguracoesJogo>> = ({ aoIn
     }
     if (tela === 'configuracoes') {
       if (!podeInteragirOcular) {
-        if (focoConfig === 'velocidade') return "Qual a potência do motor? Quer ir devagar ou rápido?";
+        if (focoConfig === 'dificuldade') return "Qual o nível de dificuldade?";
         if (focoConfig === 'penalidade') return "Se a nave bater, quer voltar do começo?";
         if (focoConfig === 'sons') return "Quer ouvir as músicas do espaço?";
         if (focoConfig === 'iniciar') return "Tudo pronto! Vamos decolar?";
       } else {
-        if (focoConfig === 'velocidade') {
-          const vText = { lenta: "Velocidade devagar.", normal: "Velocidade normal.", rapida: "Velocidade rápida!" };
-          return `${vText[configuracoes.velocidade]}. Pisque para escolher esta!`;
+        if (focoConfig === 'dificuldade') {
+          const vText = { facil: "Dificuldade fácil.", medio: "Dificuldade média.", dificil: "Dificuldade difícil!" };
+          return `${vText[configuracoes.dificuldade]}. Pisque para escolher esta!`;
         }
         if (focoConfig === 'penalidade') return configuracoes.penalidade ? "Sim, voltar ao bater. Pisque para escolher!" : "Não, continuar de onde parou. Pisque para escolher!";
         if (focoConfig === 'sons') return configuracoes.sons ? "Sons ligados. Pisque para escolher!" : "Sons desligados. Pisque para escolher!";
@@ -145,7 +145,7 @@ const ManualSistemaSolar: React.FC<BaseManualProps<ConfiguracoesJogo>> = ({ aoIn
     else if (tela === 'perigos') setTela('configuracoes');
     else if (tela === 'configuracoes') {
       if (modoOcular) {
-        if (focoConfig === 'velocidade') setFocoConfig('penalidade');
+        if (focoConfig === 'dificuldade') setFocoConfig('penalidade');
         else if (focoConfig === 'penalidade') setFocoConfig('sons');
         else if (focoConfig === 'sons') setFocoConfig('iniciar');
         else aoIniciar(configuracoes);
@@ -238,16 +238,16 @@ const ManualSistemaSolar: React.FC<BaseManualProps<ConfiguracoesJogo>> = ({ aoIn
         {tela === 'configuracoes' && (
           <S.ContainerConfiguracoes>
             <S.TextoSlide><h2>Sistemas da Nave</h2></S.TextoSlide>
-            
-            <S.LinhaConfiguracao $isFocused={feedbackVisual && focoConfig === 'velocidade'}>
-              <S.RotuloConfiguracao><Zap /><h3>Potência</h3></S.RotuloConfiguracao>
+
+            <S.LinhaConfiguracao $isFocused={feedbackVisual && focoConfig === 'dificuldade'}>
+              <S.RotuloConfiguracao><Zap /><h3>Dificuldade</h3></S.RotuloConfiguracao>
               <S.GrupoBotoes>
-                {VELOCIDADES.map(v => (
+                {DIFICULDADES.map(v => (
                   <S.BotaoOpcao 
                     key={v} 
-                    $ativo={configuracoes.velocidade === v} 
-                    $isFocused={feedbackVisual && focoConfig === 'velocidade' && configuracoes.velocidade === v}
-                    onClick={() => setConfiguracoes(prev => ({ ...prev, velocidade: v }))}
+                    $ativo={configuracoes.dificuldade === v} 
+                    $isFocused={feedbackVisual && focoConfig === 'dificuldade' && configuracoes.dificuldade === v}
+                    onClick={() => setConfiguracoes(prev => ({ ...prev, dificuldade: v }))}
                   >
                     {v}
                   </S.BotaoOpcao>

@@ -1,9 +1,10 @@
 export type EstadoJogo = 'manual' | 'jogando' | 'vitoria' | 'derrota';
 
 export type VelocidadeGeracao = 'lenta' | 'normal' | 'rapida';
+export type DificildadeJogo = 'facil' | 'medio' | 'dificil';
 
 export interface ConfiguracoesJogo {
-  velocidade: VelocidadeGeracao;
+  dificuldade: DificildadeJogo;
   penalidade: boolean;
   sons: boolean;
 }

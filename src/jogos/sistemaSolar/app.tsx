@@ -6,7 +6,7 @@ import TelaDerrotaSistemaSolar from './derrota';
 import type { ConfiguracoesJogo, EstadoJogo } from '../../interface/types';
 
 const CONFIG_INICIAL: ConfiguracoesJogo = {
-  velocidade: 'normal',
+  dificuldade: 'facil',
   penalidade: true,
   sons: true,
 };
