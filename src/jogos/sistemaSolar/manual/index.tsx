@@ -5,9 +5,9 @@ import { useStore } from 'zustand';
 import { lojaOlho } from '../../../lojas/lojaOlho';
 import { useLeitorOcular } from '../../../hooks/useLeitorOcular';
 import { pararNarracao } from '../../../servicos/acessibilidade';
-import type { BaseManualProps, ConfiguracoesJogo, DificildadeJogo } from '../../../interface/types';
+import type { BaseManualProps, ConfiguracoesJogo, DificuldadeJogo } from '../../../interface/types';
 
-const DIFICULDADES: DificildadeJogo[] = ['facil', 'medio', 'dificil'];
+const DIFICULDADES: DificuldadeJogo[] = ['facil', 'medio', 'dificil'];
 
 const planetasInfo = [
   { 
