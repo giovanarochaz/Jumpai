@@ -1,11 +1,15 @@
 import styled, { keyframes, css } from 'styled-components';
 
 const TEMA = {
-   madeira: '#8B4513',
+   // Cores de madeira
+   madeiraClara: '#D2691E',
+   madeiraEscura: '#8B4513',
+   madeiraBorda: '#5D4037',
+   madeiraSombra: '#3E2723',
+   
    verdeSapo: '#4ADE80',
    amareloDestaque: '#FBBF24',
-   azulAgua: '#0EA5E9',
-   vidroEscuro: 'rgba(0, 20, 0, 0.8)',
+   branco: '#FFFFFF',
 };
 
 // --- ANIMAÇÕES ---
@@ -14,6 +18,7 @@ const splashAnim = keyframes` 0% { transform: translate(-50%, -50%) scale(0.3); 
 const tremer = keyframes` 0%, 100% { transform: translate(0,0); } 25% { transform: translate(-5px, 5px); } 75% { transform: translate(5px, -5px); } `;
 
 // --- COMPONENTES ---
+
 export const FundoLagoa = styled.div<{ $tremendo: boolean }>`
    position: fixed; inset: 0; 
    background: url('/assets/saltoAlfabetico/fundo_lagoa.png') center/cover;
@@ -21,42 +26,74 @@ export const FundoLagoa = styled.div<{ $tremendo: boolean }>`
    ${({ $tremendo }) => $tremendo && css`animation: ${tremer} 0.1s infinite;`}
 `;
 
+// PLACA DE MADEIRA DO TOPO
 export const HudPalavra = styled.div`
-   position: fixed; top: 2vh; left: 50%; transform: translateX(-50%);
-   background: ${TEMA.vidroEscuro}; padding: 15px 30px;
-   border-radius: 20px; border: 3px solid ${TEMA.verdeSapo};
-   display: flex; gap: 15px; z-index: 100;
-   box-shadow: 0 0 20px rgba(74, 222, 128, 0.3);
+   position: fixed; 
+   top: 2vh; 
+   left: 50%; 
+   transform: translateX(-50%);
+   
+   /* Estilo Placa de Madeira */
+   background-color: ${TEMA.madeiraClara};
+   background-image: linear-gradient(180deg, ${TEMA.madeiraClara} 0%, ${TEMA.madeiraEscura} 100%);
+   border: 5px solid ${TEMA.madeiraBorda};
+   border-radius: 15px;
+   
+   padding: 15px 30px;
+   display: flex; 
+   gap: 15px; 
+   z-index: 100;
+   
+   /* Sombra para parecer 3D */
+   box-shadow: 
+      inset 0 0 10px rgba(0,0,0,0.5), 
+      0 8px 0 ${TEMA.madeiraSombra},
+      0 15px 20px rgba(0,0,0,0.4);
 `;
 
 export const SlotSilaba = styled.div<{ $status: string; $ehTonica: boolean }>`
-   width: clamp(60px, 8vw, 100px); height: clamp(70px, 10vh, 120px);
-   background: white; border-radius: 12px;
-   display: flex; justify-content: center; align-items: center;
-   font-size: clamp(1.5rem, 4vh, 3rem); font-weight: 900;
-   border: 4px solid #3E2723;
+   width: clamp(60px, 8vw, 100px); 
+   height: clamp(70px, 10vh, 120px);
+   background: white; 
+   border-radius: 10px;
+   display: flex; 
+   justify-content: center; 
+   align-items: center;
+   font-size: clamp(1.5rem, 4vh, 3rem); 
+   font-weight: 900;
+   border: 4px solid ${TEMA.madeiraBorda};
    transition: all 0.4s;
 
    ${({ $status }) => {
-      if ($status === 'pendente') return css`opacity: 0.3;`;
-      if ($status === 'correto') return css`background: ${TEMA.verdeSapo}; color: white;`;
-      if ($status === 'erro') return css`background: #ef4444; color: white;`;
+      if ($status === 'pendente') return css`
+         background: rgba(255, 255, 255, 0.3);
+         color: rgba(0, 0, 0, 0.2);
+         border-color: rgba(0, 0, 0, 0.1);
+      `;
+      if ($status === 'correto') return css`
+         background: ${TEMA.verdeSapo}; 
+         color: white;
+         box-shadow: inset 0 -4px 0 rgba(0,0,0,0.2);
+      `;
+      if ($status === 'erro') return css`
+         background: #ef4444; 
+         color: white;
+      `;
    }}
    
    ${({ $ehTonica, $status }) => $ehTonica && $status === 'correto' && css`
-      color: ${TEMA.amareloDestaque}; text-shadow: 0 0 10px gold;
+      color: ${TEMA.amareloDestaque}; 
+      text-shadow: 0 0 10px gold;
    `}
 `;
 
+// ... Restante do código (VitoriaRegiaBase, WrapperFolha, etc) continua igual
 export const VitoriaRegiaBase = styled.div`
    position: absolute; bottom: 5vh; left: 50%; transform: translateX(-50%);
    width: 20vw; z-index: 10; img { width: 100%; }
 `;
 
-interface WrapperFolhaProps {
-   $pos: number;
-   $focado: boolean;
-}
+interface WrapperFolhaProps { $pos: number; $focado: boolean; }
 
 export const WrapperFolha = styled.div<WrapperFolhaProps>`
    position: absolute; width: 15vw; max-width: 180px; z-index: 20;
@@ -104,9 +141,7 @@ export const SplashEffect = styled.div`
 `;
 
 export const OverlayAviso = styled.div`
-   position: fixed; inset: 0; background: rgba(0,0,0,0.6);
-   backdrop-filter: blur(4px);
-   display: flex; justify-content: center; align-items: center;
+   position: fixed; top: 50%; left: 50%; transform: translate(-50%, -50%);
    color: white; font-size: clamp(1.5rem, 5vw, 3rem); font-weight: 900;
    text-align: center; text-shadow: 0 0 20px black; z-index: 150;
 `;

@@ -111,10 +111,10 @@ const JogoSaltoAlfabetico: React.FC<Jogos> = ({ aoVencer, aoPerder, configuracoe
           setIndiceSilaba(prox);
 
           if (prox === itemAtual.silabas.length) {
-            setAnuncioVoz(`Excelente! Você formou a palavra ${itemAtual.palavra}!`);
+            setAnuncioVoz(`${itemAtual.palavra}!`);
             setTimeout(aoVencer, 2500);
           } else {
-            setAnuncioVoz(`${fonetica} coletado! Busque a próxima parte.`);
+            setAnuncioVoz(`${fonetica}`);
             setEstadoSapo('parado');
             setPosicaoAlvo(null);
             gerarOpcoes(itemAtual.silabas[prox]);
