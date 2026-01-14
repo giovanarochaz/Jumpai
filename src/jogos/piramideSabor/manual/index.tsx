@@ -5,9 +5,9 @@ import { useStore } from 'zustand';
 import { lojaOlho } from '../../../lojas/lojaOlho';
 import { useLeitorOcular } from '../../../hooks/useLeitorOcular';
 import { pararNarracao } from '../../../servicos/acessibilidade';
-import type { BaseManualProps, ConfiguracoesJogo, VelocidadeGeracao } from '../../../interface/types';
+import type { BaseManualProps, ConfiguracoesJogo, DificuldadeJogo } from '../../../interface/types';
 
-const VELOCIDADES: VelocidadeGeracao[] = ['lenta', 'normal', 'rapida'];
+const dificuldadeS: DificuldadeJogo[] = ['facil', 'medio', 'dificil'];
 
 const receitaInfo = [
     {
@@ -47,8 +47,8 @@ const ManualPiramideSabor: React.FC<BaseManualProps<ConfiguracoesJogo>> = ({ aoI
 
   const [tela, setTela] = useState<'introducao' | 'receita' | 'comoJogar' | 'desafios' | 'configuracoes'>('introducao');
   const [slideAtual, setSlideAtual] = useState(0);
-  const [configuracoes, setConfiguracoes] = useState<ConfiguracoesJogo>({ velocidade: 'normal', penalidade: true, sons: true });
-  const [focoConfig, setFocoConfig] = useState<'velocidade' | 'penalidade' | 'sons' | 'iniciar'>('velocidade');
+  const [configuracoes, setConfiguracoes] = useState<ConfiguracoesJogo>({ dificuldade: 'facil', penalidade: true, sons: true });
+  const [focoConfig, setFocoConfig] = useState<'dificuldade' | 'penalidade' | 'sons' | 'iniciar'>('dificuldade');
   const [podeInteragirOcular, setPodeInteragirOcular] = useState(false);
   
   const timerScanRef = useRef<NodeJS.Timeout | null>(null);
@@ -67,10 +67,10 @@ const ManualPiramideSabor: React.FC<BaseManualProps<ConfiguracoesJogo>> = ({ aoI
   useEffect(() => {
     if (modoOcular && podeInteragirOcular && tela === 'configuracoes') {
       timerScanRef.current = setInterval(() => {
-        if (focoConfig === 'velocidade') {
+        if (focoConfig === 'dificuldade') {
           setConfiguracoes(prev => ({
             ...prev,
-            velocidade: VELOCIDADES[(VELOCIDADES.indexOf(prev.velocidade) + 1) % VELOCIDADES.length]
+            dificuldade: dificuldadeS[(dificuldadeS.indexOf(prev.dificuldade) + 1) % dificuldadeS.length]
           }));
         } else if (focoConfig === 'penalidade') {
           setConfiguracoes(prev => ({ ...prev, penalidade: !prev.penalidade }));
@@ -99,12 +99,12 @@ const ManualPiramideSabor: React.FC<BaseManualProps<ConfiguracoesJogo>> = ({ aoI
     }
     if (tela === 'configuracoes') {
       if (!podeInteragirOcular) {
-        if (focoConfig === 'velocidade') return "Qual a velocidade da comida caindo?";
+        if (focoConfig === 'dificuldade') return "Qual a dificuldade da comida caindo?";
         if (focoConfig === 'penalidade') return "Se errar a ordem, quer recomeçar do zero?";
         if (focoConfig === 'sons') return "Quer ouvir a música da lanchonete?";
         if (focoConfig === 'iniciar') return "Tudo pronto! Vamos começar?";
       } else {
-        if (focoConfig === 'velocidade') return `${configuracoes.velocidade}`;
+        if (focoConfig === 'dificuldade') return `${configuracoes.dificuldade}`;
         if (focoConfig === 'penalidade') return configuracoes.penalidade ? "Recomeçar ao errar!" : "Continuar ao errar!";
         if (focoConfig === 'sons') return configuracoes.sons ? "Sons ligados!" : "Sons desligados!";
         if (focoConfig === 'iniciar') return "Pisque agora para colocar as mãos na massa!";
@@ -127,7 +127,7 @@ const ManualPiramideSabor: React.FC<BaseManualProps<ConfiguracoesJogo>> = ({ aoI
     else if (tela === 'desafios') setTela('configuracoes');
     else if (tela === 'configuracoes') {
       if (modoOcular) {
-        if (focoConfig === 'velocidade') setFocoConfig('penalidade');
+        if (focoConfig === 'dificuldade') setFocoConfig('penalidade');
         else if (focoConfig === 'penalidade') setFocoConfig('sons');
         else if (focoConfig === 'sons') setFocoConfig('iniciar');
         else aoIniciar(configuracoes);
@@ -218,15 +218,15 @@ const ManualPiramideSabor: React.FC<BaseManualProps<ConfiguracoesJogo>> = ({ aoI
           <S.ContainerConfiguracoes>
             <S.TextoSlide><h2>Ajustes do Chef</h2></S.TextoSlide>
             
-            <S.LinhaConfiguracao $isFocused={feedbackVisual && focoConfig === 'velocidade'}>
-              <S.RotuloConfiguracao><Zap /><h3>Velocidade da Comida</h3></S.RotuloConfiguracao>
+            <S.LinhaConfiguracao $isFocused={feedbackVisual && focoConfig === 'dificuldade'}>
+              <S.RotuloConfiguracao><Zap /><h3>dificuldade da Comida</h3></S.RotuloConfiguracao>
               <S.GrupoBotoes>
-                {VELOCIDADES.map(v => (
+                {dificuldadeS.map(v => (
                   <S.BotaoOpcao 
                     key={v} 
-                    ativo={configuracoes.velocidade === v} 
-                    $isFocused={feedbackVisual && focoConfig === 'velocidade' && configuracoes.velocidade === v}
-                    onClick={() => setConfiguracoes(prev => ({ ...prev, velocidade: v }))}
+                    ativo={configuracoes.dificuldade === v} 
+                    $isFocused={feedbackVisual && focoConfig === 'dificuldade' && configuracoes.dificuldade === v}
+                    onClick={() => setConfiguracoes(prev => ({ ...prev, dificuldade: v }))}
                   >
                     {v}
                   </S.BotaoOpcao>
