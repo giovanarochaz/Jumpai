@@ -25,7 +25,6 @@ const SaltoAlfabetico: React.FC = () => {
   };
 
   const lidarComDerrota = () => {
-    console.log("Derrota detectada!");
     setEstadoDoJogo('derrota');
   };
 
@@ -49,13 +48,15 @@ const SaltoAlfabetico: React.FC = () => {
 
       {estadoDoJogo === 'vitoria' && (
         <TelaVitoriaSalto 
-          aoReiniciar={reiniciarJogo} 
+          aoReiniciar={reiniciarJogo}
+          configuracoes={configuracoes}
         />
       )}
 
       {estadoDoJogo === 'derrota' && (
         <TelaDerrotaSalto 
           aoReiniciar={reiniciarJogo} 
+          configuracoes={configuracoes}
         />
       )}
     </>

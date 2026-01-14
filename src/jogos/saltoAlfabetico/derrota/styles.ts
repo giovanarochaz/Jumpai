@@ -1,142 +1,149 @@
 import styled, { keyframes, css } from 'styled-components';
 
-// --- CORES DA DERROTA ---
 const TEMA = {
-  madeiraMolhada: '#5D4037', // Madeira escura
-  azulAgua: '#0EA5E9',       // Azul piscina
-  azulEscuro: '#0369A1',
-  branco: '#E0F2FE',         // Branco azulado
-  textoEscuro: '#281815'
+  vermelhoAlerta: '#ef4444',
+  madeira: '#8b4513',
+  madeiraEscura: '#5d4037',
+  madeiraClara: '#deb887',
+  ouro: '#fbbf24',
+  branco: '#ffffff',
+  azulAgua: '#0ea5e9'
 };
 
-// --- ANIMAÇÕES ---
-const cairNaAgua = keyframes`
-  0% { transform: translateY(-300px) rotate(10deg); opacity: 0; }
-  60% { transform: translateY(20px) rotate(-5deg); opacity: 1; }
-  100% { transform: translateY(0) rotate(-2deg); }
+interface BotaoProps {
+  $isFocused: boolean;
+}
+
+const pulse = keyframes`
+  0% { transform: scale(1); box-shadow: 0 0 0 0px ${TEMA.ouro}; }
+  50% { transform: scale(1.08); box-shadow: 0 0 20px 8px rgba(251, 191, 36, 0.4); }
+  100% { transform: scale(1); box-shadow: 0 0 0 0px ${TEMA.ouro}; }
 `;
 
-const pingo = keyframes`
-  0% { transform: translateY(0) scale(1); opacity: 0.8; }
-  100% { transform: translateY(30px) scale(0); opacity: 0; }
+const cairGota = keyframes`
+  0% { transform: translateY(-20px); opacity: 0; }
+  50% { opacity: 0.6; }
+  100% { transform: translateY(20px); opacity: 0; }
 `;
 
-const flutuarNaAgua = keyframes`
-  0%, 100% { transform: rotate(-2deg) translateY(0); }
-  50% { transform: rotate(2deg) translateY(5px); }
-`;
+const EstiloBotao = css<BotaoProps>`
+  padding: 18px 30px;
+  font-size: 1.1rem;
+  font-weight: 900;
+  border-radius: 20px;
+  border: 4px solid ${TEMA.madeiraEscura};
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  transition: all 0.2s;
+  background: ${TEMA.madeira};
+  color: ${TEMA.branco};
+  box-shadow: 0 6px 0px ${TEMA.madeiraEscura};
 
-// --- COMPONENTES ---
+  &:hover {
+    background: ${TEMA.madeiraEscura};
+    transform: translateY(-2px);
+  }
+
+  ${props => props.$isFocused && css`
+    animation: ${pulse} 1.5s infinite;
+    border-color: ${TEMA.branco} !important;
+    background: ${TEMA.ouro} !important;
+    color: ${TEMA.madeiraEscura} !important;
+    transform: scale(1.1);
+    z-index: 10;
+  `}
+`;
 
 export const FundoDerrota = styled.div`
-  position: fixed; top: 0; left: 0; width: 100vw; height: 100vh;
-  
-  /* IMAGEM DA LAGOA DE FUNDO */
+  position: fixed; inset: 0; z-index: 300;
   background-image: url('/assets/saltoAlfabetico/fundo_lagoa.png');
   background-size: cover;
   background-position: center;
-
-  /* Overlay azul escuro para indicar submersão/erro */
-  &::before {
-    content: '';
-    position: absolute; top: 0; left: 0; width: 100%; height: 100%;
-    background: rgba(3, 105, 161, 0.7); /* Azulão */
-    backdrop-filter: blur(2px);
-  }
-
   display: flex; justify-content: center; align-items: center;
-  z-index: 300;
+  overflow: hidden;
+
+  &::before {
+    content: ''; position: absolute; inset: 0;
+    background: rgba(45, 27, 27, 0.8); backdrop-filter: blur(5px);
+  }
 `;
 
-export const PlacaDerrota = styled.div`
-  position: relative;
-  
-  /* Madeira Molhada (Escura e Azulada) */
-  background-color: ${TEMA.madeiraMolhada};
-  border: 6px solid ${TEMA.azulAgua};
+export const ConteudoDerrota = styled.div`
+  background-color: ${TEMA.madeiraClara};
+  background-image: linear-gradient(180deg, ${TEMA.madeiraClara} 0%, ${TEMA.madeira} 100%);
+  border: 8px solid ${TEMA.vermelhoAlerta};
   border-radius: 40px;
-  padding: 40px;
-  width: 90%; max-width: 600px;
-  
-  display: flex; flex-direction: column; align-items: center; text-align: center;
-  
-  box-shadow: 
-    inset 0 0 50px ${TEMA.azulEscuro}, /* Sombra interna de água */
-    0 20px 40px rgba(0,0,0,0.6);
-    
-  animation: ${cairNaAgua} 0.6s ease-out, ${flutuarNaAgua} 3s ease-in-out infinite 0.6s;
+  padding: 50px;
+  width: 90%;
+  max-width: 650px;
+  text-align: center;
+  box-shadow: 0 15px 0px ${TEMA.madeiraEscura}, 0 25px 50px rgba(0,0,0,0.5);
+  position: relative;
+  z-index: 310;
 
-  /* Gotas caindo da placa */
-  &::after {
-    content: '💧';
-    position: absolute; bottom: -30px; left: 20%;
-    font-size: 24px; animation: ${pingo} 1.5s infinite;
-  }
   &::before {
-    content: '💧';
-    position: absolute; bottom: -40px; right: 20%;
-    font-size: 24px; animation: ${pingo} 2s infinite 0.5s;
+    content: ''; position: absolute; inset: 6px;
+    border: 3px dashed ${TEMA.vermelhoAlerta};
+    border-radius: 30px; pointer-events: none;
+    opacity: 0.5;
   }
+`;
+
+export const TituloDerrota = styled.h1`
+  font-size: 2.5rem;
+  color: ${TEMA.vermelhoAlerta};
+  font-weight: 900;
+  text-transform: uppercase;
+  margin: 15px 0;
+  text-shadow: 2px 2px 0px ${TEMA.branco};
+`;
+
+export const MensagemDerrota = styled.p`
+  font-size: 1.2rem;
+  color: ${TEMA.branco};
+  line-height: 1.5;
+  margin-bottom: 35px;
+  font-weight: bold;
+  background: rgba(0,0,0,0.2);
+  padding: 15px;
+  border-radius: 15px;
 `;
 
 export const IconeContainer = styled.div`
-  background-color: ${TEMA.azulAgua};
-  width: 120px; height: 120px;
-  border-radius: 50%;
-  border: 5px solid ${TEMA.branco};
-  display: flex; justify-content: center; align-items: center;
-  box-shadow: 0 8px 0 ${TEMA.azulEscuro};
-  margin-bottom: 20px;
-  
-  svg { color: ${TEMA.branco}; }
-`;
-
-export const Titulo = styled.h1`
-  font-family: 'Comic Sans MS', cursive, sans-serif;
-  font-size: 3rem;
-  color: ${TEMA.branco};
-  text-transform: uppercase;
-  margin: 0;
-  text-shadow: 3px 3px 0 ${TEMA.azulEscuro};
-`;
-
-export const Mensagem = styled.div`
-  margin: 20px 0;
-  font-size: 1.3rem;
-  color: ${TEMA.textoEscuro};
-  background-color: rgba(224, 242, 254, 0.8); /* Azul clarinho */
-  padding: 15px;
-  border-radius: 15px;
-  border: 2px solid ${TEMA.azulEscuro};
-  
-  strong { color: ${TEMA.azulEscuro}; font-weight: 900; }
+  color: ${TEMA.vermelhoAlerta};
+  position: relative;
+  display: inline-block;
+  filter: drop-shadow(0 4px 0px rgba(0,0,0,0.2));
+  margin-bottom: 10px;
 `;
 
 export const ContainerBotoes = styled.div`
-  display: flex; gap: 20px; margin-top: 20px;
+  display: flex;
+  gap: 20px;
+  justify-content: center;
 `;
 
-export const Botao = styled.button<{ $focado?: boolean }>`
-  display: flex; align-items: center; gap: 10px;
-  padding: 15px 30px;
-  border-radius: 20px;
-  font-size: 1.1rem; font-weight: bold;
-  cursor: pointer;
-  text-transform: uppercase;
-  transition: all 0.2s;
+export const BotaoDerrota = styled.button<BotaoProps>`
+  ${EstiloBotao}
+`;
 
-  background-color: ${TEMA.branco};
-  color: ${TEMA.azulEscuro};
-  border: 3px solid ${TEMA.azulEscuro};
-  box-shadow: 0 6px 0 ${TEMA.azulEscuro};
+export const GotaAgua = styled.div`
+  position: absolute;
+  border-radius: 50% 50% 50% 50% / 60% 60% 40% 40%;
+  opacity: 0;
+  animation: ${cairGota} 2s infinite linear;
+  pointer-events: none;
+`;
 
-  ${({ $focado }) => $focado && css`
-    background-color: ${TEMA.azulAgua};
-    color: white;
-    transform: scale(1.1);
-    box-shadow: 0 10px 0 ${TEMA.azulEscuro};
-    border-color: white;
-  `}
-
-  &:active { transform: translateY(4px); box-shadow: none; }
+export const SinalAlertaLagoa = styled.div`
+  position: absolute;
+  inset: 0;
+  background: radial-gradient(circle, transparent 40%, rgba(239, 68, 68, 0.2) 100%);
+  animation: ${keyframes`
+    0%, 100% { opacity: 0.3; }
+    50% { opacity: 0.7; }
+  `} 1s infinite;
+  pointer-events: none;
 `;

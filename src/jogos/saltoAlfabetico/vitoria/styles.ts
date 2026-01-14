@@ -1,133 +1,132 @@
 import styled, { keyframes, css } from 'styled-components';
 
-// --- CORES DA VITÓRIA ---
 const TEMA = {
-  madeiraClara: '#DEB887', // Burlywood
-  madeiraEscura: '#8B4513', // SaddleBrown
+  madeiraClara: '#DEB887',
+  madeiraEscura: '#8B4513',
   ouro: '#FBBF24',
   ouroEscuro: '#B45309',
   marromTexto: '#3E2723',
   branco: '#FFFFFF',
+  verdeFolha: '#4ADE80'
 };
 
-// --- ANIMAÇÕES ---
 const popIn = keyframes`
   0% { transform: scale(0.5); opacity: 0; }
   60% { transform: scale(1.1); }
   100% { transform: scale(1); opacity: 1; }
 `;
 
-const brilho = keyframes`
-  0%, 100% { transform: scale(1); filter: brightness(1); }
-  50% { transform: scale(1.1); filter: brightness(1.2); }
+const pulse = keyframes`
+  0% { transform: scale(1); box-shadow: 0 0 0 0px ${TEMA.ouro}; }
+  50% { transform: scale(1.08); box-shadow: 0 0 20px 8px rgba(251, 191, 36, 0.5); }
+  100% { transform: scale(1); box-shadow: 0 0 0 0px ${TEMA.ouro}; }
 `;
 
-// --- COMPONENTES ---
+const particles = keyframes`
+  0% { transform: scale(0); opacity: 1; }
+  100% { transform: scale(2.5); opacity: 0; }
+`;
 
 export const FundoVitoria = styled.div`
-  position: fixed; top: 0; left: 0; width: 100vw; height: 100vh;
-  
-  /* IMAGEM DA LAGOA DE FUNDO */
+  position: fixed; inset: 0; z-index: 300;
   background-image: url('/assets/saltoAlfabetico/fundo_lagoa.png');
   background-size: cover;
   background-position: center;
-
-  /* Overlay dourado para indicar vitória */
-  &::before {
-    content: '';
-    position: absolute; top: 0; left: 0; width: 100%; height: 100%;
-    background: rgba(251, 191, 36, 0.3); /* Amarelo translúcido */
-    backdrop-filter: blur(3px);
-  }
-
   display: flex; justify-content: center; align-items: center;
-  z-index: 300;
+  overflow: hidden;
+
+  &::before {
+    content: ''; position: absolute; inset: 0;
+    background: rgba(0, 0, 0, 0.4); backdrop-filter: blur(4px);
+  }
 `;
 
 export const PlacaVitoria = styled.div`
   position: relative;
-  
-  /* Textura de Madeira */
   background-color: ${TEMA.madeiraClara};
-  background-image: repeating-linear-gradient(45deg, rgba(0,0,0,0.05) 0px, rgba(0,0,0,0.05) 2px, transparent 2px, transparent 4px);
-  
+  background-image: linear-gradient(180deg, ${TEMA.madeiraClara} 0%, ${TEMA.madeiraEscura} 100%);
   border: 8px solid ${TEMA.ouro};
   border-radius: 40px;
-  padding: 40px;
+  padding: 50px;
   width: 90%; max-width: 600px;
-  
-  display: flex; flex-direction: column; align-items: center; text-align: center;
-  
-  box-shadow: 
-    0 0 0 8px ${TEMA.madeiraEscura}, /* Borda dupla (Ouro + Madeira) */
-    0 20px 40px rgba(0,0,0,0.6);
-    
+  text-align: center;
+  box-shadow: 0 15px 0px ${TEMA.marromTexto}, 0 25px 50px rgba(0,0,0,0.5);
   animation: ${popIn} 0.5s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+  display: flex; flex-direction: column; align-items: center;
+`;
+
+export const TituloVitoria = styled.h1`
+  font-size: 2.8rem;
+  color: ${TEMA.ouro};
+  font-weight: 900;
+  text-transform: uppercase;
+  margin: 15px 0;
+  text-shadow: 3px 3px 0px ${TEMA.marromTexto};
+`;
+
+export const MensagemVitoria = styled.p`
+  font-size: 1.3rem;
+  color: ${TEMA.branco};
+  margin-bottom: 35px;
+  line-height: 1.5;
+  background: rgba(0,0,0,0.2);
+  padding: 15px;
+  border-radius: 15px;
+  border: 2px dashed ${TEMA.ouro};
+  
+  strong { color: ${TEMA.ouro}; font-weight: 900; }
 `;
 
 export const IconeContainer = styled.div`
-  background-color: ${TEMA.ouro};
+  background: ${TEMA.ouro};
+  color: ${TEMA.marromTexto};
   width: 120px; height: 120px;
   border-radius: 50%;
-  border: 5px solid ${TEMA.branco};
   display: flex; justify-content: center; align-items: center;
+  border: 6px solid ${TEMA.branco};
   box-shadow: 0 8px 0 ${TEMA.ouroEscuro};
-  margin-bottom: 20px;
-  z-index: 1;
-  animation: ${brilho} 2s infinite;
-  
-  svg { color: ${TEMA.marromTexto}; }
-`;
-
-export const Titulo = styled.h1`
-  font-family: 'Comic Sans MS', cursive, sans-serif;
-  font-size: 3rem;
-  color: ${TEMA.ouroEscuro};
-  text-transform: uppercase;
-  margin: 0;
-  text-shadow: 2px 2px 0 ${TEMA.branco};
-  z-index: 1;
-`;
-
-export const Mensagem = styled.div`
-  margin: 20px 0;
-  font-size: 1.3rem;
-  color: ${TEMA.marromTexto};
-  background-color: rgba(255, 255, 255, 0.5);
-  padding: 15px;
-  border-radius: 15px;
-  border: 2px dashed ${TEMA.madeiraEscura};
-  z-index: 1;
-  
-  strong { color: ${TEMA.ouroEscuro}; font-weight: 900; }
+  margin-bottom: 10px;
 `;
 
 export const ContainerBotoes = styled.div`
-  display: flex; gap: 20px; margin-top: 20px; z-index: 1;
+  display: flex; gap: 20px; justify-content: center;
 `;
 
-export const Botao = styled.button<{ $focado?: boolean }>`
-  display: flex; align-items: center; gap: 10px;
-  padding: 15px 30px;
+export const BotaoVitoria = styled.button<{ $isFocused: boolean }>`
+  padding: 18px 30px;
+  font-size: 1.1rem;
+  font-weight: 900;
   border-radius: 20px;
-  font-size: 1.1rem; font-weight: bold;
+  border: 4px solid ${TEMA.marromTexto};
   cursor: pointer;
-  text-transform: uppercase;
+  display: flex;
+  align-items: center;
+  gap: 10px;
   transition: all 0.2s;
-
-  background-color: ${TEMA.madeiraEscura};
+  background: ${TEMA.madeiraEscura};
   color: ${TEMA.branco};
-  border: 3px solid ${TEMA.marromTexto};
-  box-shadow: 0 6px 0 ${TEMA.marromTexto};
+  box-shadow: 0 6px 0px ${TEMA.marromTexto};
 
-  /* Estilo Focado (Eye Tracking) */
-  ${({ $focado }) => $focado && css`
-    background-color: ${TEMA.ouro};
+  &:hover {
+    background: ${TEMA.ouro};
     color: ${TEMA.marromTexto};
-    transform: scale(1.1);
-    box-shadow: 0 10px 0 ${TEMA.ouroEscuro};
-    border-color: ${TEMA.branco};
-  `}
+    transform: translateY(-3px);
+  }
 
-  &:active { transform: translateY(4px); box-shadow: none; }
+  ${props => props.$isFocused && css`
+    animation: ${pulse} 1.5s infinite;
+    background: ${TEMA.ouro} !important;
+    color: ${TEMA.marromTexto} !important;
+    border-color: ${TEMA.branco} !important;
+    transform: scale(1.1);
+  `}
+`;
+
+export const ContainerFogos = styled.div` position: absolute; width: 10px; height: 10px; `;
+
+export const ParticulaFogos = styled.div`
+  position: absolute; width: 100%; height: 100%; border-radius: 50%;
+  background: var(--color);
+  animation: ${particles} 2s infinite ease-out;
+  animation-delay: var(--delay);
 `;
