@@ -60,7 +60,6 @@ const JogoSaltoAlfabetico: React.FC<Jogos> = ({ aoVencer, aoPerder, configuracoe
     setOpcoes([correta, ...erradas].sort(() => 0.5 - Math.random()));
   }, [configuracoes.dificuldade]);
 
-  // Inicialização da palavra
   useEffect(() => {
     const dificuldade = configuracoes.dificuldade || 'facil';
     const lista = PALAVRAS[dificuldade];
@@ -69,27 +68,21 @@ const JogoSaltoAlfabetico: React.FC<Jogos> = ({ aoVencer, aoPerder, configuracoe
     gerarOpcoes(sorteada.silabas[0]);
   }, [configuracoes.dificuldade, gerarOpcoes]);
 
-  // Texto para leitura: AGORA SEMPRE RETORNA SE HOUVER ANÚNCIO
   const textoParaLeitura = useMemo(() => {
     if (!jogoIniciado) return "O sapinho está na margem. Pisque ou aperte espaço para começar!";
     return anuncioVoz || "";
   }, [jogoIniciado, anuncioVoz]);
 
-  // Hook do Leitor: Sempre libera a interação quando termina de falar
   useLeitorOcular(textoParaLeitura, [textoParaLeitura], () => {
     if (modoOcular) setPodeInteragirOcular(true);
   });
 
-  // Controle de interação ocular (trava enquanto fala apenas se o leitorAtivo estiver on, 
-  // caso contrário libera rápido mas ainda fala)
   useEffect(() => {
     if (!modoOcular) { setPodeInteragirOcular(true); return; }
     
     if (!leitorAtivo) {
-      // Se o leitor geral está off, a voz do jogo sai mas não trava a experiência
       setPodeInteragirOcular(true); 
     } else {
-      // Se o leitor está on, esperamos o fim da fala
       setPodeInteragirOcular(false); 
     }
   }, [modoOcular, leitorAtivo, anuncioVoz]);
@@ -116,7 +109,6 @@ const JogoSaltoAlfabetico: React.FC<Jogos> = ({ aoVencer, aoPerder, configuracoe
             setAnuncioVoz(`${itemAtual.palavra}!`);
             setTimeout(aoVencer, 3000);
           } else {
-            // FALA A PRÓXIMA SÍLABA
             setAnuncioVoz(`Boa! Agora pule na sílaba ${itemAtual.fonetica[prox]}`);
             setEstadoSapo('parado');
             setPosicaoAlvo(null);
@@ -141,13 +133,11 @@ const JogoSaltoAlfabetico: React.FC<Jogos> = ({ aoVencer, aoPerder, configuracoe
     }, 150);
   }, [estadoSapo, opcoes, itemAtual, indiceSilaba, configuracoes, aoVencer, aoPerder, gerarOpcoes]);
 
-  // Início do Jogo
   const iniciarJogo = useCallback(() => {
     setJogoIniciado(true);
     setAnuncioVoz(`Vamos lá! Pule na sílaba ${itemAtual.fonetica[0]}`);
   }, [itemAtual]);
 
-  // Controle Ocular (Piscada)
   useEffect(() => {
     if (!modoOcular || !podeInteragirOcular) return;
 
@@ -160,7 +150,6 @@ const JogoSaltoAlfabetico: React.FC<Jogos> = ({ aoVencer, aoPerder, configuracoe
     if (!estaPiscando) piscadaProcessadaRef.current = false;
   }, [estaPiscando, modoOcular, podeInteragirOcular, jogoIniciado, focoAtual, estadoSapo, realizarSalto, iniciarJogo]);
 
-  // Carrossel de Foco
   useEffect(() => {
     if (!modoOcular || estadoSapo !== 'parado' || !jogoIniciado) return;
     const int = setInterval(() => {
@@ -169,7 +158,6 @@ const JogoSaltoAlfabetico: React.FC<Jogos> = ({ aoVencer, aoPerder, configuracoe
     return () => clearInterval(int);
   }, [modoOcular, estadoSapo, jogoIniciado]);
 
-  // Teclado
   useEffect(() => {
     const tratarTecla = (e: KeyboardEvent) => {
       if (!jogoIniciado && ['Enter', ' '].includes(e.key)) iniciarJogo();
@@ -232,7 +220,7 @@ const JogoSaltoAlfabetico: React.FC<Jogos> = ({ aoVencer, aoPerder, configuracoe
 
       {!jogoIniciado && (
         <S.OverlayAviso>
-          {modoOcular ? 'PISQUE PARA COMEÇAR' : 'APERTE ESPAÇO PARA COMEÇAR'}
+          {modoOcular ? 'PISQUE PARA COMEÇAR' : ''}
         </S.OverlayAviso>
       )}
     </S.FundoLagoa>

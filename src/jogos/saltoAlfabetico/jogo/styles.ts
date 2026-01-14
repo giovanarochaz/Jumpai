@@ -1,7 +1,6 @@
 import styled, { keyframes, css } from 'styled-components';
 
 const TEMA = {
-   // Cores de madeira
    madeiraClara: '#D2691E',
    madeiraEscura: '#8B4513',
    madeiraBorda: '#5D4037',
@@ -12,12 +11,10 @@ const TEMA = {
    branco: '#FFFFFF',
 };
 
-// --- ANIMAÇÕES ---
 const flutuar = keyframes` 0%, 100% { transform: translateY(0); } 50% { transform: translateY(-1vh); } `;
 const splashAnim = keyframes` 0% { transform: translate(-50%, -50%) scale(0.3); opacity: 0; } 100% { transform: translate(-50%, -80%) scale(1.5); opacity: 0; } `;
 const tremer = keyframes` 0%, 100% { transform: translate(0,0); } 25% { transform: translate(-5px, 5px); } 75% { transform: translate(5px, -5px); } `;
 
-// --- COMPONENTES ---
 
 export const FundoLagoa = styled.div<{ $tremendo: boolean }>`
    position: fixed; inset: 0; 
@@ -26,7 +23,6 @@ export const FundoLagoa = styled.div<{ $tremendo: boolean }>`
    ${({ $tremendo }) => $tremendo && css`animation: ${tremer} 0.1s infinite;`}
 `;
 
-// PLACA DE MADEIRA DO TOPO
 export const HudPalavra = styled.div`
    position: fixed; 
    top: 2vh; 
@@ -87,7 +83,6 @@ export const SlotSilaba = styled.div<{ $status: string; $ehTonica: boolean }>`
    `}
 `;
 
-// ... Restante do código (VitoriaRegiaBase, WrapperFolha, etc) continua igual
 export const VitoriaRegiaBase = styled.div`
    position: absolute; bottom: 5vh; left: 50%; transform: translateX(-50%);
    width: 20vw; z-index: 10; img { width: 100%; }
