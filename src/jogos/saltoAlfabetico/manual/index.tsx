@@ -7,7 +7,7 @@ import { useLeitorOcular } from '../../../hooks/useLeitorOcular';
 import { pararNarracao } from '../../../servicos/acessibilidade';
 import type { BaseManualProps, ConfiguracoesJogo } from '../../../interface/types';
 
-const DIFICULDADES = ['fácil', 'médio', 'difícil'];
+const DIFICULDADES = ['facil', 'medio', 'dificil'];
 
 const slidesEducativos = [
   {

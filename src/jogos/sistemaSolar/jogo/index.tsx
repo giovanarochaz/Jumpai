@@ -4,7 +4,7 @@ import { useStore } from 'zustand';
 import { lojaOlho } from '../../../lojas/lojaOlho'; 
 import { pararNarracao } from '../../../servicos/acessibilidade';
 import { useLeitorOcular } from '../../../hooks/useLeitorOcular';
-import type { EstadoPlaneta, Jogos, VelocidadeGeracao } from '../../../interface/types';
+import type { DificuldadeJogo, EstadoPlaneta, Jogos } from '../../../interface/types';
 
 // --- CONSTANTES ---
 const planetasDoHudOrdem = [
@@ -20,10 +20,10 @@ const planetasDoHudOrdem = [
 
 const meteorosParaGerar = [{ nome: 'meteoro', imagem: '/assets/sistemaSolar/meteoro.png' }];
 
-const MAPA_VELOCIDADE: Record<VelocidadeGeracao, { min: number; max: number }> = {
- lenta: { min: 8, max: 12 },
- normal: { min: 5, max: 7 },
- rapida: { min: 2.5, max: 4 },
+const MAPA_VELOCIDADE: Record<DificuldadeJogo, { min: number; max: number }> = {
+ facil: { min: 8, max: 12 },
+ medio: { min: 5, max: 7 },
+ dificil: { min: 2.5, max: 4 },
 };
 
 const POSICAO_TOPO = '12vh';
@@ -111,7 +111,7 @@ const JogoSistemaSolar: React.FC<Jogos> = ({ aoVencer, aoPerder, configuracoes }
    const isMeteoro = corpoAleatorio.nome === 'meteoro';
    
    const topProposto = Math.random() * 65 + 15;
-   const vel = MAPA_VELOCIDADE[configuracoes.velocidade];
+   const vel = MAPA_VELOCIDADE[configuracoes.dificuldade];
    const duracao = Math.random() * (vel.max - vel.min) + vel.min;
    const vmin = Math.min(window.innerWidth, window.innerHeight);
    const tamanho = isMeteoro ? vmin * 0.08 : vmin * 0.14; 
@@ -125,7 +125,7 @@ const JogoSistemaSolar: React.FC<Jogos> = ({ aoVencer, aoPerder, configuracoes }
 
   const intervalo = setInterval(gerarCorpo, 2800);
   return () => clearInterval(intervalo);
- }, [jogoIniciado, proximoPlanetaIndex, configuracoes.velocidade, estaVisivel]);
+ }, [jogoIniciado, proximoPlanetaIndex, configuracoes.dificuldade, estaVisivel]);
 
  useEffect(() => {
     const manipularVisibilidade = () => {

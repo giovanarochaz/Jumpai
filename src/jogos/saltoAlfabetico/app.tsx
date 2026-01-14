@@ -14,7 +14,6 @@ const SaltoAlfabetico: React.FC = () => {
     sons: true
   });
 
-  // --- HANDLERS ---
 
   const iniciarJogo = (config: ConfiguracoesJogo) => {
     setConfiguracoes(config);
