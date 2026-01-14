@@ -64,7 +64,7 @@ const JogoPiramideSabor: React.FC<{ aoVencer: () => void; aoPerder: () => void; 
   useEffect(() => {
     const gerar = () => {
       if (jogoFinalizado) return;
-      const delay = { lenta: 4000, normal: 3000, rapida: 1800 }[configuracoes.velocidade];
+      const delay = { facil: 4000, medio: 3000, dificil: 1800 }[configuracoes.dificuldade];
       
       timerRef.current = setTimeout(() => {
         if (jogoFinalizado) return;
@@ -82,7 +82,7 @@ const JogoPiramideSabor: React.FC<{ aoVencer: () => void; aoPerder: () => void; 
     };
     gerar();
     return () => { if (timerRef.current) clearTimeout(timerRef.current); };
-  }, [configuracoes.velocidade, jogoFinalizado]);
+  }, [configuracoes.dificuldade, jogoFinalizado]);
 
   // Colisão e Penalidade
   useEffect(() => {
