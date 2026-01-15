@@ -29,7 +29,7 @@ const SaltoAlfabetico: React.FC = () => {
   };
 
   const reiniciarJogo = () => {
-    setEstadoDoJogo('jogando');
+    setEstadoDoJogo('manual');
   };
 
   return (

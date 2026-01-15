@@ -40,8 +40,6 @@ const ManualSaltoAlfabetico: React.FC<BaseManualProps<ConfiguracoesJogo>> = ({ a
   const timerDebounceRef = useRef<NodeJS.Timeout | null>(null);
   const piscadaProcessadaRef = useRef(false);
 
-  // --- ACESSIBILIDADE E TIMERS ---
-
   useEffect(() => {
     if (!modoOcular) { setPodeInteragirOcular(true); return; }
     setPodeInteragirOcular(false);

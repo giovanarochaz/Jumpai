@@ -69,7 +69,7 @@ const JogoSaltoAlfabetico: React.FC<Jogos> = ({ aoVencer, aoPerder, configuracoe
   }, [configuracoes.dificuldade, gerarOpcoes]);
 
   const textoParaLeitura = useMemo(() => {
-    if (!jogoIniciado) return "O sapinho está na margem. Pisque ou aperte espaço para começar!";
+    if (!jogoIniciado) return "O sapinho está na margem. Pisque para começar!";
     return anuncioVoz || "";
   }, [jogoIniciado, anuncioVoz]);
 
@@ -79,12 +79,8 @@ const JogoSaltoAlfabetico: React.FC<Jogos> = ({ aoVencer, aoPerder, configuracoe
 
   useEffect(() => {
     if (!modoOcular) { setPodeInteragirOcular(true); return; }
-    
-    if (!leitorAtivo) {
-      setPodeInteragirOcular(true); 
-    } else {
-      setPodeInteragirOcular(false); 
-    }
+    if (!leitorAtivo) setPodeInteragirOcular(true); 
+    else setPodeInteragirOcular(false); 
   }, [modoOcular, leitorAtivo, anuncioVoz]);
 
   const realizarSalto = useCallback((idx: number) => {
@@ -109,7 +105,7 @@ const JogoSaltoAlfabetico: React.FC<Jogos> = ({ aoVencer, aoPerder, configuracoe
             setAnuncioVoz(`${itemAtual.palavra}!`);
             setTimeout(aoVencer, 3000);
           } else {
-            setAnuncioVoz(`Boa! Agora pule na sílaba ${itemAtual.fonetica[prox]}`);
+            setAnuncioVoz(`${itemAtual.fonetica[indiceSilaba]} coletado! Agora busque ${itemAtual.fonetica[prox]}`);
             setEstadoSapo('parado');
             setPosicaoAlvo(null);
             gerarOpcoes(itemAtual.silabas[prox]);
@@ -135,7 +131,7 @@ const JogoSaltoAlfabetico: React.FC<Jogos> = ({ aoVencer, aoPerder, configuracoe
 
   const iniciarJogo = useCallback(() => {
     setJogoIniciado(true);
-    setAnuncioVoz(`Vamos lá! Pule na sílaba ${itemAtual.fonetica[0]}`);
+    setAnuncioVoz(`Pule na sílaba ${itemAtual.fonetica[0]}`);
   }, [itemAtual]);
 
   useEffect(() => {
@@ -218,9 +214,9 @@ const JogoSaltoAlfabetico: React.FC<Jogos> = ({ aoVencer, aoPerder, configuracoe
         />
       </S.SapoWrapper>
 
-      {!jogoIniciado && (
+      {!jogoIniciado && modoOcular && (
         <S.OverlayAviso>
-          {modoOcular ? 'PISQUE PARA COMEÇAR' : ''}
+          PISQUE PARA COMEÇAR
         </S.OverlayAviso>
       )}
     </S.FundoLagoa>
