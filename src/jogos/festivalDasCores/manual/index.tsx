@@ -1,281 +1,240 @@
-// import React, { useState, useEffect, useRef } from 'react';
-// import * as S from './styles';
-// import { Palette, Brush, Zap, Music, ShieldOff, ArrowRight, ArrowLeft, Target } from 'lucide-react';
-// import { useStore } from 'zustand';
-// import { lojaOlho } from '../../../lojas/lojaOlho';
+import React, { useState, useEffect, useRef, useMemo, useCallback } from 'react';
+import * as S from './styles';
+import { Palette, Brush, Music, ShieldOff, ChevronRight, ChevronLeft, Target } from 'lucide-react';
+import { useStore } from 'zustand';
+import { lojaOlho } from '../../../lojas/lojaOlho';
+import { useLeitorOcular } from '../../../hooks/useLeitorOcular';
+import { pararNarracao } from '../../../servicos/acessibilidade';
+import type { BaseManualProps, ConfiguracoesJogo } from '../../../interface/types';
 
-// // --- CONTEÚDO EDUCATIVO COMPLETO ---
-// const slidesEducativos = [
-//     {
-//       titulo: 'Cores Primárias',
-//       texto: "Tudo começa aqui! Vermelho, Amarelo e Azul são as 'cores pais'. Elas existem sozinhas e não podem ser criadas misturando outras tintas.",
-//       renderVisual: () => (
-//         <S.ContainerMistura>
-//            <S.BolhaCor $cor="#EF4444" title="Vermelho" />
-//            <S.BolhaCor $cor="#FACC15" title="Amarelo" />
-//            <S.BolhaCor $cor="#3B82F6" title="Azul" />
-//         </S.ContainerMistura>
-//       )
-//     },
-//     {
-//       titulo: 'Cores Secundárias',
-//       texto: "Acontecem quando misturamos duas Cores Primárias em partes iguais.",
-//       renderVisual: () => (
-//         <div style={{display: 'flex', flexDirection: 'column', gap: '10px'}}>
-//             {/* Laranja */}
-//             <S.ContainerMistura>
-//                 <S.BolhaCor $cor="#EF4444" /> <S.Operador>+</S.Operador> <S.BolhaCor $cor="#FACC15" /> 
-//                 <S.Operador>=</S.Operador> <S.BolhaCor $cor="#F97316" title="Laranja" />
-//             </S.ContainerMistura>
-//             {/* Verde */}
-//             <S.ContainerMistura>
-//                 <S.BolhaCor $cor="#3B82F6" /> <S.Operador>+</S.Operador> <S.BolhaCor $cor="#FACC15" /> 
-//                 <S.Operador>=</S.Operador> <S.BolhaCor $cor="#22C55E" title="Verde" />
-//             </S.ContainerMistura>
-//             {/* Roxo */}
-//             <S.ContainerMistura>
-//                 <S.BolhaCor $cor="#3B82F6" /> <S.Operador>+</S.Operador> <S.BolhaCor $cor="#EF4444" /> 
-//                 <S.Operador>=</S.Operador> <S.BolhaCor $cor="#9333EA" title="Roxo" />
-//             </S.ContainerMistura>
-//         </div>
-//       )
-//     },
-//     {
-//       titulo: 'Terciárias (Quentes)',
-//       texto: "As Cores Terciárias nascem da mistura de uma Primária com uma Secundária. Veja os tons quentes!",
-//       renderVisual: () => (
-//         <div style={{display: 'flex', flexDirection: 'column', gap: '10px'}}>
-//             {/* Vermelho + Laranja = Vermelho Alaranjado */}
-//             <S.ContainerMistura>
-//                 <S.BolhaCor $cor="#EF4444" /> <S.Operador>+</S.Operador> <S.BolhaCor $cor="#F97316" /> 
-//                 <S.Operador>=</S.Operador> <S.BolhaCor $cor="#EA580C" title="Vermelho-Alaranjado" />
-//             </S.ContainerMistura>
-//             {/* Amarelo + Laranja = Amarelo Alaranjado */}
-//             <S.ContainerMistura>
-//                 <S.BolhaCor $cor="#FACC15" /> <S.Operador>+</S.Operador> <S.BolhaCor $cor="#F97316" /> 
-//                 <S.Operador>=</S.Operador> <S.BolhaCor $cor="#FDBA74" title="Amarelo-Alaranjado" />
-//             </S.ContainerMistura>
-//             {/* Vermelho + Roxo = Magenta */}
-//             <S.ContainerMistura>
-//                 <S.BolhaCor $cor="#EF4444" /> <S.Operador>+</S.Operador> <S.BolhaCor $cor="#9333EA" /> 
-//                 <S.Operador>=</S.Operador> <S.BolhaCor $cor="#BE185D" title="Magenta" />
-//             </S.ContainerMistura>
-//         </div>
-//       )
-//     },
-//     {
-//       titulo: 'Terciárias (Frias)',
-//       texto: "Também temos os tons frios! Misturando azuis e verdes criamos cores da natureza.",
-//       renderVisual: () => (
-//         <div style={{display: 'flex', flexDirection: 'column', gap: '10px'}}>
-//             {/* Azul + Verde = Turquesa */}
-//             <S.ContainerMistura>
-//                 <S.BolhaCor $cor="#3B82F6" /> <S.Operador>+</S.Operador> <S.BolhaCor $cor="#22C55E" /> 
-//                 <S.Operador>=</S.Operador> <S.BolhaCor $cor="#06B6D4" title="Turquesa" />
-//             </S.ContainerMistura>
-//             {/* Amarelo + Verde = Lima */}
-//             <S.ContainerMistura>
-//                 <S.BolhaCor $cor="#FACC15" /> <S.Operador>+</S.Operador> <S.BolhaCor $cor="#22C55E" /> 
-//                 <S.Operador>=</S.Operador> <S.BolhaCor $cor="#84CC16" title="Lima" />
-//             </S.ContainerMistura>
-//             {/* Azul + Roxo = Violeta */}
-//             <S.ContainerMistura>
-//                 <S.BolhaCor $cor="#3B82F6" /> <S.Operador>+</S.Operador> <S.BolhaCor $cor="#9333EA" /> 
-//                 <S.Operador>=</S.Operador> <S.BolhaCor $cor="#4F46E5" title="Violeta" />
-//             </S.ContainerMistura>
-//         </div>
-//       )
-//     },
-//     {
-//       titulo: 'Seu Objetivo',
-//       texto: "Use o pincel mágico! Pinte o desenho da esquerda para ficar igualzinho ao modelo da direita. Misture as tintas para encontrar a cor certa!",
-//       renderVisual: () => <Target size={100} color="#E11D48" style={{filter: 'drop-shadow(2px 4px 6px rgba(0,0,0,0.2))'}} />
-//     }
-// ];
+const DIFICULDADES = ['facil', 'medio', 'dificil'];
 
-// export type DificuldadeCores = 'facil' | 'medio' | 'dificil';
+const slidesEducativos = [
+  {
+    titulo: 'As Cores Poderosas (Primárias)',
+    texto: (<>Essas são as <strong>"Cores Pais"</strong>. Elas são puras e únicas: você não consegue criá-las misturando outras tintas. Elas são a base de tudo!</>),
+    narração: "Cores Primárias. Elas são as cores pais. Vermelho, Amarelo e Azul. Elas são puras e você não consegue criá-las misturando outras tintas. Pisque agora para ver as misturas.",
+    visual: 'primarias'
+  },
+  {
+    titulo: 'As Misturas de Duplas (Secundárias)',
+    texto: (
+      <>Quando duas "Cores Pais" se juntam, elas criam as <strong>Cores Secundárias</strong>. Veja a mágica acontecer!</>
+    ),
+    narração: "Cores Secundárias. Quando duas cores pais se juntam, elas criam as secundárias. Amarelo e Azul fazem Verde. Amarelo e Vermelho fazem Laranja. Vermelho e Azul fazem Roxo. Pisque para ver o nível profissional.",
+    visual: 'secundarias'
+  },
+  {
+    titulo: 'O Toque Especial (Terciárias)',
+    texto: (
+      <>Agora a brincadeira ficou profissional! As <strong>Cores Terciárias</strong> surgem quando misturamos uma cor primária com uma secundária vizinha.</>
+    ),
+    narração: "Cores Terciárias. Elas surgem quando misturamos uma cor primária com uma secundária. Como o Vermelho alaranjado ou o Azul esverdeado. Pisque para conhecer sua missão.",
+    visual: 'terciarias'
+  },
+  {
+    titulo: 'Sua Missão de Artista',
+    texto: (
+      <>Use o <strong>pincel mágico</strong>! Pinte o desenho da esquerda para ficar igualzinho ao modelo da direita. Misture as tintas para encontrar a cor certa!</>
+    ),
+    narração: "Sua Missão. Use o pincel mágico! Pinte o desenho da esquerda para ficar igual ao modelo da direita. Pisque para configurar seu ateliê.",
+    visual: 'objetivo'
+  }
+];
 
-// export interface ConfiguracoesCores {
-//    dificuldade: DificuldadeCores;
-//    penalidade: boolean;
-//    sons: boolean;
-// }
+const ManualFestivalDasCores: React.FC<BaseManualProps<ConfiguracoesJogo>> = ({ aoIniciar }) => {
+  const { mostrarCameraFlutuante: modoOcular, estaPiscando, leitorAtivo } = useStore(lojaOlho);
 
-// interface ManualProps {
-//    aoIniciar: (config: ConfiguracoesCores) => void;
-// }
+  const [tela, setTela] = useState<'educativo' | 'configuracoes'>('educativo');
+  const [slideIndex, setSlideIndex] = useState(0);
+  const [config, setConfig] = useState<ConfiguracoesJogo>({ dificuldade: 'facil', penalidade: true, sons: true });
+  
+  const [focoConfig, setFocoConfig] = useState<'dificuldade' | 'penalidade' | 'sons' | 'iniciar'>('dificuldade');
+  const [podeInteragirOcular, setPodeInteragirOcular] = useState(false);
 
-// type FocoConfig = 'dificuldade' | 'penalidade' | 'sons' | 'iniciar';
-// const DIFICULDADES: DificuldadeCores[] = ['facil', 'medio', 'dificil'];
+  const timerScanRef = useRef<NodeJS.Timeout | null>(null);
+  const timerDebounceRef = useRef<NodeJS.Timeout | null>(null);
+  const piscadaProcessadaRef = useRef(false);
 
-// const ManualFestivalDasCores: React.FC<ManualProps> = ({ aoIniciar }) => {
-//    const [tela, setTela] = useState<'educativo' | 'configuracoes'>('educativo');
-//    const [slideIndex, setSlideIndex] = useState(0);
+  useEffect(() => {
+    if (!modoOcular) { setPodeInteragirOcular(true); return; }
+    setPodeInteragirOcular(false);
+    if (timerDebounceRef.current) clearTimeout(timerDebounceRef.current);
+    if (!leitorAtivo) {
+      timerDebounceRef.current = setTimeout(() => setPodeInteragirOcular(true), 1200);
+    }
+  }, [tela, slideIndex, focoConfig, modoOcular, leitorAtivo]);
 
-//    const [config, setConfig] = useState<ConfiguracoesCores>({
-//       dificuldade: 'facil',
-//       penalidade: false,
-//       sons: true,
-//    });
+  useEffect(() => {
+    if (modoOcular && podeInteragirOcular && tela === 'configuracoes') {
+      timerScanRef.current = setInterval(() => {
+        if (focoConfig === 'dificuldade') {
+           const currentDif = config.dificuldade || 'facil';
+           const nextIdx = (DIFICULDADES.indexOf(currentDif) + 1) % 3;
+           setConfig(prev => ({ ...prev, dificuldade: DIFICULDADES[nextIdx] as any }));
+        } else if (focoConfig === 'penalidade') {
+          setConfig(prev => ({ ...prev, penalidade: !prev.penalidade }));
+        } else if (focoConfig === 'sons') {
+          setConfig(prev => ({ ...prev, sons: !prev.sons }));
+        }
+      }, 3000);
+    }
+    return () => { if (timerScanRef.current) clearInterval(timerScanRef.current); };
+  }, [tela, focoConfig, podeInteragirOcular, modoOcular, config.dificuldade]);
 
-//    const { mostrarCameraFlutuante, estaPiscando } = useStore(lojaOlho);
-//    const [focoConfig, setFocoConfig] = useState<FocoConfig>('dificuldade');
-//    const [bloquearPiscada, setBloquearPiscada] = useState(true);
-//    const timerRef = useRef<any>(null);
-//    const cicloRef = useRef<any>(null);
+  const textoParaLeitura = useMemo(() => {
+    if (!leitorAtivo) return null;
+    if (tela === 'educativo') return slidesEducativos[slideIndex].narração;
+    
+    if (tela === 'configuracoes') {
+      if (!podeInteragirOcular) {
+        if (focoConfig === 'dificuldade') return "Qual o nível das tintas?";
+        if (focoConfig === 'penalidade') return "Se errar a cor, quer recomeçar o desenho do zero?";
+        if (focoConfig === 'sons') return "Ligar sons do ateliê?";
+        if (focoConfig === 'iniciar') return "Tudo pronto! Vamos pintar?";
+      } else {
+        if (focoConfig === 'dificuldade') {
+          const t: Record<string, string> = { facil: "Cores Primárias.", medio: "Cores Secundárias.", dificil: "Cores Terciárias." };
+          return `${t[config.dificuldade || 'facil']}.`;
+        }
+        if (focoConfig === 'penalidade') return config.penalidade ? "Apaga apenas as partes erradas." : "Reiniciar ao errar.";
+        if (focoConfig === 'sons') return config.sons ? "Sons ligados." : "Sons desligados.";
+        if (focoConfig === 'iniciar') return "Pisque agora para começar a pintura!";
+      }
+    }
+    return "";
+  }, [tela, slideIndex, focoConfig, config, leitorAtivo, podeInteragirOcular]);
 
-//    const avancar = () => {
-//       if (tela === 'educativo') {
-//          if (slideIndex < slidesEducativos.length - 1) setSlideIndex(s => s + 1);
-//          else setTela('configuracoes');
-//       }
-//    };
+  useLeitorOcular(textoParaLeitura, [textoParaLeitura], () => {
+    if (modoOcular && leitorAtivo) setPodeInteragirOcular(true);
+  });
 
-//    const voltar = () => {
-//       if (tela === 'educativo' && slideIndex > 0) setSlideIndex(s => s - 1);
-//       else if (tela === 'configuracoes') { setTela('educativo'); setSlideIndex(slidesEducativos.length - 1); }
-//    };
+  const confirmarAcao = useCallback(() => {
+    if (tela === 'educativo') {
+      if (slideIndex < slidesEducativos.length - 1) setSlideIndex(s => s + 1);
+      else setTela('configuracoes');
+    } else if (tela === 'configuracoes') {
+      if (modoOcular) {
+        if (focoConfig === 'dificuldade') setFocoConfig('penalidade');
+        else if (focoConfig === 'penalidade') setFocoConfig('sons');
+        else if (focoConfig === 'sons') setFocoConfig('iniciar');
+        else aoIniciar(config);
+      } else {
+        aoIniciar(config);
+      }
+    }
+  }, [tela, slideIndex, focoConfig, config, modoOcular, aoIniciar]);
 
-//    // Lógica de Controle Ocular
-//    useEffect(() => {
-//       timerRef.current = setTimeout(() => setBloquearPiscada(false), 1000);
-//       return () => { clearTimeout(timerRef.current); clearInterval(cicloRef.current); };
-//    }, []);
+  useEffect(() => {
+    if (!estaPiscando) { piscadaProcessadaRef.current = false; return; }
+    if (estaPiscando && modoOcular && podeInteragirOcular && !piscadaProcessadaRef.current) {
+      piscadaProcessadaRef.current = true;
+      setPodeInteragirOcular(false);
+      pararNarracao();
+      confirmarAcao();
+    }
+  }, [estaPiscando, modoOcular, podeInteragirOcular, confirmarAcao]);
 
-//    useEffect(() => {
-//       if (bloquearPiscada || !mostrarCameraFlutuante || !estaPiscando) return;
-//       setBloquearPiscada(true);
+  const feedbackVisual = modoOcular && podeInteragirOcular;
 
-//       if (tela !== 'configuracoes') {
-//          avancar();
-//          timerRef.current = setTimeout(() => setBloquearPiscada(false), 800);
-//       } else {
-//          switch (focoConfig) {
-//             case 'dificuldade':
-//                 const idx = DIFICULDADES.indexOf(config.dificuldade);
-//                 setConfig(c => ({...c, dificuldade: DIFICULDADES[(idx + 1) % 3]}));
-//                 setFocoConfig('penalidade');
-//                 break;
-//             case 'penalidade':
-//                 setConfig(c => ({...c, penalidade: !c.penalidade}));
-//                 setFocoConfig('sons');
-//                 break;
-//             case 'sons':
-//                 setConfig(c => ({...c, sons: !c.sons}));
-//                 setFocoConfig('iniciar');
-//                 break;
-//             case 'iniciar':
-//                 aoIniciar(config);
-//                 break;
-//          }
-//          timerRef.current = setTimeout(() => setBloquearPiscada(false), 800);
-//       }
-//    }, [estaPiscando, mostrarCameraFlutuante, bloquearPiscada]);
-
-//    // Ciclo de foco automático nas configurações
-//    useEffect(() => {
-//       if (tela !== 'configuracoes' || !mostrarCameraFlutuante) return;
-//       cicloRef.current = setInterval(() => {
-//          setFocoConfig(prev => {
-//             if (prev === 'dificuldade') return 'penalidade';
-//             if (prev === 'penalidade') return 'sons';
-//             if (prev === 'sons') return 'iniciar';
-//             return 'dificuldade';
-//          });
-//       }, 2000);
-//       return () => clearInterval(cicloRef.current);
-//    }, [tela, mostrarCameraFlutuante]);
-
-//    const renderTela = () => {
-//       const isEye = mostrarCameraFlutuante && !bloquearPiscada;
-
-//       if (tela === 'educativo') {
-//          const slide = slidesEducativos[slideIndex];
-//          return (
-//             <>
-//                <S.TituloManual>
-//                   <Palette size={40} style={{marginRight: 10, verticalAlign: 'middle', color: '#F97316'}} />
-//                   {slide.titulo}
-//                </S.TituloManual>
-               
-//                <S.ContainerSlide>
-//                   {slide.renderVisual()}
-//                   <S.TextoExplicativo>{slide.texto}</S.TextoExplicativo>
-//                </S.ContainerSlide>
-
-//                <S.BarraNavegacao>
-//                   <S.BotaoNav onClick={voltar} disabled={slideIndex === 0}>
-//                      <ArrowLeft /> Voltar
-//                   </S.BotaoNav>
-//                   <S.BotaoNav onClick={avancar} $destaque={isEye}>
-//                      {slideIndex === slidesEducativos.length - 1 ? 'Configurar' : 'Próximo'} <ArrowRight />
-//                   </S.BotaoNav>
-//                </S.BarraNavegacao>
-//             </>
-//          );
-//       }
-
-//       return (
-//          <S.ContainerConfig>
-//             <S.TituloManual>Mesa de Trabalho</S.TituloManual>
+  return (
+    <S.FundoModal>
+      <S.ConteudoModal>
+        {tela === 'educativo' && (
+          <>
+            <S.TituloSlide>
+               <Palette size={40} color="#f97316" /> {slidesEducativos[slideIndex].titulo}
+            </S.TituloSlide>
             
-//             <S.LinhaConfig $focado={focoConfig === 'dificuldade'}>
-//                <S.Label><Brush size={28}/> Nível de Cor</S.Label>
-//                <S.GrupoBotoes>
-//                   <S.BotaoDificuldade 
-//                      $ativo={config.dificuldade === 'facil'} 
-//                      onClick={() => setConfig(c => ({...c, dificuldade: 'facil'}))} 
-//                      $cor="#EF4444"
-//                   >
-//                      Primárias
-//                   </S.BotaoDificuldade>
-//                   <S.BotaoDificuldade 
-//                      $ativo={config.dificuldade === 'medio'} 
-//                      onClick={() => setConfig(c => ({...c, dificuldade: 'medio'}))} 
-//                      $cor="#F97316"
-//                   >
-//                      + Secundárias
-//                   </S.BotaoDificuldade>
-//                   <S.BotaoDificuldade 
-//                      $ativo={config.dificuldade === 'dificil'} 
-//                      onClick={() => setConfig(c => ({...c, dificuldade: 'dificil'}))} 
-//                      $cor="#9333EA"
-//                   >
-//                      + Terciárias
-//                   </S.BotaoDificuldade>
-//                </S.GrupoBotoes>
-//             </S.LinhaConfig>
+            <S.ContainerSlide>
+               {slidesEducativos[slideIndex].visual === 'primarias' && (
+                  <S.ContainerMistura>
+                    <S.BolhaCor $cor="#EF4444" /> <S.BolhaCor $cor="#FACC15" /> <S.BolhaCor $cor="#3B82F6" />
+                  </S.ContainerMistura>
+               )}
+               {slidesEducativos[slideIndex].visual === 'secundarias' && (
+                  <div style={{display: 'flex', flexDirection: 'column', gap: '8px'}}>
+                    <S.ContainerMistura><S.BolhaCor $cor="#FACC15"/><S.Operador>+</S.Operador><S.BolhaCor $cor="#3B82F6"/><S.Operador>=</S.Operador><S.BolhaCor $cor="#22C55E"/></S.ContainerMistura>
+                    <S.ContainerMistura><S.BolhaCor $cor="#EF4444"/><S.Operador>+</S.Operador><S.BolhaCor $cor="#3B82F6"/><S.Operador>=</S.Operador><S.BolhaCor $cor="#9333EA"/></S.ContainerMistura>
+                  </div>
+               )}
+               {slidesEducativos[slideIndex].visual === 'terciarias' && (
+                  <S.ContainerMistura>
+                    <S.BolhaCor $cor="#EF4444" /> <S.Operador>+</S.Operador> <S.BolhaCor $cor="#F97316" /> <S.Operador>→</S.Operador> <S.BolhaCor $cor="#EA580C" />
+                  </S.ContainerMistura>
+               )}
+               {slidesEducativos[slideIndex].visual === 'objetivo' && (
+                  <Target size={100} color="#EF4444" />
+               )}
+               <S.TextoExplicativo>{slidesEducativos[slideIndex].texto}</S.TextoExplicativo>
+            </S.ContainerSlide>
 
-//             <S.LinhaConfig $focado={focoConfig === 'penalidade'}>
-//                <S.Label><ShieldOff size={28}/> Borracha Automática (Resetar ao errar)</S.Label>
-//                <S.ToggleContainer>
-//                   <input type="checkbox" checked={config.penalidade} onChange={e => setConfig(c => ({...c, penalidade: e.target.checked}))} />
-//                   <span className="slider"></span>
-//                </S.ToggleContainer>
-//             </S.LinhaConfig>
+            <S.BarraNavegacao>
+              <S.BotaoNav onClick={() => setSlideIndex(0)} disabled={slideIndex === 0}>
+                <ChevronLeft /> Voltar
+              </S.BotaoNav>
+              <S.BotaoNav onClick={confirmarAcao} $destaque={feedbackVisual}>
+                {leitorAtivo && !podeInteragirOcular && modoOcular ? 'OUVINDO...' : 'PRÓXIMO'} <ChevronRight />
+              </S.BotaoNav>
+            </S.BarraNavegacao>
+          </>
+        )}
 
-//             <S.LinhaConfig $focado={focoConfig === 'sons'}>
-//                <S.Label><Music size={28}/> Sons do Ateliê</S.Label>
-//                <S.ToggleContainer>
-//                   <input type="checkbox" checked={config.sons} onChange={e => setConfig(c => ({...c, sons: e.target.checked}))} />
-//                   <span className="slider"></span>
-//                </S.ToggleContainer>
-//             </S.LinhaConfig>
+        {tela === 'configuracoes' && (
+          <S.ContainerConfig>
+            <S.TituloSlide>Ajustes do Ateliê</S.TituloSlide>
+            
+            <S.LinhaConfig $focado={feedbackVisual && focoConfig === 'dificuldade'}>
+              <S.Label><Brush size={28}/> Nível das Tintas</S.Label>
+              <S.GrupoBotoes>
+                {DIFICULDADES.map(d => (
+                  <S.BotaoOpcao 
+                    key={d}
+                    $ativo={config.dificuldade === d}
+                    $isFocused={feedbackVisual && focoConfig === 'dificuldade' && config.dificuldade === d}
+                    onClick={() => setConfig(c => ({...c, dificuldade: d as any}))}
+                  >
+                    {d === 'facil' ? 'Primárias' : d === 'medio' ? 'Secundárias' : 'Terciárias'}
+                  </S.BotaoOpcao>
+                ))}
+              </S.GrupoBotoes>
+            </S.LinhaConfig>
 
-//             <S.BotaoIniciar $focado={focoConfig === 'iniciar'} onClick={() => aoIniciar(config)}>
-//                PEGAR PINCEL E PINTAR!
-//             </S.BotaoIniciar>
-//          </S.ContainerConfig>
-//       );
-//    };
+            <S.LinhaConfig 
+              $focado={feedbackVisual && focoConfig === 'penalidade'}
+              onClick={() => setConfig(prev => ({ ...prev, penalidade: !prev.penalidade }))}
+              style={{ cursor: 'pointer' }}
+            >
+              <S.Label><ShieldOff size={28}/> Recomeçar se Errar</S.Label>
+              <S.ToggleContainer>
+                <S.InputInterruptor type="checkbox" checked={config.penalidade} readOnly />
+                <S.DeslizadorInterruptor />
+              </S.ToggleContainer>
+            </S.LinhaConfig>
 
-//    return (
-//       <S.FundoModal>
-//          <S.ConteudoModal>
-//             {renderTela()}
-//          </S.ConteudoModal>
-//       </S.FundoModal>
-//    );
-// };
+            <S.LinhaConfig 
+              $focado={feedbackVisual && focoConfig === 'sons'}
+              onClick={() => setConfig(prev => ({ ...prev, sons: !prev.sons }))}
+              style={{ cursor: 'pointer' }}
+            >
+              <S.Label><Music size={28}/> Sons do Ateliê</S.Label>
+              <S.ToggleContainer>
+                <S.InputInterruptor type="checkbox" checked={config.sons} readOnly />
+                <S.DeslizadorInterruptor />
+              </S.ToggleContainer>
+            </S.LinhaConfig>
 
-// export default ManualFestivalDasCores;
+            <S.BotaoIniciar 
+              $focado={feedbackVisual && focoConfig === 'iniciar'}
+              onClick={confirmarAcao}
+            >
+              {leitorAtivo && !podeInteragirOcular && modoOcular ? 'PREPARANDO...' : 'COMEÇAR PINTURA!'}
+            </S.BotaoIniciar>
+          </S.ContainerConfig>
+        )}
+      </S.ConteudoModal>
+    </S.FundoModal>
+  );
+};
+
+export default ManualFestivalDasCores;

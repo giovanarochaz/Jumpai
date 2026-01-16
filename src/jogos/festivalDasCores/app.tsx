@@ -1,60 +1,53 @@
-// import React, { useState } from 'react';
-// import FestivalDasCoresJogo from './jogo'; 
-// import type { ConfiguracoesCores } from './manual';
-// import ManualFestivalDasCores from './manual';
-// import TelaVitoriaCores from './vitoria';
-// import TelaDerrotaCores from './derrota';
+import { useState } from "react";
+import type { ConfiguracoesJogo } from "../../interface/types";
+import TelaDerrotaFestivalCores from "./derrota";
+import FestivalDasCoresJogo from "./jogo";
+import ManualFestivalDasCores from "./manual";
+import TelaVitoriaFestivalCores from "./vitoria";
 
-// const FestivalDasCores: React.FC = () => {
-//   const [estadoDoJogo, setEstadoDoJogo] = useState<'manual' | 'jogando' | 'vitoria'>('manual');
+const FestivalDasCores: React.FC = () => {
+  const [estadoDoJogo, setEstadoDoJogo] = useState<'manual' | 'jogando' | 'vitoria' | 'derrota'>('manual');
   
-//   // Estado inicial obrigatório
-//   const [configuracoes, setConfiguracoes] = useState<ConfiguracoesCores>({
-//     dificuldade: 'facil',
-//     penalidade: true,
-//     sons: true
-//   });
+  const [configuracoes, setConfiguracoes] = useState<ConfiguracoesJogo>({
+    dificuldade: 'facil',
+    penalidade: true,
+    sons: true
+  });
 
-//   const iniciarJogo = (config: ConfiguracoesCores) => {
-//     setConfiguracoes(config);
-//     setEstadoDoJogo('jogando');
-//   };
+  const iniciarJogo = (config: ConfiguracoesJogo) => {
+    setConfiguracoes(config);
+    setEstadoDoJogo('jogando');
+  };
 
-//   const lidarComVitoria = () => {
-//     setEstadoDoJogo('vitoria');
-//   };
+  return (
+    <>
+      {estadoDoJogo === 'manual' && (
+        <ManualFestivalDasCores aoIniciar={iniciarJogo} />
+      )}
+      
+      {estadoDoJogo === 'jogando' && (
+        <FestivalDasCoresJogo 
+          aoVencer={() => setEstadoDoJogo('vitoria')} 
+          aoPerder={() => setEstadoDoJogo('derrota')}
+          configuracoes={configuracoes}
+        />
+      )}
 
-//   const reiniciar = () => {
-//     setEstadoDoJogo('jogando');
-//   }
+      {estadoDoJogo === 'vitoria' && (
+        <TelaVitoriaFestivalCores 
+          aoReiniciar={() => setEstadoDoJogo('manual')}
+          configuracoes={configuracoes}
+        />
+      )}
 
-//   return (
-//     <>
-//       {estadoDoJogo === 'manual' && (
-//         // <ManualFestivalDasCores aoIniciar={iniciarJogo} />
-//         <TelaDerrotaCores aoReiniciar={function (): void {
-//                   throw new Error('Function not implemented.');
-//               } } aoSair={function (): void {
-//                   throw new Error('Function not implemented.');
-//               } }></TelaDerrotaCores>
-//       )}
+      {estadoDoJogo === 'derrota' && (
+        <TelaDerrotaFestivalCores 
+          aoReiniciar={() => setEstadoDoJogo('manual')} 
+          configuracoes={configuracoes}
+        />
+      )}
+    </>
+  );
+};
 
-//       {estadoDoJogo === 'jogando' && (
-//         <FestivalDasCoresJogo 
-//           aoVencer={lidarComVitoria} 
-//           aoPerder={() => {}} 
-//           configuracoes={configuracoes} 
-//         />
-//       )}
-
-//       {estadoDoJogo === 'vitoria' && (
-//         <TelaVitoriaCores 
-//             aoReiniciar={reiniciar} 
-//             aoSair={() => setEstadoDoJogo('manual')} 
-//         />
-//       )}
-//     </>
-//   );
-// };
-
-// export default FestivalDasCores;
+export default FestivalDasCores;

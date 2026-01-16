@@ -1,95 +1,84 @@
-// import React, { useEffect, useState, useRef } from 'react';
-// import * as S from './styles'; // Importa os estilos de "Ateliê Bagunçado"
-// import { XCircle, Home, RotateCcw } from 'lucide-react';
-// import { useStore } from 'zustand';
-// import { lojaOlho } from '../../../lojas/lojaOlho';
-// import { useNavigate } from 'react-router-dom';
+import React, { useState, useEffect, useCallback, useRef, useMemo } from 'react';
+import * as S from './styles';
+import { Eraser, RotateCcw, Home } from 'lucide-react';
+import { useNavigate } from 'react-router-dom';
+import { useStore } from 'zustand';
+import { lojaOlho } from '../../../lojas/lojaOlho';
+import { useLeitorOcular } from '../../../hooks/useLeitorOcular';
+import { pararNarracao } from '../../../servicos/acessibilidade';
+import type { ConfiguracoesJogo } from '../../../interface/types';
 
-// interface Props { 
-//   aoReiniciar: () => void; 
-//   aoSair: () => void; 
-// }
+const TelaDerrotaFestivalCores: React.FC<{ aoReiniciar: () => void; configuracoes: ConfiguracoesJogo }> = ({ aoReiniciar, configuracoes }) => {
+  const { estaPiscando, mostrarCameraFlutuante: modoOcular, leitorAtivo } = useStore(lojaOlho);
+  const navigate = useNavigate();
 
-// const TelaDerrotaCores: React.FC<Props> = ({ aoReiniciar, aoSair }) => {
-//   const { estaPiscando } = useStore(lojaOlho);
-//   const [foco, setFoco] = useState<'reiniciar' | 'sair'>('reiniciar');
-//   const [bloqueado, setBloqueado] = useState(false);
-//   const navigate = useNavigate();
-//   const timerRef = useRef<any>(null);
+  const [botaoFocado, setBotaoFocado] = useState<'reiniciar' | 'menu' | null>(modoOcular ? 'reiniciar' : null);
+  const [podeInteragirOcular, setPodeInteragirOcular] = useState(false);
+  
+  const timerDebounceRef = useRef<NodeJS.Timeout | null>(null);
+  const timerScanRef = useRef<NodeJS.Timeout | null>(null);
+  const piscadaProcessadaRef = useRef(false);
 
-//   // Efeito Sonoro de "Erro/Tinta Caindo"
-//   useEffect(() => {
-//     const audio = new Audio('/assets/festivalCores/sounds/erro.mp3'); // Certifique-se de ter esse som ou remova
-//     audio.volume = 0.5;
-//     audio.play().catch(() => {});
-//   }, []);
+  useEffect(() => {
+    if (!modoOcular) { setPodeInteragirOcular(true); return; }
+    setPodeInteragirOcular(false);
+    if (timerDebounceRef.current) clearTimeout(timerDebounceRef.current);
+    if (!leitorAtivo) timerDebounceRef.current = setTimeout(() => setPodeInteragirOcular(true), 1200);
+  }, [modoOcular, leitorAtivo]);
 
-//   // Ciclo de foco automático para acessibilidade
-//   useEffect(() => {
-//     const intervalo = setInterval(() => { 
-//       setFoco(prev => prev === 'reiniciar' ? 'sair' : 'reiniciar'); 
-//     }, 2000);
-//     return () => clearInterval(intervalo);
-//   }, []);
+  useEffect(() => {
+    if (modoOcular && podeInteragirOcular) {
+      timerScanRef.current = setInterval(() => setBotaoFocado(prev => prev === 'reiniciar' ? 'menu' : 'reiniciar'), 3500);
+    }
+    return () => { if (timerScanRef.current) clearInterval(timerScanRef.current); };
+  }, [modoOcular, podeInteragirOcular]);
 
-//   // Detecção de piscada ou Tecla Enter
-//   useEffect(() => {
-//     const acaoConfirmada = () => {
-//       if (bloqueado) return;
-//       setBloqueado(true);
-      
-//       if (foco === 'reiniciar') aoReiniciar(); 
-//       else navigate('/jogos/teclado');
-      
-//       timerRef.current = setTimeout(() => setBloqueado(false), 1000);
-//     };
+  useEffect(() => {
+    if (configuracoes.sons) {
+      const audio = new Audio('/assets/efeitos/derrota.mp3');
+      audio.play().catch(() => {});
+      return () => { audio.pause(); };
+    }
+  }, [configuracoes.sons]);
 
-//     if (estaPiscando) acaoConfirmada();
+  const textoParaLeitura = useMemo(() => {
+    if (!leitorAtivo) return null;
+    if (!podeInteragirOcular) return "Ops! A tinta borrou um pouquinho. Vamos usar a borracha mágica e tentar de novo?";
+    return botaoFocado === 'reiniciar' ? "Limpar o desenho e recomeçar. Pisque agora!" : "Voltar para o menu principal. Pisque agora!";
+  }, [leitorAtivo, podeInteragirOcular, botaoFocado]);
 
-//     const handleKey = (e: KeyboardEvent) => {
-//       if (e.key === 'Enter') acaoConfirmada();
-//     };
-//     window.addEventListener('keydown', handleKey);
+  useLeitorOcular(textoParaLeitura, [textoParaLeitura], () => {
+    if (modoOcular && leitorAtivo) setPodeInteragirOcular(true);
+  });
 
-//     return () => {
-//       clearTimeout(timerRef.current);
-//       window.removeEventListener('keydown', handleKey);
-//     };
-//   }, [estaPiscando, foco, bloqueado, aoReiniciar, navigate]);
+  const confirmarAcao = useCallback(() => {
+    pararNarracao();
+    if (botaoFocado === 'reiniciar') aoReiniciar();
+    else navigate('/jogos');
+  }, [botaoFocado, aoReiniciar, navigate]);
 
-//   return (
-//     <S.FundoDerrota>
-//       <S.PlacaDerrota>
-//         <S.IconeContainer>
-//           {/* Ícone de Erro Artístico */}
-//           <XCircle size={60} strokeWidth={2.5} />
-//         </S.IconeContainer>
-        
-//         <S.Titulo>Pintura Incompleta</S.Titulo>
-        
-//         <S.Mensagem>
-//           Ops! As cores não ficaram iguais ao modelo. A arte exige prática!<br/>
-//           <strong>Vamos limpar o pincel e tentar de novo?</strong>
-//         </S.Mensagem>
+  useEffect(() => {
+    if (!estaPiscando) { piscadaProcessadaRef.current = false; return; }
+    if (estaPiscando && modoOcular && podeInteragirOcular && !piscadaProcessadaRef.current) {
+      piscadaProcessadaRef.current = true;
+      confirmarAcao();
+    }
+  }, [estaPiscando, modoOcular, podeInteragirOcular, confirmarAcao]);
 
-//         <S.ContainerBotoes>
-//           <S.Botao 
-//             onClick={aoReiniciar} 
-//             $focado={foco === 'reiniciar'}
-//           >
-//              <RotateCcw size={24} /> Tentar
-//           </S.Botao>
-          
-//           <S.Botao 
-//             onClick={() => navigate('/jogos/teclado')} 
-//             $focado={foco === 'sair'}
-//           >
-//              <Home size={24} /> Sair
-//           </S.Botao>
-//         </S.ContainerBotoes>
-//       </S.PlacaDerrota>
-//     </S.FundoDerrota>
-//   );
-// };
+  return (
+    <S.FundoDerrota>
+      <S.AlertaErro />
+      <S.ConteudoPlaca $derrota>
+        <S.IconeContainer style={{color: '#ef4444'}}><Eraser size={80} /></S.IconeContainer>
+        <S.Titulo $derrota>A TINTA BORROU!</S.Titulo>
+        <S.Mensagem>A mistura não ficou igual ao modelo. Que tal praticar mais uma vez para virar um mestre?</S.Mensagem>
+        <S.ContainerBotoes>
+          <S.BotaoAcao $derrota onClick={aoReiniciar} $isFocused={modoOcular && podeInteragirOcular && botaoFocado === 'reiniciar'}><RotateCcw size={20} /> RECOMEÇAR</S.BotaoAcao>
+          <S.BotaoAcao $derrota onClick={() => navigate('/jogos')} $isFocused={modoOcular && podeInteragirOcular && botaoFocado === 'menu'}><Home size={20} /> MENU</S.BotaoAcao>
+        </S.ContainerBotoes>
+      </S.ConteudoPlaca>
+    </S.FundoDerrota>
+  );
+};
 
-// export default TelaDerrotaCores;
+export default TelaDerrotaFestivalCores;

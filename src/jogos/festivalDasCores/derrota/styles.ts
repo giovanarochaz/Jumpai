@@ -1,168 +1,83 @@
 import styled, { keyframes, css } from 'styled-components';
 
-// --- CORES (Tom mais sóbrio/sujo para derrota) ---
 const TEMA = {
-  parede: '#F3F4F6',        // Cinza claro (Parede fria)
-  madeiraClara: '#A1887F',  // Madeira desbotada
-  madeiraEscura: '#5D4037', // Marrom escuro
-  chao1: '#8D6E63',         // Chão mais escuro
-  chao2: '#6D4C41',
-  rodape: '#3E2723',
-  branco: '#FFFFFF',
-  vermelhoErro: '#EF4444',
-  cinzaTexto: '#4B5563',
+  madeiraParede: '#3e1a0b',
+  madeiraPlaca: '#78350f',
+  madeiraClara: '#FDBA74',
+  laranja: '#F97316',
+  amarelo: '#FACC15',
+  vermelho: '#EF4444',
+  azul: '#3B82F6',
+  verde: '#22C55E',
+  branco: '#ffffff',
 };
 
-// --- ANIMAÇÕES ---
-const cairPlaca = keyframes`
-  0% { transform: translateY(-500px) rotate(10deg); opacity: 0; }
-  60% { transform: translateY(20px) rotate(-5deg); opacity: 1; }
-  80% { transform: translateY(-10px) rotate(2deg); }
-  100% { transform: translateY(0) rotate(-2deg); } /* Termina torta */
+interface BotaoProps { $isFocused: boolean; $derrota?: boolean; }
+
+const popIn = keyframes` from { opacity: 0; transform: scale(0.9); } to { opacity: 1; transform: scale(1); } `;
+const pulse = keyframes` 
+  0% { transform: scale(1); box-shadow: 0 0 0 0px ${TEMA.amarelo}; }
+  50% { transform: scale(1.05); box-shadow: 0 0 20px 8px rgba(250, 204, 21, 0.4); }
+  100% { transform: scale(1); }
+`;
+const splashExplosion = keyframes` 0% { transform: scale(0); opacity: 1; } 100% { transform: scale(3.5); opacity: 0; } `;
+
+const FundoAtelieBase = css`
+  position: fixed; inset: 0; z-index: 300; display: flex; justify-content: center; align-items: center;
+  background-color: ${TEMA.madeiraParede};
+  background-image: 
+    radial-gradient(circle at 10% 20%, rgba(239, 68, 68, 0.5) 0%, transparent 15%),
+    radial-gradient(circle at 90% 10%, rgba(59, 130, 246, 0.5) 0%, transparent 18%),
+    radial-gradient(circle at 50% 5%, rgba(250, 204, 21, 0.4) 0%, transparent 15%),
+    radial-gradient(circle at 85% 85%, rgba(249, 115, 22, 0.4) 0%, transparent 15%),
+    radial-gradient(circle at 15% 75%, rgba(34, 197, 94, 0.4) 0%, transparent 15%),
+    linear-gradient(90deg, rgba(255,255,255,0.03) 1px, transparent 1px, transparent 80px, rgba(0,0,0,0.2) 81px, transparent 81px);
+  background-size: 100% 100%, 100% 100%, 100% 100%, 100% 100%, 100% 100%, 100px 100%;
 `;
 
-const tremer = keyframes`
-  0%, 100% { transform: translateX(0); }
-  25% { transform: translateX(-5px); }
-  75% { transform: translateX(5px); }
+export const FundoVitoria = styled.div`
+  ${FundoAtelieBase}
+  &:before { content: ''; position: absolute; inset: 0; background: radial-gradient(circle, transparent 20%, rgba(0,0,0,0.4) 100%); }
 `;
-
-// --- ESTRUTURA ---
 
 export const FundoDerrota = styled.div`
-  position: fixed; top: 0; left: 0; width: 100vw; height: 100vh;
-  
-  /* PAREDE SUJA */
-  background-color: ${TEMA.parede};
-  background-image: 
-    /* Mancha grande de tinta preta/cinza escorrendo */
-    radial-gradient(circle at 80% 20%, rgba(0, 0, 0, 0.1) 0%, transparent 20%),
-    /* Mancha de tinta vermelha no chão */
-    radial-gradient(ellipse at 50% 90%, rgba(255, 0, 0, 0.15) 0%, transparent 30%),
-    /* Textura da parede */
-    linear-gradient(to right, rgba(0,0,0,0.05) 1px, transparent 1px);
-  background-size: 100% 100%, 100% 100%, 40px 100%;
-
-  display: flex; justify-content: center; align-items: center;
-  z-index: 300;
-  overflow: hidden;
-
-  /* CHÃO DE MADEIRA ESCURA */
-  &::after {
-    content: '';
-    position: absolute; bottom: 0; left: 0; width: 100%; height: 35%;
-    z-index: -1;
-    background: repeating-linear-gradient(
-      90deg,
-      ${TEMA.chao2} 0px, ${TEMA.chao2} 2px,
-      ${TEMA.chao1} 2px, ${TEMA.chao1} 40px
-    );
-    box-shadow: inset 0 20px 50px rgba(0,0,0,0.5); /* Sombra mais pesada */
-  }
-
-  /* RODAPÉ */
-  &::before {
-    content: '';
-    position: absolute; bottom: 35%; left: 0; width: 100%; height: 15px;
-    background-color: ${TEMA.rodape};
-    border-top: 2px solid rgba(255,255,255,0.1);
-    z-index: 0;
-  }
+  ${FundoAtelieBase}
+  &:before { content: ''; position: absolute; inset: 0; background: radial-gradient(circle, transparent 10%, rgba(0,0,0,0.8) 100%); backdrop-filter: grayscale(0.4); }
 `;
 
-export const PlacaDerrota = styled.div`
-  position: relative;
-  background-color: #F9FAFB; /* Quase branco, frio */
-  width: 90%; max-width: 600px;
-  padding: 40px;
-  
-  /* Borda estilo Quadro (Torta e "velha") */
-  border: 8px solid ${TEMA.madeiraClara};
-  border-radius: 20px;
-  
-  /* Sombra no chão */
-  box-shadow: 0 30px 50px rgba(0,0,0,0.4);
-    
-  display: flex; flex-direction: column; align-items: center; text-align: center;
-  z-index: 10;
-  
-  /* Animação de cair e ficar torto */
-  animation: ${cairPlaca} 0.6s ease-out forwards; 
-  transform: rotate(-2deg);
+export const ConteudoPlaca = styled.div<{ $derrota?: boolean }>`
+  position: relative; background: #fffbeb; 
+  border: 8px solid ${props => props.$derrota ? TEMA.vermelho : TEMA.madeiraClara};
+  border-radius: 40px; padding: 50px; width: 90%; max-width: 650px; text-align: center;
+  box-shadow: 0 12px 0px ${props => props.$derrota ? '#7f1d1d' : TEMA.madeiraPlaca};
+  animation: ${popIn} 0.5s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+  &::before { content: ''; position: absolute; inset: 6px; border: 3px dashed ${props => props.$derrota ? TEMA.vermelho : TEMA.madeiraClara}; border-radius: 30px; pointer-events: none; }
 `;
 
-// --- ÍCONE ---
-
-export const IconeContainer = styled.div`
-  position: relative;
-  width: 120px; height: 120px;
-  display: flex; justify-content: center; align-items: center;
-  margin-bottom: 20px;
-  
-  background-color: #FEE2E2; /* Vermelho bem claro */
-  border-radius: 50%;
-  border: 4px dashed ${TEMA.vermelhoErro};
-  
-  animation: ${tremer} 2s infinite; /* Tremendo de "erro" */
-  
-  svg { color: ${TEMA.vermelhoErro}; }
+export const Titulo = styled.h1<{ $derrota?: boolean }>`
+  font-size: 3rem; font-weight: 900; text-transform: uppercase; margin: 15px 0;
+  color: ${props => props.$derrota ? TEMA.vermelho : TEMA.madeiraPlaca};
 `;
 
-// --- TEXTOS ---
+export const Mensagem = styled.p` font-size: 1.3rem; color: ${TEMA.madeiraPlaca}; margin-bottom: 35px; line-height: 1.5; font-weight: bold; `;
 
-export const Titulo = styled.h1`
-  font-family: 'Comic Sans MS', sans-serif;
-  font-size: 3rem;
-  color: ${TEMA.vermelhoErro};
-  text-transform: uppercase;
-  font-weight: 900;
-  margin: 0;
-  text-shadow: 2px 2px 0px rgba(0,0,0,0.1);
-`;
+export const BotaoAcao = styled.button<BotaoProps>`
+  padding: 18px 30px; font-size: 1.1rem; font-weight: 900; border-radius: 20px;
+  border: 4px solid ${TEMA.madeiraPlaca}; cursor: pointer; display: flex; align-items: center; gap: 10px;
+  transition: all 0.2s; background: ${TEMA.branco}; color: ${TEMA.madeiraPlaca};
+  box-shadow: 5px 5px 0px ${TEMA.madeiraPlaca};
 
-export const Mensagem = styled.div`
-  margin: 20px 0 30px;
-  font-size: 1.3rem;
-  color: ${TEMA.cinzaTexto};
-  line-height: 1.5;
-  background-color: rgba(0,0,0,0.03);
-  padding: 15px;
-  border-radius: 10px;
-  
-  strong {
-    color: ${TEMA.madeiraEscura};
-    font-weight: 800;
-  }
-`;
-
-// --- BOTÕES ---
-
-export const ContainerBotoes = styled.div`
-  display: flex; gap: 20px; width: 100%; justify-content: center;
-`;
-
-export const Botao = styled.button<{ $focado?: boolean }>`
-  display: flex; align-items: center; justify-content: center; gap: 10px;
-  padding: 15px 30px;
-  border-radius: 20px;
-  font-size: 1.1rem; font-weight: 900;
-  text-transform: uppercase;
-  cursor: pointer;
-  
-  background-color: ${TEMA.branco};
-  color: ${TEMA.madeiraEscura};
-  border: 3px solid ${TEMA.madeiraClara};
-  box-shadow: 0 5px 0 ${TEMA.madeiraClara};
-  transition: all 0.2s;
-
-  /* Estilo Focado */
-  ${({ $focado }) => $focado && css`
-    background-color: ${TEMA.vermelhoErro};
-    color: white;
-    border-color: ${TEMA.vermelhoErro};
+  ${props => props.$isFocused && css`
+    animation: ${pulse} 1.5s infinite;
+    background: ${props.$derrota ? '#fee2e2' : TEMA.amarelo} !important;
+    border-color: ${props.$derrota ? TEMA.vermelho : TEMA.laranja} !important;
     transform: scale(1.1);
-    box-shadow: 0 8px 0 #991B1B;
   `}
-
-  &:active { transform: translateY(4px); box-shadow: none; }
 `;
+
+export const IconeContainer = styled.div` color: ${TEMA.laranja}; position: relative; display: inline-block; filter: drop-shadow(4px 4px 0px rgba(0,0,0,0.1)); margin-bottom: 10px; `;
+export const BadgeArtista = styled.div` position: absolute; bottom: -5px; right: -5px; background: ${TEMA.verde}; color: white; border-radius: 50%; padding: 8px; border: 3px solid white; `;
+export const ContainerBotoes = styled.div` display: flex; gap: 20px; justify-content: center; `;
+export const ContainerSplash = styled.div` position: absolute; width: 20px; height: 20px; `;
+export const ParticleSplash = styled.div` position: absolute; width: 100%; height: 100%; border-radius: 50%; background: var(--color); animation: ${splashExplosion} 2.5s infinite ease-out; animation-delay: var(--delay); `;
+export const AlertaErro = styled.div` position: absolute; inset: 0; pointer-events: none; background: radial-gradient(circle, transparent 40%, rgba(239, 68, 68, 0.15) 100%); animation: ${keyframes` 0%, 100% { transform: translate(0,0); } 25% { transform: translate(-1px, 1px); } 75% { transform: translate(1px, -1px); } `} 0.5s infinite; `;

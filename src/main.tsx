@@ -10,8 +10,8 @@ import CalibragemOcular from './pages/calibragem/calibragem';
 import CalibragemTeste from './pages/calibragem/teste';
 import PiramideDoSabor from './jogos/piramideSabor/app';
 import SaltoAlfabetico from './jogos/saltoAlfabetico/app';
-// import FestivalDasCores from './jogos/festivalDasCores/app';
 import SelecaoJogos from './pages/selecaoJogos';
+import FestivalDasCores from './jogos/festivalDasCores/app';
 
 const router = createBrowserRouter([
   {
@@ -38,10 +38,10 @@ const router = createBrowserRouter([
         path: '/saltoAlfabetico', 
         element: <SaltoAlfabetico />,
       },
-      // {
-      //   path: '/festivalDasCores',
-      //   element: <FestivalDasCores />,
-      // },
+      {
+        path: '/festivalDasCores',
+        element: <FestivalDasCores />,
+      },
       {
         path: '/calibragemOcular',
         element: <CalibragemOcular />,
