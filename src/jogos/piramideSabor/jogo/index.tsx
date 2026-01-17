@@ -10,6 +10,7 @@ const RECHEIOS = [
   { nome: 'hamburguer', imagem: '/assets/piramideSabor/carne.png' },
   { nome: 'queijo', imagem: '/assets/piramideSabor/queijo.png' },
   { nome: 'salada', imagem: '/assets/piramideSabor/salada.png' },
+  { nome: 'tomate', imagem: '/assets/piramideSabor/tomate.png' },
 ];
 const INIMIGOS = [
   { nome: 'inimigo', imagem: '/assets/piramideSabor/donut.png' },

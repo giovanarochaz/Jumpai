@@ -9,6 +9,15 @@ import type { BaseManualProps, ConfiguracoesJogo, DificuldadeJogo } from '../../
 
 const dificuldadeS: DificuldadeJogo[] = ['facil', 'medio', 'dificil'];
 
+const CONFIG_MANCHAS = [
+  { img: '/assets/piramideSabor/tomate.png', cor: 'rgba(239, 68, 68, 0.6)' }, // Vermelho
+  { img: '/assets/piramideSabor/queijo.png', cor: 'rgba(250, 204, 21, 0.6)' }, // Amarelo
+  { img: '/assets/piramideSabor/salada.png', cor: 'rgba(34, 197, 94, 0.6)' },  // Verde
+  { img: '/assets/piramideSabor/carne.png', cor: 'rgba(154, 52, 18, 0.6)' },   // Marrom/Laranja
+  { img: '/assets/piramideSabor/donut.png', cor: 'rgba(217, 70, 239, 0.5)' }, // Rosa/Roxo
+  { img: '/assets/piramideSabor/fritas.png', cor: 'rgba(251, 146, 60, 0.5)' }, // Laranja
+];
+
 const receitaInfo = [
     {
       nome: 'Pão (Base)',
@@ -29,10 +38,16 @@ const receitaInfo = [
       descricao: "Eu sou dos Laticínios! Sou recheado de Cálcio, o mineral que deixa seus ossos e dentes duros como rocha e prontos para um sorrisão!"
     },
     {
+      nome: 'Tomate',
+      grupo: 'Frutas e Legumes',
+      imagem: '/assets/piramideSabor/tomate.png',
+      descricao: "Eu sou o Tomate! Tenho o poder do Licopeno, um escudo que protege seu coração e deixa sua pele brilhando de saúde!"
+    },
+    {
       nome: 'Salada',
       grupo: 'Legumes e Verduras',
       imagem: '/assets/piramideSabor/salada.png',
-      descricao: "Somos as Hortaliças e Legumes! Nossas vitaminas e minerais criam um escudo invisível que protege seu corpo contra os vilões da gripe e do resfriado!"
+      descricao: "Somos as Hortaliças! Nossas vitaminas e minerais criam um escudo invisível que protege seu corpo contra os vilões da gripe e do resfriado!"
     },
     {
       nome: 'Pão (Topo)',
@@ -54,6 +69,17 @@ const ManualPiramideSabor: React.FC<BaseManualProps<ConfiguracoesJogo>> = ({ aoI
   const timerScanRef = useRef<NodeJS.Timeout | null>(null);
   const timerDebounceRef = useRef<NodeJS.Timeout | null>(null);
   const piscadaProcessadaRef = useRef(false); 
+
+  // Gera as manchas de fundo uma única vez
+  const manchasFundo = useMemo(() => {
+    return Array.from({ length: 12 }).map((_, i) => ({
+      ...CONFIG_MANCHAS[i % CONFIG_MANCHAS.length],
+      top: `${Math.random() * 85}%`,
+      left: `${Math.random() * 85}%`,
+      delay: `${Math.random() * 5}s`,
+      scale: 0.6 + Math.random() * 0.6
+    }));
+  }, []);
 
   useEffect(() => {
     if (!modoOcular) { setPodeInteragirOcular(true); return; }
@@ -84,31 +110,16 @@ const ManualPiramideSabor: React.FC<BaseManualProps<ConfiguracoesJogo>> = ({ aoI
 
   const textoParaLeitura = useMemo(() => {
     if (!leitorAtivo) return null; 
-
-    if (tela === 'introducao') {
-      return "Olá, Super Chef! Sua missão é montar o Hambúrguer Lendário usando a Pirâmide Alimentar. Pisque agora para conhecer os ingredientes!";
-    }
-    if (tela === 'receita') {
-      return `${receitaInfo[slideAtual].nome}, do grupo dos ${receitaInfo[slideAtual].grupo}. ${receitaInfo[slideAtual].descricao}. Pisque para ver o próximo!`;
-    }
-    if (tela === 'comoJogar') {
-      return "Preste atenção! Os ingredientes vão cair do céu. Você deve usar as setas para mover o Chef e pegar apenas o ingrediente que a receita pedir no topo da tela. A ordem é muito importante! Pisque para ver o que evitar.";
-    }
-    if (tela === 'desafios') {
-      return "Cuidado! Não pegue doces, frituras ou ingredientes fora da ordem. Se errar, o lanche pode desmoronar! Pisque para preparar sua cozinha.";
-    }
+    if (tela === 'introducao') return "Olá, Super Chef! Sua missão é montar o Hambúrguer Lendário. Pisque agora para conhecer os ingredientes!";
+    if (tela === 'receita') return `${receitaInfo[slideAtual].nome}, do grupo dos ${receitaInfo[slideAtual].grupo}. ${receitaInfo[slideAtual].descricao}. Pisque para o próximo!`;
+    if (tela === 'comoJogar') return "Preste atenção! Pegue apenas o ingrediente que a receita pedir no topo da tela. A ordem é muito importante! Pisque para ver os perigos.";
+    if (tela === 'desafios') return "Cuidado! Não pegue doces ou frituras. Se errar, o lanche pode desmoronar! Pisque para configurar.";
     if (tela === 'configuracoes') {
-      if (!podeInteragirOcular) {
-        if (focoConfig === 'dificuldade') return "Qual a dificuldade da comida caindo?";
-        if (focoConfig === 'penalidade') return "Se errar a ordem, quer recomeçar do zero?";
-        if (focoConfig === 'sons') return "Quer ouvir a música da lanchonete?";
-        if (focoConfig === 'iniciar') return "Tudo pronto! Vamos começar?";
-      } else {
-        if (focoConfig === 'dificuldade') return `${configuracoes.dificuldade}`;
-        if (focoConfig === 'penalidade') return configuracoes.penalidade ? "Recomeçar ao errar!" : "Continuar ao errar!";
-        if (focoConfig === 'sons') return configuracoes.sons ? "Sons ligados!" : "Sons desligados!";
-        if (focoConfig === 'iniciar') return "Pisque agora para colocar as mãos na massa!";
-      }
+      if (!podeInteragirOcular) return "Vamos ajustar sua cozinha?";
+      if (focoConfig === 'dificuldade') return `Dificuldade ${configuracoes.dificuldade}.`;
+      if (focoConfig === 'penalidade') return configuracoes.penalidade ? "Recomeçar ao errar." : "Continuar ao errar.";
+      if (focoConfig === 'sons') return configuracoes.sons ? "Música ligada." : "Música desligada.";
+      return "Pisque para começar a cozinhar!";
     }
     return "";
   }, [tela, slideAtual, focoConfig, configuracoes, leitorAtivo, podeInteragirOcular]);
@@ -147,10 +158,20 @@ const ManualPiramideSabor: React.FC<BaseManualProps<ConfiguracoesJogo>> = ({ aoI
     }
   }, [estaPiscando, modoOcular, podeInteragirOcular, confirmarAcao]);
 
-  const feedbackVisual = modoOcular && podeInteragirOcular;
-
   return (
     <S.FundoModal>
+      <S.DecoracaoFundo>
+        {manchasFundo.map((item, idx) => (
+          <S.ManchaComida 
+            key={idx} 
+            $corGlow={item.cor} 
+            style={{ top: item.top, left: item.left, transform: `scale(${item.scale})` }}
+          >
+            <img src={item.img} alt="" style={{ animationDelay: item.delay }} />
+          </S.ManchaComida>
+        ))}
+      </S.DecoracaoFundo>
+
       <S.ConteudoModal>
         {tela === 'introducao' && (
           <S.ContainerExplicacao>
@@ -159,12 +180,12 @@ const ManualPiramideSabor: React.FC<BaseManualProps<ConfiguracoesJogo>> = ({ aoI
               <S.WrapperIcone><ChefHat /></S.WrapperIcone>
               <S.WrapperTexto>
                 <h3>Missão Pirâmide do Sabor</h3>
-                <p>O Mestre Cuca te desafiou! Você deve montar um hambúrguer super nutritivo seguindo a ordem correta da receita. Vamos aprender sobre os alimentos?</p>
+                <p>O Mestre Cuca te desafiou! Monte um hambúrguer super nutritivo seguindo a ordem da receita. Vamos aprender sobre os alimentos?</p>
               </S.WrapperTexto>
             </S.SecaoExplicacao>
             <S.NavegacaoCarrossel>
               <div />
-              <S.BotaoNavegacao onClick={confirmarAcao} $isFocusedManual={feedbackVisual}>
+              <S.BotaoNavegacao onClick={confirmarAcao} $isFocusedManual={modoOcular && podeInteragirOcular}>
                 {leitorAtivo && !podeInteragirOcular && modoOcular ? 'OUVINDO...' : 'CONHECER INGREDIENTES'} <ChevronRight />
               </S.BotaoNavegacao>
             </S.NavegacaoCarrossel>
@@ -176,7 +197,7 @@ const ManualPiramideSabor: React.FC<BaseManualProps<ConfiguracoesJogo>> = ({ aoI
             <S.ContainerSlide>
               <S.IngredienteAnimado src={receitaInfo[slideAtual].imagem} alt={receitaInfo[slideAtual].nome} />
               <S.TextoSlide>
-                <span style={{color: '#ef4444', fontWeight: 'bold', textTransform: 'uppercase'}}>{receitaInfo[slideAtual].grupo}</span>
+                <span style={{color: '#ef4444', fontWeight: '900', textTransform: 'uppercase', fontSize: '0.9rem'}}>{receitaInfo[slideAtual].grupo}</span>
                 <h2>{receitaInfo[slideAtual].nome}</h2>
                 <p>{receitaInfo[slideAtual].descricao}</p>
               </S.TextoSlide>
@@ -185,9 +206,9 @@ const ManualPiramideSabor: React.FC<BaseManualProps<ConfiguracoesJogo>> = ({ aoI
               <S.BotaoNavegacao onClick={() => { pararNarracao(); slideAtual === 0 ? setTela('introducao') : setSlideAtual(s => s - 1); }}>
                 <ChevronLeft /> Voltar
               </S.BotaoNavegacao>
-              <span>{slideAtual + 1} / {receitaInfo.length}</span>
-              <S.BotaoNavegacao onClick={confirmarAcao} $isFocusedManual={feedbackVisual}>
-                {leitorAtivo && !podeInteragirOcular && modoOcular ? 'OUVINDO...' : 'PRÓXIMO'} <ChevronRight />
+              <span style={{color: '#78350f'}}>{slideAtual + 1} / {receitaInfo.length}</span>
+              <S.BotaoNavegacao onClick={confirmarAcao} $isFocusedManual={modoOcular && podeInteragirOcular}>
+                 PRÓXIMO <ChevronRight />
               </S.BotaoNavegacao>
             </S.NavegacaoCarrossel>
           </>
@@ -200,14 +221,14 @@ const ManualPiramideSabor: React.FC<BaseManualProps<ConfiguracoesJogo>> = ({ aoI
                 <S.WrapperIcone>{tela === 'comoJogar' ? <Gamepad2 /> : <Bomb />}</S.WrapperIcone>
                 <S.WrapperTexto>
                    <p>{tela === 'comoJogar' 
-                      ? 'Use as setas para mover o Chef. Fique de olho no TOPO DA TELA: pegue apenas o ingrediente que a receita pedir no momento. Se pegar fora de ordem, o lanche desmorona!' 
-                      : 'Fuja de doces, frituras e gorduras! Elas não fazem parte da nossa receita saudável e tiram seus pontos de Chef.'}
+                      ? 'Fique de olho no TOPO DA TELA: pegue apenas o ingrediente que a receita pedir no momento. Se pegar fora de ordem, o lanche desmorona!' 
+                      : 'Fuja de doces e frituras! Elas não fazem parte da nossa receita saudável e tiram seus pontos de Chef.'}
                    </p>
                 </S.WrapperTexto>
               </S.SecaoExplicacao>
               <S.NavegacaoCarrossel>
                 <S.BotaoNavegacao onClick={() => setTela(tela === 'comoJogar' ? 'receita' : 'comoJogar')}><ChevronLeft /> Voltar</S.BotaoNavegacao>
-                <S.BotaoNavegacao onClick={confirmarAcao} $isFocusedManual={feedbackVisual}>
+                <S.BotaoNavegacao onClick={confirmarAcao} $isFocusedManual={modoOcular && podeInteragirOcular}>
                    {tela === 'comoJogar' ? 'ENTENDI A ORDEM!' : 'PREPARAR COZINHA'}
                 </S.BotaoNavegacao>
               </S.NavegacaoCarrossel>
@@ -218,14 +239,14 @@ const ManualPiramideSabor: React.FC<BaseManualProps<ConfiguracoesJogo>> = ({ aoI
           <S.ContainerConfiguracoes>
             <S.TextoSlide><h2>Ajustes do Chef</h2></S.TextoSlide>
             
-            <S.LinhaConfiguracao $isFocused={feedbackVisual && focoConfig === 'dificuldade'}>
-              <S.RotuloConfiguracao><Zap /><h3>dificuldade da Comida</h3></S.RotuloConfiguracao>
+            <S.LinhaConfiguracao $isFocused={modoOcular && podeInteragirOcular && focoConfig === 'dificuldade'}>
+              <S.RotuloConfiguracao><Zap /><h3>Velocidade</h3></S.RotuloConfiguracao>
               <S.GrupoBotoes>
                 {dificuldadeS.map(v => (
                   <S.BotaoOpcao 
                     key={v} 
                     ativo={configuracoes.dificuldade === v} 
-                    $isFocused={feedbackVisual && focoConfig === 'dificuldade' && configuracoes.dificuldade === v}
+                    $isFocused={modoOcular && podeInteragirOcular && focoConfig === 'dificuldade' && configuracoes.dificuldade === v}
                     onClick={() => setConfiguracoes(prev => ({ ...prev, dificuldade: v }))}
                   >
                     {v}
@@ -234,15 +255,15 @@ const ManualPiramideSabor: React.FC<BaseManualProps<ConfiguracoesJogo>> = ({ aoI
               </S.GrupoBotoes>
             </S.LinhaConfiguracao>
 
-            <S.LinhaConfiguracao $isFocused={feedbackVisual && focoConfig === 'penalidade'} onClick={() => setConfiguracoes(prev => ({ ...prev, penalidade: !prev.penalidade }))}>
-              <S.RotuloConfiguracao><ShieldOff /><h3>Reiniciar se errar a ordem?</h3></S.RotuloConfiguracao>
+            <S.LinhaConfiguracao $isFocused={modoOcular && podeInteragirOcular && focoConfig === 'penalidade'} onClick={() => setConfiguracoes(prev => ({ ...prev, penalidade: !prev.penalidade }))}>
+              <S.RotuloConfiguracao><ShieldOff /><h3>Recomeçar ao errar?</h3></S.RotuloConfiguracao>
               <S.ContainerInterruptor>
                 <S.InputInterruptor type="checkbox" checked={configuracoes.penalidade} readOnly />
                 <S.DeslizadorInterruptor />
               </S.ContainerInterruptor>
             </S.LinhaConfiguracao>
 
-            <S.LinhaConfiguracao $isFocused={feedbackVisual && focoConfig === 'sons'} onClick={() => setConfiguracoes(prev => ({ ...prev, sons: !prev.sons }))}>
+            <S.LinhaConfiguracao $isFocused={modoOcular && podeInteragirOcular && focoConfig === 'sons'} onClick={() => setConfiguracoes(prev => ({ ...prev, sons: !prev.sons }))}>
               <S.RotuloConfiguracao><Music /><h3>Música e Efeitos</h3></S.RotuloConfiguracao>
               <S.ContainerInterruptor>
                 <S.InputInterruptor type="checkbox" checked={configuracoes.sons} readOnly />
@@ -250,8 +271,8 @@ const ManualPiramideSabor: React.FC<BaseManualProps<ConfiguracoesJogo>> = ({ aoI
               </S.ContainerInterruptor>
             </S.LinhaConfiguracao>
 
-            <S.BotaoIniciarMissao onClick={confirmarAcao} $isFocused={feedbackVisual && focoConfig === 'iniciar'}>
-              {leitorAtivo && !podeInteragirOcular && modoOcular ? 'AQUECENDO FORNO...' : 'MÃOS NA MASSA!'}
+            <S.BotaoIniciarMissao onClick={confirmarAcao} $isFocused={modoOcular && podeInteragirOcular && focoConfig === 'iniciar'}>
+              {leitorAtivo && !podeInteragirOcular && modoOcular ? 'AQUECENDO...' : 'MÃOS NA MASSA!'}
             </S.BotaoIniciarMissao>
           </S.ContainerConfiguracoes>
         )}
