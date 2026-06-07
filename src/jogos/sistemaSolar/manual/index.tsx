@@ -54,13 +54,14 @@ const planetasInfo = [
 
 const ManualSistemaSolar: React.FC<BaseManualProps<ConfiguracoesJogo>> = ({ aoIniciar }) => {
   const { mostrarCameraFlutuante: modoOcular, estaPiscando, leitorAtivo } = useStore(lojaOlho);
-
   const [tela, setTela] = useState<'introducao' | 'planetas' | 'comoJogar' | 'perigos' | 'configuracoes'>('introducao');
   const [slideAtual, setSlideAtual] = useState(0);
-  const [configuracoes, setConfiguracoes] = useState<ConfiguracoesJogo>({ dificuldade: 'facil', penalidade: true, sons: true });
+  const [focoTutorial, setFocoTutorial] = useState<'treinar' | 'pular'>('treinar');
   const [focoConfig, setFocoConfig] = useState<'dificuldade' | 'penalidade' | 'sons' | 'iniciar'>('dificuldade');
-  const [podeInteragirOcular, setPodeInteragirOcular] = useState(false);
   
+  const [configuracoes, setConfiguracoes] = useState<ConfiguracoesJogo>({ dificuldade: 'facil', penalidade: true, sons: true });
+  
+  const [podeInteragirOcular, setPodeInteragirOcular] = useState(false);
   const timerScanRef = useRef<NodeJS.Timeout | null>(null);
   const timerDebounceRef = useRef<NodeJS.Timeout | null>(null);
   const piscadaProcessadaRef = useRef(false); 
@@ -75,72 +76,88 @@ const ManualSistemaSolar: React.FC<BaseManualProps<ConfiguracoesJogo>> = ({ aoIn
     if (timerDebounceRef.current) clearTimeout(timerDebounceRef.current);
     
     if (!leitorAtivo) {
-      timerDebounceRef.current = setTimeout(() => setPodeInteragirOcular(true), 1200);
+      timerDebounceRef.current = setTimeout(() => setPodeInteragirOcular(true), 1500);
     }
-  }, [tela, slideAtual, focoConfig, modoOcular, leitorAtivo]);
+  }, [tela, slideAtual, focoConfig, focoTutorial, modoOcular, leitorAtivo]);
 
   useEffect(() => {
-    if (modoOcular && podeInteragirOcular && tela === 'configuracoes') {
+    if (modoOcular && podeInteragirOcular) {
+      const tempoScan = tela === 'introducao' ? 4500 : 3000; 
+
       timerScanRef.current = setInterval(() => {
-        if (focoConfig === 'dificuldade') {
-          setConfiguracoes(prev => ({
-            ...prev,
-            dificuldade: DIFICULDADES[(DIFICULDADES.indexOf(prev.dificuldade) + 1) % DIFICULDADES.length]
-          }));
-        } else if (focoConfig === 'penalidade') {
-          setConfiguracoes(prev => ({ ...prev, penalidade: !prev.penalidade }));
-        } else if (focoConfig === 'sons') {
-          setConfiguracoes(prev => ({ ...prev, sons: !prev.sons }));
+        if (tela === 'introducao') {
+          setFocoTutorial(prev => prev === 'treinar' ? 'pular' : 'treinar');
+        } else if (tela === 'configuracoes') {
+          if (focoConfig === 'dificuldade') {
+            setConfiguracoes(prev => ({
+              ...prev,
+              dificuldade: DIFICULDADES[(DIFICULDADES.indexOf(prev.dificuldade) + 1) % DIFICULDADES.length]
+            }));
+          } else if (focoConfig === 'penalidade') {
+            setConfiguracoes(prev => ({ ...prev, penalidade: !prev.penalidade }));
+          } else if (focoConfig === 'sons') {
+            setConfiguracoes(prev => ({ ...prev, sons: !prev.sons }));
+          }
         }
-      }, 2500);
+      }, tempoScan);
     }
     return () => { if (timerScanRef.current) clearInterval(timerScanRef.current); };
-  }, [tela, focoConfig, podeInteragirOcular, modoOcular]);
+  }, [tela, focoConfig, focoTutorial, podeInteragirOcular, modoOcular]);
 
   const textoParaLeitura = useMemo(() => {
     if (!leitorAtivo) return null; 
 
     if (tela === 'introducao') {
-      return "Bem-vindo à Academia de Pilotos! Sua missão é guiar a nave e encontrar os planetas. Pisque os olhos agora para começar a aprender!";
+      if (!podeInteragirOcular) {
+         return focoTutorial === 'treinar' 
+           ? "Bem-vindo à Academia de Pilotos! Para aprender a missão, pisque agora. Para pular o tutorial, aguarde."
+           : "Pular treinamento. Para ir direto para a configuração da nave, pisque agora!";
+      }
+      return focoTutorial === 'treinar' ? "Treinar missão. Pisque agora!" : "Pular para o jogo. Pisque agora!";
     }
+
     if (tela === 'planetas') {
-      return `${planetasInfo[slideAtual].nome}. ${planetasInfo[slideAtual].descricao}. Para conhecer o próximo planeta, pisque agora!`;
+      return `${planetasInfo[slideAtual].nome}. ${planetasInfo[slideAtual].descricao}. Para o próximo planeta, pisque agora!`;
     }
+
     if (tela === 'comoJogar') {
-      return "Como pilotar: No jogo, sua nave voa sozinha. Toda vez que você piscar, ela muda de direção para desviar das pedras e coletar os planetas. Pisque agora para continuar!";
+      return "Como pilotar: Sua nave voa sozinha. Toda vez que você piscar, ela muda de direção. Pisque agora para continuar!";
     }
+
     if (tela === 'perigos') {
-      return "Cuidado! Existem pedras espaciais no caminho. Se você bater, a missão pode falhar. Pisque agora para preparar sua nave!";
+      return "Cuidado com as pedras espaciais! Se bater, a missão falha. Pisque agora para configurar sua nave!";
     }
+
     if (tela === 'configuracoes') {
       if (!podeInteragirOcular) {
-        if (focoConfig === 'dificuldade') return "Qual o nível de dificuldade?";
-        if (focoConfig === 'penalidade') return "Se a nave bater, quer voltar do começo?";
-        if (focoConfig === 'sons') return "Quer ouvir as músicas do espaço?";
+        if (focoConfig === 'dificuldade') return `Nível de dificuldade: ${configuracoes.dificuldade}. Pisque para mudar ou aguarde.`;
+        if (focoConfig === 'penalidade') return configuracoes.penalidade ? "Reiniciar ao bater? Sim. Pisque para mudar." : "Reiniciar ao bater? Não. Pisque para mudar.";
+        if (focoConfig === 'sons') return configuracoes.sons ? "Sons ligados. Pisque para desligar." : "Sons desligados. Pisque para ligar.";
         if (focoConfig === 'iniciar') return "Tudo pronto! Vamos decolar?";
-      } else {
-        if (focoConfig === 'dificuldade') {
-          const vText = { facil: "Dificuldade fácil.", medio: "Dificuldade média.", dificil: "Dificuldade difícil!" };
-          return `${vText[configuracoes.dificuldade]}. Pisque para escolher esta!`;
-        }
-        if (focoConfig === 'penalidade') return configuracoes.penalidade ? "Sim, voltar ao bater. Pisque para escolher!" : "Não, continuar de onde parou. Pisque para escolher!";
-        if (focoConfig === 'sons') return configuracoes.sons ? "Sons ligados. Pisque para escolher!" : "Sons desligados. Pisque para escolher!";
-        if (focoConfig === 'iniciar') return "Pisque agora para decolar sua nave e começar a aventura!";
       }
+      return "Pisque para confirmar esta opção!";
     }
+    
     return "";
-  }, [tela, slideAtual, focoConfig, configuracoes, leitorAtivo, podeInteragirOcular]);
+  }, [tela, slideAtual, focoConfig, focoTutorial, configuracoes, leitorAtivo, podeInteragirOcular]);
 
   useLeitorOcular(textoParaLeitura, [textoParaLeitura], () => {
     if (modoOcular && leitorAtivo) setPodeInteragirOcular(true);
   });
 
   const confirmarAcao = useCallback(() => {
-    if (tela === 'introducao') setTela('planetas');
+    if (tela === 'introducao') {
+      if (modoOcular) {
+        if (focoTutorial === 'treinar') setTela('planetas');
+        else setTela('configuracoes');
+      } else {
+        setTela('planetas'); 
+      }
+    }     
     else if (tela === 'planetas') {
       if (slideAtual === planetasInfo.length - 1) setTela('comoJogar');
       else setSlideAtual(s => s + 1);
-    } 
+    }
     else if (tela === 'comoJogar') setTela('perigos');
     else if (tela === 'perigos') setTela('configuracoes');
     else if (tela === 'configuracoes') {
@@ -153,7 +170,7 @@ const ManualSistemaSolar: React.FC<BaseManualProps<ConfiguracoesJogo>> = ({ aoIn
         aoIniciar(configuracoes);
       }
     }
-  }, [tela, slideAtual, focoConfig, configuracoes, modoOcular, aoIniciar]);
+  }, [tela, slideAtual, focoConfig, focoTutorial, configuracoes, modoOcular, aoIniciar]);
 
   useEffect(() => {
     if (!estaPiscando) {
@@ -169,11 +186,12 @@ const ManualSistemaSolar: React.FC<BaseManualProps<ConfiguracoesJogo>> = ({ aoIn
     }
   }, [estaPiscando, modoOcular, podeInteragirOcular, confirmarAcao]);
 
-  const feedbackVisual = modoOcular && podeInteragirOcular;
+  const visualOcular = modoOcular && podeInteragirOcular;
 
   return (
     <S.FundoModal>
       <S.ConteudoModal>
+
         {tela === 'introducao' && (
           <S.ContainerExplicacao>
             <S.TextoSlide><h2>Academia de Pilotos</h2></S.TextoSlide>
@@ -184,9 +202,20 @@ const ManualSistemaSolar: React.FC<BaseManualProps<ConfiguracoesJogo>> = ({ aoIn
                 <p>Sua missão é pilotar uma nave avançada e coletar os planetas na ordem correta!</p>
               </S.WrapperTexto>
             </S.SecaoExplicacao>
+            
             <S.NavegacaoCarrossel>
-              <div />
-              <S.BotaoNavegacao onClick={confirmarAcao} $isFocusedManual={feedbackVisual}>
+              <S.BotaoNavegacao 
+                onClick={() => { pararNarracao(); setTela('configuracoes'); }}
+                $isFocusedManual={modoOcular && focoTutorial === 'pular' && podeInteragirOcular}
+                style={{ backgroundColor: 'transparent', border: '1px solid rgba(255,255,255,0.3)' }}
+              >
+                PULAR TUTORIAL
+              </S.BotaoNavegacao>
+
+              <S.BotaoNavegacao 
+                onClick={confirmarAcao} 
+                $isFocusedManual={modoOcular && focoTutorial === 'treinar' && podeInteragirOcular}
+              >
                 {leitorAtivo && !podeInteragirOcular && modoOcular ? 'OUVINDO...' : 'INICIAR TREINAMENTO'} <ChevronRight />
               </S.BotaoNavegacao>
             </S.NavegacaoCarrossel>
@@ -207,7 +236,7 @@ const ManualSistemaSolar: React.FC<BaseManualProps<ConfiguracoesJogo>> = ({ aoIn
                 <ChevronLeft /> Voltar
               </S.BotaoNavegacao>
               <span>{slideAtual + 1} / {planetasInfo.length}</span>
-              <S.BotaoNavegacao onClick={confirmarAcao} $isFocusedManual={feedbackVisual}>
+              <S.BotaoNavegacao onClick={confirmarAcao} $isFocusedManual={visualOcular}>
                 {leitorAtivo && !podeInteragirOcular && modoOcular ? 'OUVINDO...' : 'PRÓXIMO'} <ChevronRight />
               </S.BotaoNavegacao>
             </S.NavegacaoCarrossel>
@@ -228,7 +257,7 @@ const ManualSistemaSolar: React.FC<BaseManualProps<ConfiguracoesJogo>> = ({ aoIn
               </S.SecaoExplicacao>
               <S.NavegacaoCarrossel>
                 <S.BotaoNavegacao onClick={() => setTela(tela === 'comoJogar' ? 'planetas' : 'comoJogar')}><ChevronLeft /> Voltar</S.BotaoNavegacao>
-                <S.BotaoNavegacao onClick={confirmarAcao} $isFocusedManual={feedbackVisual}>
+                <S.BotaoNavegacao onClick={confirmarAcao} $isFocusedManual={visualOcular}>
                    {tela === 'comoJogar' ? 'ENTENDI!' : 'CONFIGURAR NAVE'}
                 </S.BotaoNavegacao>
               </S.NavegacaoCarrossel>
@@ -239,14 +268,14 @@ const ManualSistemaSolar: React.FC<BaseManualProps<ConfiguracoesJogo>> = ({ aoIn
           <S.ContainerConfiguracoes>
             <S.TextoSlide><h2>Sistemas da Nave</h2></S.TextoSlide>
 
-            <S.LinhaConfiguracao $isFocused={feedbackVisual && focoConfig === 'dificuldade'}>
+            <S.LinhaConfiguracao $isFocused={visualOcular && focoConfig === 'dificuldade'}>
               <S.RotuloConfiguracao><Zap /><h3>Dificuldade</h3></S.RotuloConfiguracao>
               <S.GrupoBotoes>
                 {DIFICULDADES.map(v => (
                   <S.BotaoOpcao 
                     key={v} 
                     $ativo={configuracoes.dificuldade === v} 
-                    $isFocused={feedbackVisual && focoConfig === 'dificuldade' && configuracoes.dificuldade === v}
+                    $isFocused={visualOcular && focoConfig === 'dificuldade' && configuracoes.dificuldade === v}
                     onClick={() => setConfiguracoes(prev => ({ ...prev, dificuldade: v }))}
                   >
                     {v}
@@ -256,9 +285,8 @@ const ManualSistemaSolar: React.FC<BaseManualProps<ConfiguracoesJogo>> = ({ aoIn
             </S.LinhaConfiguracao>
 
             <S.LinhaConfiguracao 
-                $isFocused={feedbackVisual && focoConfig === 'penalidade'}
+                $isFocused={visualOcular && focoConfig === 'penalidade'}
                 onClick={() => setConfiguracoes(prev => ({ ...prev, penalidade: !prev.penalidade }))}
-                style={{ cursor: 'pointer' }}
             >
               <S.RotuloConfiguracao><ShieldOff /><h3>Reiniciar?</h3></S.RotuloConfiguracao>
               <S.ContainerInterruptor>
@@ -268,9 +296,8 @@ const ManualSistemaSolar: React.FC<BaseManualProps<ConfiguracoesJogo>> = ({ aoIn
             </S.LinhaConfiguracao>
 
             <S.LinhaConfiguracao 
-                $isFocused={feedbackVisual && focoConfig === 'sons'}
+                $isFocused={visualOcular && focoConfig === 'sons'}
                 onClick={() => setConfiguracoes(prev => ({ ...prev, sons: !prev.sons }))}
-                style={{ cursor: 'pointer' }}
             >
               <S.RotuloConfiguracao><Music /><h3>Áudio</h3></S.RotuloConfiguracao>
               <S.ContainerInterruptor>
@@ -279,7 +306,7 @@ const ManualSistemaSolar: React.FC<BaseManualProps<ConfiguracoesJogo>> = ({ aoIn
               </S.ContainerInterruptor>
             </S.LinhaConfiguracao>
 
-            <S.BotaoIniciarMissao onClick={confirmarAcao} $isFocused={feedbackVisual && focoConfig === 'iniciar'}>
+            <S.BotaoIniciarMissao onClick={confirmarAcao} $isFocused={visualOcular && focoConfig === 'iniciar'}>
               {leitorAtivo && !podeInteragirOcular && modoOcular ? 'PREPARANDO...' : 'DECOLAR'}
             </S.BotaoIniciarMissao>
           </S.ContainerConfiguracoes>
