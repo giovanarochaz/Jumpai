@@ -1,9 +1,20 @@
-// src/components/Menu/index.tsx
-import React from 'react';
-import { Gamepad2, Trophy, BookOpen } from 'lucide-react';
+import React, { useCallback } from 'react';
+import { Gamepad2, BookOpen } from 'lucide-react';
 import { NavBar, NavItem, NavLogo, NavMenu } from './styles';
+import { useNavigate } from 'react-router-dom';
 
 const Menu: React.FC = () => {
+  const navigate = useNavigate();
+
+  const irParaJogos = useCallback(() => {
+    navigate('/jogos');
+  }, [navigate]);
+
+  const irParaHistoria = useCallback(() => {
+    navigate('/historia');
+  }, [navigate]);
+
+  
   return (
     <NavBar>
       <NavLogo aria-label="JUMPAI Home">
@@ -12,11 +23,11 @@ const Menu: React.FC = () => {
       </NavLogo>
 
       <NavMenu>
-        <NavItem>
-          <Trophy size={18} />
-          <span>Prêmios</span>
+        <NavItem onClick={irParaJogos} tabIndex={0} role="button" aria-label="Navegar para Jogos">
+          <Gamepad2 size={18} />
+          <span>Jogos</span>
         </NavItem>
-        <NavItem>
+        <NavItem onClick={irParaHistoria} tabIndex={0} role="button" aria-label="Navegar para História">
           <BookOpen size={18} />
           <span>História</span>
         </NavItem>
