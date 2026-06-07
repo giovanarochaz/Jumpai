@@ -1,6 +1,6 @@
 import React, { useState, useEffect, useCallback, useRef, useMemo } from 'react';
 import * as S from './styles';
-import { Gamepad2, Bomb, Zap, Music, ShieldOff, ChefHat, ChevronRight, ChevronLeft } from 'lucide-react';
+import { Gamepad2, Bomb, Zap, Music, ShieldOff, ChefHat, ChevronRight, ChevronLeft} from 'lucide-react';
 import { useStore } from 'zustand';
 import { lojaOlho } from '../../../lojas/lojaOlho';
 import { useLeitorOcular } from '../../../hooks/useLeitorOcular';
@@ -10,12 +10,12 @@ import type { BaseManualProps, ConfiguracoesJogo, DificuldadeJogo } from '../../
 const dificuldadeS: DificuldadeJogo[] = ['facil', 'medio', 'dificil'];
 
 const CONFIG_MANCHAS = [
-  { img: '/assets/piramideSabor/tomate.png', cor: 'rgba(239, 68, 68, 0.6)' }, // Vermelho
-  { img: '/assets/piramideSabor/queijo.png', cor: 'rgba(250, 204, 21, 0.6)' }, // Amarelo
-  { img: '/assets/piramideSabor/salada.png', cor: 'rgba(34, 197, 94, 0.6)' },  // Verde
-  { img: '/assets/piramideSabor/carne.png', cor: 'rgba(154, 52, 18, 0.6)' },   // Marrom/Laranja
-  { img: '/assets/piramideSabor/donut.png', cor: 'rgba(217, 70, 239, 0.5)' }, // Rosa/Roxo
-  { img: '/assets/piramideSabor/fritas.png', cor: 'rgba(251, 146, 60, 0.5)' }, // Laranja
+  { img: '/assets/piramideSabor/tomate.png', cor: 'rgba(239, 68, 68, 0.6)' },
+  { img: '/assets/piramideSabor/queijo.png', cor: 'rgba(250, 204, 21, 0.6)' },
+  { img: '/assets/piramideSabor/salada.png', cor: 'rgba(34, 197, 94, 0.6)' },
+  { img: '/assets/piramideSabor/carne.png', cor: 'rgba(154, 52, 18, 0.6)' },
+  { img: '/assets/piramideSabor/donut.png', cor: 'rgba(217, 70, 239, 0.5)' },
+  { img: '/assets/piramideSabor/fritas.png', cor: 'rgba(251, 146, 60, 0.5)' },
 ];
 
 const receitaInfo = [
@@ -23,37 +23,37 @@ const receitaInfo = [
       nome: 'Pão (Base)',
       grupo: 'Carboidratos',
       imagem: '/assets/piramideSabor/pao_base.png',
-      descricao: "Eu sou o grupo dos Carboidratos! Sou como a super-gasolina do seu corpo, dando toda a energia que você precisa para correr, pular e brincar o dia inteirinho!"
+      descricao: "Eu sou o grupo dos Carboidratos! Sou como a super-gasolina do seu corpo, dando toda a energia que você precisa!"
     },
     {
       nome: 'Hambúrguer',
       grupo: 'Proteínas',
       imagem: '/assets/piramideSabor/carne.png',
-      descricao: "Eu represento as Proteínas! Somos como 'tijolinhos' mágicos que constroem seus músculos e te deixam forte como um verdadeiro super-herói!"
+      descricao: "Eu represento as Proteínas! Somos como 'tijolinhos' mágicos que constroem seus músculos e te deixam forte!"
     },
     {
       nome: 'Queijo',
       grupo: 'Laticínios',
       imagem: '/assets/piramideSabor/queijo.png',
-      descricao: "Eu sou dos Laticínios! Sou recheado de Cálcio, o mineral que deixa seus ossos e dentes duros como rocha e prontos para um sorrisão!"
+      descricao: "Eu sou dos Laticínios! Sou recheado de Cálcio, o mineral que deixa seus ossos e dentes duros como rocha!"
     },
     {
       nome: 'Tomate',
       grupo: 'Frutas e Legumes',
       imagem: '/assets/piramideSabor/tomate.png',
-      descricao: "Eu sou o Tomate! Tenho o poder do Licopeno, um escudo que protege seu coração e deixa sua pele brilhando de saúde!"
+      descricao: "Eu sou o Tomate! Tenho o poder do Licopeno, um escudo que protege seu coração e sua pele!"
     },
     {
       nome: 'Salada',
       grupo: 'Legumes e Verduras',
       imagem: '/assets/piramideSabor/salada.png',
-      descricao: "Somos as Hortaliças! Nossas vitaminas e minerais criam um escudo invisível que protege seu corpo contra os vilões da gripe e do resfriado!"
+      descricao: "Somos as Hortaliças! Nossas vitaminas criam um escudo invisível contra os vilões da gripe!"
     },
     {
       nome: 'Pão (Topo)',
       grupo: 'Carboidratos',
       imagem: '/assets/piramideSabor/pao_topo.png',
-      descricao: "Mais energia para fechar o lanche! Viu só? Quando juntamos um pouco de cada grupo, criamos uma refeição equilibrada, saudável e deliciosa!"
+      descricao: "Mais energia para fechar o lanche! Quando juntamos tudo, criamos uma refeição equilibrada e deliciosa!"
     },
 ];
 
@@ -61,6 +61,7 @@ const ManualPiramideSabor: React.FC<BaseManualProps<ConfiguracoesJogo>> = ({ aoI
   const { mostrarCameraFlutuante: modoOcular, estaPiscando, leitorAtivo } = useStore(lojaOlho);
 
   const [tela, setTela] = useState<'introducao' | 'receita' | 'comoJogar' | 'desafios' | 'configuracoes'>('introducao');
+  const [focoTutorial, setFocoTutorial] = useState<'treinar' | 'pular'>('treinar'); // NOVO
   const [slideAtual, setSlideAtual] = useState(0);
   const [configuracoes, setConfiguracoes] = useState<ConfiguracoesJogo>({ dificuldade: 'facil', penalidade: true, sons: true });
   const [focoConfig, setFocoConfig] = useState<'dificuldade' | 'penalidade' | 'sons' | 'iniciar'>('dificuldade');
@@ -70,7 +71,6 @@ const ManualPiramideSabor: React.FC<BaseManualProps<ConfiguracoesJogo>> = ({ aoI
   const timerDebounceRef = useRef<NodeJS.Timeout | null>(null);
   const piscadaProcessadaRef = useRef(false); 
 
-  // Gera as manchas de fundo uma única vez
   const manchasFundo = useMemo(() => {
     return Array.from({ length: 12 }).map((_, i) => ({
       ...CONFIG_MANCHAS[i % CONFIG_MANCHAS.length],
@@ -88,48 +88,65 @@ const ManualPiramideSabor: React.FC<BaseManualProps<ConfiguracoesJogo>> = ({ aoI
     if (!leitorAtivo) {
       timerDebounceRef.current = setTimeout(() => setPodeInteragirOcular(true), 1200);
     }
-  }, [tela, slideAtual, focoConfig, modoOcular, leitorAtivo]);
+  }, [tela, slideAtual, focoConfig, focoTutorial, modoOcular, leitorAtivo]);
 
   useEffect(() => {
-    if (modoOcular && podeInteragirOcular && tela === 'configuracoes') {
+    if (modoOcular && podeInteragirOcular) {
       timerScanRef.current = setInterval(() => {
-        if (focoConfig === 'dificuldade') {
-          setConfiguracoes(prev => ({
-            ...prev,
-            dificuldade: dificuldadeS[(dificuldadeS.indexOf(prev.dificuldade) + 1) % dificuldadeS.length]
-          }));
-        } else if (focoConfig === 'penalidade') {
-          setConfiguracoes(prev => ({ ...prev, penalidade: !prev.penalidade }));
-        } else if (focoConfig === 'sons') {
-          setConfiguracoes(prev => ({ ...prev, sons: !prev.sons }));
+        if (tela === 'introducao') {
+          setFocoTutorial(prev => prev === 'treinar' ? 'pular' : 'treinar');
+        } else if (tela === 'configuracoes') {
+          if (focoConfig === 'dificuldade') {
+            setConfiguracoes(prev => ({
+              ...prev,
+              dificuldade: dificuldadeS[(dificuldadeS.indexOf(prev.dificuldade) + 1) % dificuldadeS.length]
+            }));
+          } else if (focoConfig === 'penalidade') {
+            setConfiguracoes(prev => ({ ...prev, penalidade: !prev.penalidade }));
+          } else if (focoConfig === 'sons') {
+            setConfiguracoes(prev => ({ ...prev, sons: !prev.sons }));
+          }
         }
-      }, 2500);
+      }, tela === 'introducao' ? 4500 : 2500);
     }
     return () => { if (timerScanRef.current) clearInterval(timerScanRef.current); };
-  }, [tela, focoConfig, podeInteragirOcular, modoOcular]);
+  }, [tela, focoConfig, focoTutorial, podeInteragirOcular, modoOcular]);
 
   const textoParaLeitura = useMemo(() => {
     if (!leitorAtivo) return null; 
-    if (tela === 'introducao') return "Olá, Super Chef! Sua missão é montar o Hambúrguer Lendário. Pisque agora para conhecer os ingredientes!";
-    if (tela === 'receita') return `${receitaInfo[slideAtual].nome}, do grupo dos ${receitaInfo[slideAtual].grupo}. ${receitaInfo[slideAtual].descricao}. Pisque para o próximo!`;
-    if (tela === 'comoJogar') return "Preste atenção! Pegue apenas o ingrediente que a receita pedir no topo da tela. A ordem é muito importante! Pisque para ver os perigos.";
-    if (tela === 'desafios') return "Cuidado! Não pegue doces ou frituras. Se errar, o lanche pode desmoronar! Pisque para configurar.";
+
+    if (tela === 'introducao') {
+        if (!podeInteragirOcular) return "Olá, Super Chef! Quer aprender sobre os ingredientes nutritivos ou prefere pular direto para a cozinha?";
+        return focoTutorial === 'treinar' 
+          ? "Conhecer ingredientes. Pisque agora!" 
+          : "Pular para o jogo. Pisque agora!";
+    }
+    if (tela === 'receita') return `${receitaInfo[slideAtual].nome}. ${receitaInfo[slideAtual].descricao}. Pisque para continuar!`;
+    if (tela === 'comoJogar') return "Como pilotar o fogão: pegue apenas o ingrediente que a receita pedir no topo da tela. Pisque para continuar!";
+    if (tela === 'desafios') return "Atenção! Não pegue doces ou frituras, ou o lanche desmorona. Pisque para configurar!";
     if (tela === 'configuracoes') {
       if (!podeInteragirOcular) return "Vamos ajustar sua cozinha?";
-      if (focoConfig === 'dificuldade') return `Dificuldade ${configuracoes.dificuldade}.`;
-      if (focoConfig === 'penalidade') return configuracoes.penalidade ? "Recomeçar ao errar." : "Continuar ao errar.";
-      if (focoConfig === 'sons') return configuracoes.sons ? "Música ligada." : "Música desligada.";
+      if (focoConfig === 'dificuldade') return `Dificuldade ${configuracoes.dificuldade}. Pisque para mudar.`;
+      if (focoConfig === 'penalidade') return configuracoes.penalidade ? "Recomeçar ao errar. Pisque para mudar." : "Continuar ao errar. Pisque para mudar.";
+      if (focoConfig === 'sons') return configuracoes.sons ? "Música ligada. Pisque para mudar." : "Música desligada. Pisque para mudar.";
       return "Pisque para começar a cozinhar!";
     }
     return "";
-  }, [tela, slideAtual, focoConfig, configuracoes, leitorAtivo, podeInteragirOcular]);
+  }, [tela, slideAtual, focoConfig, focoTutorial, configuracoes, leitorAtivo, podeInteragirOcular]);
 
   useLeitorOcular(textoParaLeitura, [textoParaLeitura], () => {
     if (modoOcular && leitorAtivo) setPodeInteragirOcular(true);
   });
 
   const confirmarAcao = useCallback(() => {
-    if (tela === 'introducao') setTela('receita');
+    if (tela === 'introducao') {
+        if (modoOcular) {
+            if (focoTutorial === 'treinar') setTela('receita');
+            else setTela('configuracoes');
+        } else {
+            setTela('receita');
+        }
+    }
     else if (tela === 'receita') {
       if (slideAtual === receitaInfo.length - 1) setTela('comoJogar');
       else setSlideAtual(s => s + 1);
@@ -146,7 +163,7 @@ const ManualPiramideSabor: React.FC<BaseManualProps<ConfiguracoesJogo>> = ({ aoI
         aoIniciar(configuracoes);
       }
     }
-  }, [tela, slideAtual, focoConfig, configuracoes, modoOcular, aoIniciar]);
+  }, [tela, slideAtual, focoConfig, focoTutorial, configuracoes, modoOcular, aoIniciar]);
 
   useEffect(() => {
     if (!estaPiscando) { piscadaProcessadaRef.current = false; return; }
@@ -157,6 +174,8 @@ const ManualPiramideSabor: React.FC<BaseManualProps<ConfiguracoesJogo>> = ({ aoI
       confirmarAcao();
     }
   }, [estaPiscando, modoOcular, podeInteragirOcular, confirmarAcao]);
+
+  const feedbackVisual = modoOcular && podeInteragirOcular;
 
   return (
     <S.FundoModal>
@@ -180,12 +199,21 @@ const ManualPiramideSabor: React.FC<BaseManualProps<ConfiguracoesJogo>> = ({ aoI
               <S.WrapperIcone><ChefHat /></S.WrapperIcone>
               <S.WrapperTexto>
                 <h3>Missão Pirâmide do Sabor</h3>
-                <p>O Mestre Cuca te desafiou! Monte um hambúrguer super nutritivo seguindo a ordem da receita. Vamos aprender sobre os alimentos?</p>
+                <p>O Mestre Cuca te desafiou! Monte um hambúrguer nutritivo seguindo a receita. Vamos aprender ou cozinhar?</p>
               </S.WrapperTexto>
             </S.SecaoExplicacao>
             <S.NavegacaoCarrossel>
-              <div />
-              <S.BotaoNavegacao onClick={confirmarAcao} $isFocusedManual={modoOcular && podeInteragirOcular}>
+              <S.BotaoNavegacao 
+                onClick={() => { pararNarracao(); setTela('configuracoes'); }}
+                $isFocusedManual={modoOcular && podeInteragirOcular && focoTutorial === 'pular'}
+                style={{ backgroundColor: 'transparent', border: '1px solid rgba(0,0,0,0.2)' }}
+              >
+                PULAR
+              </S.BotaoNavegacao>
+              <S.BotaoNavegacao 
+                onClick={confirmarAcao} 
+                $isFocusedManual={modoOcular && podeInteragirOcular && focoTutorial === 'treinar'}
+              >
                 {leitorAtivo && !podeInteragirOcular && modoOcular ? 'OUVINDO...' : 'CONHECER INGREDIENTES'} <ChevronRight />
               </S.BotaoNavegacao>
             </S.NavegacaoCarrossel>
@@ -207,7 +235,7 @@ const ManualPiramideSabor: React.FC<BaseManualProps<ConfiguracoesJogo>> = ({ aoI
                 <ChevronLeft /> Voltar
               </S.BotaoNavegacao>
               <span style={{color: '#78350f'}}>{slideAtual + 1} / {receitaInfo.length}</span>
-              <S.BotaoNavegacao onClick={confirmarAcao} $isFocusedManual={modoOcular && podeInteragirOcular}>
+              <S.BotaoNavegacao onClick={confirmarAcao} $isFocusedManual={feedbackVisual}>
                  PRÓXIMO <ChevronRight />
               </S.BotaoNavegacao>
             </S.NavegacaoCarrossel>
@@ -221,14 +249,14 @@ const ManualPiramideSabor: React.FC<BaseManualProps<ConfiguracoesJogo>> = ({ aoI
                 <S.WrapperIcone>{tela === 'comoJogar' ? <Gamepad2 /> : <Bomb />}</S.WrapperIcone>
                 <S.WrapperTexto>
                    <p>{tela === 'comoJogar' 
-                      ? 'Fique de olho no TOPO DA TELA: pegue apenas o ingrediente que a receita pedir no momento. Se pegar fora de ordem, o lanche desmorona!' 
-                      : 'Fuja de doces e frituras! Elas não fazem parte da nossa receita saudável e tiram seus pontos de Chef.'}
+                      ? 'Fique de olho no TOPO DA TELA: pegue apenas o ingrediente que a receita pedir no momento.' 
+                      : 'Fuja de doces e frituras! Elas não fazem parte da nossa receita saudável e tiram pontos.'}
                    </p>
                 </S.WrapperTexto>
               </S.SecaoExplicacao>
               <S.NavegacaoCarrossel>
                 <S.BotaoNavegacao onClick={() => setTela(tela === 'comoJogar' ? 'receita' : 'comoJogar')}><ChevronLeft /> Voltar</S.BotaoNavegacao>
-                <S.BotaoNavegacao onClick={confirmarAcao} $isFocusedManual={modoOcular && podeInteragirOcular}>
+                <S.BotaoNavegacao onClick={confirmarAcao} $isFocusedManual={feedbackVisual}>
                    {tela === 'comoJogar' ? 'ENTENDI A ORDEM!' : 'PREPARAR COZINHA'}
                 </S.BotaoNavegacao>
               </S.NavegacaoCarrossel>
@@ -238,15 +266,14 @@ const ManualPiramideSabor: React.FC<BaseManualProps<ConfiguracoesJogo>> = ({ aoI
         {tela === 'configuracoes' && (
           <S.ContainerConfiguracoes>
             <S.TextoSlide><h2>Ajustes do Chef</h2></S.TextoSlide>
-            
-            <S.LinhaConfiguracao $isFocused={modoOcular && podeInteragirOcular && focoConfig === 'dificuldade'}>
+            <S.LinhaConfiguracao $isFocused={feedbackVisual && focoConfig === 'dificuldade'}>
               <S.RotuloConfiguracao><Zap /><h3>Velocidade</h3></S.RotuloConfiguracao>
               <S.GrupoBotoes>
                 {dificuldadeS.map(v => (
                   <S.BotaoOpcao 
                     key={v} 
                     ativo={configuracoes.dificuldade === v} 
-                    $isFocused={modoOcular && podeInteragirOcular && focoConfig === 'dificuldade' && configuracoes.dificuldade === v}
+                    $isFocused={feedbackVisual && focoConfig === 'dificuldade' && configuracoes.dificuldade === v}
                     onClick={() => setConfiguracoes(prev => ({ ...prev, dificuldade: v }))}
                   >
                     {v}
@@ -255,23 +282,17 @@ const ManualPiramideSabor: React.FC<BaseManualProps<ConfiguracoesJogo>> = ({ aoI
               </S.GrupoBotoes>
             </S.LinhaConfiguracao>
 
-            <S.LinhaConfiguracao $isFocused={modoOcular && podeInteragirOcular && focoConfig === 'penalidade'} onClick={() => setConfiguracoes(prev => ({ ...prev, penalidade: !prev.penalidade }))}>
+            <S.LinhaConfiguracao $isFocused={feedbackVisual && focoConfig === 'penalidade'} onClick={() => setConfiguracoes(prev => ({ ...prev, penalidade: !prev.penalidade }))}>
               <S.RotuloConfiguracao><ShieldOff /><h3>Recomeçar ao errar?</h3></S.RotuloConfiguracao>
-              <S.ContainerInterruptor>
-                <S.InputInterruptor type="checkbox" checked={configuracoes.penalidade} readOnly />
-                <S.DeslizadorInterruptor />
-              </S.ContainerInterruptor>
+              <S.ContainerInterruptor><S.InputInterruptor type="checkbox" checked={configuracoes.penalidade} readOnly /><S.DeslizadorInterruptor /></S.ContainerInterruptor>
             </S.LinhaConfiguracao>
 
-            <S.LinhaConfiguracao $isFocused={modoOcular && podeInteragirOcular && focoConfig === 'sons'} onClick={() => setConfiguracoes(prev => ({ ...prev, sons: !prev.sons }))}>
+            <S.LinhaConfiguracao $isFocused={feedbackVisual && focoConfig === 'sons'} onClick={() => setConfiguracoes(prev => ({ ...prev, sons: !prev.sons }))}>
               <S.RotuloConfiguracao><Music /><h3>Música e Efeitos</h3></S.RotuloConfiguracao>
-              <S.ContainerInterruptor>
-                <S.InputInterruptor type="checkbox" checked={configuracoes.sons} readOnly />
-                <S.DeslizadorInterruptor />
-              </S.ContainerInterruptor>
+              <S.ContainerInterruptor><S.InputInterruptor type="checkbox" checked={configuracoes.sons} readOnly /><S.DeslizadorInterruptor /></S.ContainerInterruptor>
             </S.LinhaConfiguracao>
 
-            <S.BotaoIniciarMissao onClick={confirmarAcao} $isFocused={modoOcular && podeInteragirOcular && focoConfig === 'iniciar'}>
+            <S.BotaoIniciarMissao onClick={confirmarAcao} $isFocused={feedbackVisual && focoConfig === 'iniciar'}>
               {leitorAtivo && !podeInteragirOcular && modoOcular ? 'AQUECENDO...' : 'MÃOS NA MASSA!'}
             </S.BotaoIniciarMissao>
           </S.ContainerConfiguracoes>
