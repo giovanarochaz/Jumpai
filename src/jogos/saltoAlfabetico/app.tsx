@@ -1,66 +1,59 @@
-import React, { useState } from 'react';
+import { useCallback, useMemo, useState } from 'react';
 import JogoSaltoAlfabetico from './jogo';
 import TelaVitoriaSalto from './vitoria';
 import TelaDerrotaSalto from './derrota';
 import ManualSaltoAlfabetico from './manual';
-import type { ConfiguracoesJogo } from '../../interface/types';
+import Menu from '../../componentes/Menu'; 
+import type { ConfiguracoesJogo, EstadoJogo } from '../../interface/types';
+import * as S from './styles'; 
 
-const SaltoAlfabetico: React.FC = () => {
-  const [estadoDoJogo, setEstadoDoJogo] = useState<'manual' | 'jogando' | 'vitoria' | 'derrota'>('manual');
-  
-  const [configuracoes, setConfiguracoes] = useState<ConfiguracoesJogo>({
-    dificuldade: 'facil',
-    penalidade: true,
-    sons: true
-  });
+const CONFIG_INICIAL: ConfiguracoesJogo = {
+  dificuldade: 'facil',
+  penalidade: true,
+  sons: true,
+};
 
+function SaltoAlfabetico() {
+  const [estado, setEstado] = useState<EstadoJogo>('manual');
+  const [configuracoes, setConfiguracoes] = useState<ConfiguracoesJogo>(CONFIG_INICIAL);
 
-  const iniciarJogo = (config: ConfiguracoesJogo) => {
-    setConfiguracoes(config);
-    setEstadoDoJogo('jogando');
-  };
+  const iniciarMissao = useCallback((novasConfiguracoes: ConfiguracoesJogo) => {
+    setConfiguracoes(novasConfiguracoes);
+    setEstado('jogando');
+  }, []);
 
-  const lidarComVitoria = () => {
-    setEstadoDoJogo('vitoria');
-  };
+  const finalizarJogo = useCallback((resultado: 'vitoria' | 'derrota') => {
+    setEstado(resultado);
+  }, []);
 
-  const lidarComDerrota = () => {
-    setEstadoDoJogo('derrota');
-  };
+  const voltarAoManual = useCallback(() => {
+    setEstado('manual'); 
+  }, []);
 
-  const reiniciarJogo = () => {
-    setEstadoDoJogo('manual');
-  };
+  const Telas = useMemo(() => ({
+    manual: <ManualSaltoAlfabetico aoIniciar={iniciarMissao} />,
+    jogando: (
+      <S.WrapperJogoAtivo>
+        <JogoSaltoAlfabetico 
+          aoVencer={() => finalizarJogo('vitoria')} 
+          aoPerder={() => finalizarJogo('derrota')} 
+          configuracoes={configuracoes} 
+        />
+      </S.WrapperJogoAtivo>
+    ),
+    vitoria: <TelaVitoriaSalto aoReiniciar={voltarAoManual} configuracoes={configuracoes}  />,
+    derrota: <TelaDerrotaSalto aoReiniciar={voltarAoManual} configuracoes={configuracoes}  />,
+  }), [iniciarMissao, finalizarJogo, voltarAoManual, configuracoes]);
 
   return (
-    <>
-      {estadoDoJogo === 'manual' && (
-        <ManualSaltoAlfabetico aoIniciar={iniciarJogo} />
-      )}
-      
-      {estadoDoJogo === 'jogando' && (
-        <JogoSaltoAlfabetico 
-          aoVencer={lidarComVitoria} 
-          aoPerder={lidarComDerrota} 
-          configuracoes={configuracoes}
-        />
-      )}
+    <S.ContainerDoJogo> 
+      <Menu />
 
-      {estadoDoJogo === 'vitoria' && (
-        <TelaVitoriaSalto 
-          aoReiniciar={reiniciarJogo}
-          configuracoes={configuracoes}
-        />
-      )}
-
-      {estadoDoJogo === 'derrota' && (
-        <TelaDerrotaSalto 
-          aoReiniciar={reiniciarJogo} 
-          configuracoes={configuracoes}
-        />
-      )}
-    </>
+      <S.ConteudoEstado>
+         {Telas[estado] || Telas.manual}
+      </S.ConteudoEstado>
+    </S.ContainerDoJogo>
   );
-};
+}
 
 export default SaltoAlfabetico;
