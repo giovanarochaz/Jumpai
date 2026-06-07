@@ -3,6 +3,7 @@ export const CONFIG_OCULAR = {
   LIMIAR_PISCADA: 0.50,
   DURACAO_MIN_PISCADA: 350,  // Descarta reflexos
   DURACAO_MAX_PISCADA: 1000, // Descarta se o olho ficar fechado por cansaço
+  DURACAO_PAUSA_LONGA: 2000,  // Manter olho fechado por 2s ativa a PAUSA
   COOLDOWN_CLIQUE: 600,      // Evita cliques duplos acidentais
   
   // Caminhos dos modelos MediaPipe
@@ -33,4 +34,8 @@ export const validarIntencionalidadePiscada = (duracao: number, agora: number, u
     duracao <= CONFIG_OCULAR.DURACAO_MAX_PISCADA &&
     (agora - ultimoClique) > CONFIG_OCULAR.COOLDOWN_CLIQUE
   );
+};
+
+export const validarGestoPausa = (duracao: number) => {
+  return duracao >= CONFIG_OCULAR.DURACAO_PAUSA_LONGA;
 };

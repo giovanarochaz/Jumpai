@@ -1,6 +1,7 @@
 import { create } from 'zustand';
 import React from 'react';
 
+// --- INTERFACES ---
 interface Ponto {
   x: number;
   y: number;
@@ -17,15 +18,8 @@ interface EstadoOlho {
   piscadaDireita: boolean;
   
   leitorAtivo: boolean; 
+  estaPausado: boolean;
   
-  setAlturaMedia: (altura: number) => void;
-  setAlturaMediaEsquerda: (altura: number) => void;
-  setAlturaMediaDireita: (altura: number) => void;
-  setEstaPiscando: (piscando: boolean) => void;
-  setPiscadaEsquerda: (piscando: boolean) => void;
-  setPiscadaDireita: (piscando: boolean) => void;
-  setLeitorAtivo: (ativo: boolean) => void;
-
   videoRefGlobal: React.RefObject<HTMLVideoElement | null> | null;
   mostrarCameraFlutuante: boolean;
   pontosDoOlho: {
@@ -35,6 +29,14 @@ interface EstadoOlho {
     baseDireito: Ponto | null
   };
   
+  setAlturaMedia: (altura: number) => void;
+  setAlturaMediaEsquerda: (altura: number) => void;
+  setAlturaMediaDireita: (altura: number) => void;
+  setEstaPiscando: (piscando: boolean) => void;
+  setPiscadaEsquerda: (piscando: boolean) => void;
+  setPiscadaDireita: (piscando: boolean) => void;
+  setLeitorAtivo: (ativo: boolean) => void;
+  setEstaPausado: (pausado: boolean) => void;
   setVideoRefGlobal: (ref: React.RefObject<HTMLVideoElement | null>) => void;
   setMostrarCameraFlutuante: (mostrar: boolean) => void;
   setPontosDoOlho: (pontos: {
@@ -53,6 +55,7 @@ export const lojaOlho = create<EstadoOlho>((set, get) => ({
   piscadaEsquerda: false,
   piscadaDireita: false,
   leitorAtivo: false, 
+  estaPausado: false, 
   videoRefGlobal: null,
   mostrarCameraFlutuante: false,
   pontosDoOlho: {
@@ -64,6 +67,7 @@ export const lojaOlho = create<EstadoOlho>((set, get) => ({
   setAlturaMediaEsquerda: (altura) => set({ alturaMediaEsquerda: altura }),
   setAlturaMediaDireita: (altura) => set({ alturaMediaDireita: altura }),
   setLeitorAtivo: (ativo) => set({ leitorAtivo: ativo }), 
+  setEstaPausado: (pausado) => set({ estaPausado: pausado }),
 
   setEstaPiscando: (piscando) => {
     // Evita renderizações desnecessárias se o estado for o mesmo
