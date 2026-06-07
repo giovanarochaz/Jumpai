@@ -15,23 +15,61 @@ const fadeOut = keyframes`
 `;
 
 export const ContainerAtelie = styled.div`
-  position: fixed; inset: 0; background: #FFF8E1;
-  display: flex; flex-direction: column; align-items: center; overflow: hidden;
+  /* 1. Ocupa a tela toda */
+  width: 100vw;
+  height: 100vh;
+  
+  /* 2. Sobe para trás do menu, anulando o padding de 110px do pai */
+  margin-top: -110px; 
+  
+  /* 3. Empurra o Título e os Quadros de volta para o lugar certo */
+  padding-top: 110px; 
+  
+  background: #FFF8E1; /* Cor da Parede */
+  display: flex; 
+  flex-direction: column; 
+  align-items: center; 
+  overflow: hidden;
+  position: relative;
+
   &::after {
-    content: ''; position: absolute; bottom: 0; width: 100%; height: 32%;
+    /* Chão de madeira */
+    content: ''; 
+    position: absolute; 
+    bottom: 0; 
+    width: 100%; 
+    height: 32%;
     background: repeating-linear-gradient(90deg, #A0522D 0, #A0522D 2px, #D2691E 2px, #D2691E 60px);
-    box-shadow: inset 0 20px 40px rgba(0,0,0,0.2); z-index: 0;
+    box-shadow: inset 0 20px 40px rgba(0,0,0,0.2); 
+    z-index: 0;
   }
 `;
 
 export const TituloFase = styled.h2`
-  margin: 2vh; padding: 10px 40px; background: white; z-index: 10;
-  border: 4px solid #8B4513; border-radius: 50px; color: #8B4513;
-  text-transform: uppercase; box-shadow: 0 4px 0 rgba(0,0,0,0.1);
+  /* Ajuste a margem para não ficar colado no Menu */
+  margin-top: 20px; 
+  margin-bottom: 10px;
+  
+  padding: 10px 40px; 
+  background: white; 
+  z-index: 10;
+  border: 4px solid #8B4513; 
+  border-radius: 50px; 
+  color: #8B4513;
+  text-transform: uppercase; 
+  box-shadow: 0 4px 0 rgba(0,0,0,0.1);
+  font-size: clamp(1rem, 2vw, 1.3rem);
+  position: relative;
 `;
 
 export const AreaCavaletes = styled.div`
-  display: flex; gap: 4vw; flex: 1; z-index: 5; align-items: center;
+  display: flex; 
+  gap: 4vw; 
+  flex: 1; 
+  z-index: 5; 
+  align-items: center;
+  /* Garante que os quadros fiquem bem distribuídos */
+  margin-bottom: 60px; 
 `;
 
 export const CavaleteContainer = styled.div`
@@ -71,7 +109,17 @@ export const SvgContainer = styled.svg`
 `;
 
 export const OverlayStart = styled.div`
-  position: fixed; inset: 0; background: rgba(0,0,0,0.7); z-index: 200;
-  display: flex; justify-content: center; align-items: center; color: white;
-  font-size: 2rem; font-weight: 900; text-align: center; text-shadow: 0 4px 10px black;
+  position: absolute; /* Mude de fixed para absolute */
+  inset: 0; 
+  z-index: 90; 
+  background: rgba(0,0,0,0.7);
+  display: flex; 
+  justify-content: center; 
+  align-items: center; 
+  color: white;
+  font-size: 2rem; 
+  font-weight: 900; 
+  text-align: center; 
+  text-shadow: 0 4px 10px black;
+  padding: 20px;
 `;
