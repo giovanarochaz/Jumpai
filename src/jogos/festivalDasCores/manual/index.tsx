@@ -1,6 +1,6 @@
 import React, { useState, useEffect, useRef, useMemo, useCallback } from 'react';
 import * as S from './styles';
-import { Palette, Brush, Music, ShieldOff, ChevronRight, ChevronLeft, Target } from 'lucide-react';
+import { Palette, Brush, Music, ShieldOff, ChevronRight, ChevronLeft, Target, Rocket } from 'lucide-react';
 import { useStore } from 'zustand';
 import { lojaOlho } from '../../../lojas/lojaOlho';
 import { useLeitorOcular } from '../../../hooks/useLeitorOcular';
@@ -45,7 +45,8 @@ const slidesEducativos = [
 const ManualFestivalDasCores: React.FC<BaseManualProps<ConfiguracoesJogo>> = ({ aoIniciar }) => {
   const { mostrarCameraFlutuante: modoOcular, estaPiscando, leitorAtivo } = useStore(lojaOlho);
 
-  const [tela, setTela] = useState<'educativo' | 'configuracoes'>('educativo');
+  const [tela, setTela] = useState<'introducao' | 'educativo' | 'configuracoes'>('introducao');
+  const [focoTutorial, setFocoTutorial] = useState<'treinar' | 'pular'>('treinar');
   const [slideIndex, setSlideIndex] = useState(0);
   const [config, setConfig] = useState<ConfiguracoesJogo>({ dificuldade: 'facil', penalidade: true, sons: true });
   
@@ -63,27 +64,39 @@ const ManualFestivalDasCores: React.FC<BaseManualProps<ConfiguracoesJogo>> = ({ 
     if (!leitorAtivo) {
       timerDebounceRef.current = setTimeout(() => setPodeInteragirOcular(true), 1200);
     }
-  }, [tela, slideIndex, focoConfig, modoOcular, leitorAtivo]);
+  }, [tela, slideIndex, focoConfig, focoTutorial, modoOcular, leitorAtivo]);
 
   useEffect(() => {
-    if (modoOcular && podeInteragirOcular && tela === 'configuracoes') {
+    if (modoOcular && podeInteragirOcular) {
       timerScanRef.current = setInterval(() => {
-        if (focoConfig === 'dificuldade') {
-           const currentDif = config.dificuldade || 'facil';
-           const nextIdx = (DIFICULDADES.indexOf(currentDif) + 1) % 3;
-           setConfig(prev => ({ ...prev, dificuldade: DIFICULDADES[nextIdx] as any }));
-        } else if (focoConfig === 'penalidade') {
-          setConfig(prev => ({ ...prev, penalidade: !prev.penalidade }));
-        } else if (focoConfig === 'sons') {
-          setConfig(prev => ({ ...prev, sons: !prev.sons }));
+        if (tela === 'introducao') {
+          setFocoTutorial(prev => prev === 'treinar' ? 'pular' : 'treinar');
+        } else if (tela === 'configuracoes') {
+          if (focoConfig === 'dificuldade') {
+             const currentDif = config.dificuldade || 'facil';
+             const nextIdx = (DIFICULDADES.indexOf(currentDif) + 1) % 3;
+             setConfig(prev => ({ ...prev, dificuldade: DIFICULDADES[nextIdx] as any }));
+          } else if (focoConfig === 'penalidade') {
+            setConfig(prev => ({ ...prev, penalidade: !prev.penalidade }));
+          } else if (focoConfig === 'sons') {
+            setConfig(prev => ({ ...prev, sons: !prev.sons }));
+          }
         }
-      }, 3000);
+      }, tela === 'introducao' ? 4500 : 2500);
     }
     return () => { if (timerScanRef.current) clearInterval(timerScanRef.current); };
-  }, [tela, focoConfig, podeInteragirOcular, modoOcular, config.dificuldade]);
+  }, [tela, focoConfig, focoTutorial, podeInteragirOcular, modoOcular, config.dificuldade]);
 
   const textoParaLeitura = useMemo(() => {
     if (!leitorAtivo) return null;
+
+    if (tela === 'introducao') {
+        if (!podeInteragirOcular) return "Bem-vindo ao Festival das Cores! Quer aprender a misturar as tintas ou prefere ir direto para o ateliê?";
+        return focoTutorial === 'treinar' 
+          ? "Aprender sobre as cores. Pisque agora!" 
+          : "Pular tutorial. Pisque agora!";
+    }
+
     if (tela === 'educativo') return slidesEducativos[slideIndex].narração;
     
     if (tela === 'configuracoes') {
@@ -95,22 +108,30 @@ const ManualFestivalDasCores: React.FC<BaseManualProps<ConfiguracoesJogo>> = ({ 
       } else {
         if (focoConfig === 'dificuldade') {
           const t: Record<string, string> = { facil: "Cores Primárias.", medio: "Cores Secundárias.", dificil: "Cores Terciárias." };
-          return `${t[config.dificuldade || 'facil']}.`;
+          return `${t[config.dificuldade || 'facil']}. Pisque para mudar.`;
         }
-        if (focoConfig === 'penalidade') return config.penalidade ? "Apaga apenas as partes erradas." : "Reiniciar ao errar.";
-        if (focoConfig === 'sons') return config.sons ? "Sons ligados." : "Sons desligados.";
+        if (focoConfig === 'penalidade') return config.penalidade ? "Sim, reiniciar. Pisque para mudar." : "Não, continuar. Pisque para mudar.";
+        if (focoConfig === 'sons') return config.sons ? "Sons ligados. Pisque para mudar." : "Sons desligados. Pisque para mudar.";
         if (focoConfig === 'iniciar') return "Pisque agora para começar a pintura!";
       }
     }
     return "";
-  }, [tela, slideIndex, focoConfig, config, leitorAtivo, podeInteragirOcular]);
+  }, [tela, slideIndex, focoConfig, focoTutorial, config, leitorAtivo, podeInteragirOcular]);
 
   useLeitorOcular(textoParaLeitura, [textoParaLeitura], () => {
     if (modoOcular && leitorAtivo) setPodeInteragirOcular(true);
   });
 
   const confirmarAcao = useCallback(() => {
-    if (tela === 'educativo') {
+    if (tela === 'introducao') {
+        if (modoOcular) {
+            if (focoTutorial === 'treinar') setTela('educativo');
+            else setTela('configuracoes');
+        } else {
+            setTela('educativo');
+        }
+    }
+    else if (tela === 'educativo') {
       if (slideIndex < slidesEducativos.length - 1) setSlideIndex(s => s + 1);
       else setTela('configuracoes');
     } else if (tela === 'configuracoes') {
@@ -123,7 +144,7 @@ const ManualFestivalDasCores: React.FC<BaseManualProps<ConfiguracoesJogo>> = ({ 
         aoIniciar(config);
       }
     }
-  }, [tela, slideIndex, focoConfig, config, modoOcular, aoIniciar]);
+  }, [tela, slideIndex, focoConfig, focoTutorial, config, modoOcular, aoIniciar]);
 
   useEffect(() => {
     if (!estaPiscando) { piscadaProcessadaRef.current = false; return; }
@@ -140,6 +161,32 @@ const ManualFestivalDasCores: React.FC<BaseManualProps<ConfiguracoesJogo>> = ({ 
   return (
     <S.FundoModal>
       <S.ConteudoModal>
+        
+        {tela === 'introducao' && (
+           <S.ContainerConfig>
+           <S.TituloSlide>Ateliê de Cores</S.TituloSlide>
+           <div style={{display: 'flex', justifyContent: 'center', margin: '20px 0'}}><Rocket size={60} color="#f97316"/></div>
+           <S.TextoExplicativo>
+             Seja bem-vindo, artista! Você quer passar pela aula de misturas mágicas ou quer ir direto preparar suas tintas?
+           </S.TextoExplicativo>
+           <S.BarraNavegacao>
+             <S.BotaoNav 
+                onClick={() => { pararNarracao(); setTela('configuracoes'); }} 
+                $destaque={modoOcular && podeInteragirOcular && focoTutorial === 'pular'}
+                style={{ backgroundColor: 'transparent', border: '1px solid rgba(0,0,0,0.1)' }}
+             >
+               PULAR
+             </S.BotaoNav>
+             <S.BotaoNav 
+                onClick={confirmarAcao} 
+                $destaque={modoOcular && podeInteragirOcular && focoTutorial === 'treinar'}
+             >
+               {leitorAtivo && !podeInteragirOcular && modoOcular ? 'OUVINDO...' : 'APRENDER'} <ChevronRight />
+             </S.BotaoNav>
+           </S.BarraNavegacao>
+         </S.ContainerConfig>
+        )}
+
         {tela === 'educativo' && (
           <>
             <S.TituloSlide>
@@ -170,7 +217,7 @@ const ManualFestivalDasCores: React.FC<BaseManualProps<ConfiguracoesJogo>> = ({ 
             </S.ContainerSlide>
 
             <S.BarraNavegacao>
-              <S.BotaoNav onClick={() => setSlideIndex(0)} disabled={slideIndex === 0}>
+              <S.BotaoNav onClick={() => { pararNarracao(); slideIndex === 0 ? setTela('introducao') : setSlideIndex(s => s - 1); }}>
                 <ChevronLeft /> Voltar
               </S.BotaoNav>
               <S.BotaoNav onClick={confirmarAcao} $destaque={feedbackVisual}>
