@@ -4,6 +4,8 @@ import JogoSistemaSolar from './jogo';
 import TelaVitoria from './vitoria';
 import TelaDerrotaSistemaSolar from './derrota';
 import type { ConfiguracoesJogo, EstadoJogo } from '../../interface/types';
+import Menu from '../../componentes/Menu'; 
+import * as S from './styles'; 
 
 const CONFIG_INICIAL: ConfiguracoesJogo = {
   dificuldade: 'facil',
@@ -31,20 +33,26 @@ function SistemaSolar() {
   const Telas = useMemo(() => ({
     manual: <ManualSistemaSolar aoIniciar={iniciarMissao} />,
     jogando: (
-      <JogoSistemaSolar 
-        aoVencer={() => finalizarJogo('vitoria')} 
-        aoPerder={() => finalizarJogo('derrota')} 
-        configuracoes={configuracoes} 
-      />
+      <S.WrapperJogoAtivo>
+        <JogoSistemaSolar 
+          aoVencer={() => finalizarJogo('vitoria')} 
+          aoPerder={() => finalizarJogo('derrota')} 
+          configuracoes={configuracoes} 
+        />
+      </S.WrapperJogoAtivo>
     ),
     vitoria: <TelaVitoria aoReiniciar={voltarAoManual} configuracoes={configuracoes}  />,
     derrota: <TelaDerrotaSistemaSolar aoReiniciar={voltarAoManual} configuracoes={configuracoes}  />,
   }), [iniciarMissao, finalizarJogo, voltarAoManual, configuracoes]);
 
   return (
-    <main className="game-container">
-      {Telas[estado] || Telas.manual}
-    </main>
+    <S.ContainerDoJogo> 
+      <Menu />
+
+      <S.ConteudoEstado>
+         {Telas[estado] || Telas.manual}
+      </S.ConteudoEstado>
+    </S.ContainerDoJogo>
   );
 }
 

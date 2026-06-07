@@ -95,11 +95,24 @@ export const Planeta = styled.img<{ $top: number; $duracao: number; $tamanho: nu
 
 // --- HUD E INTERFACE ---
 export const HudContainer = styled.div`
-   position: fixed; top: 0; left: 50%; transform: translateX(-50%);
-   background: ${TEMA.vidroEscuro}; padding: clamp(5px, 1.5vh, 12px) clamp(15px, 3vw, 30px);
-   border-radius: 0 0 25px 25px; border: 2px solid ${TEMA.azulIon}; border-top: none;
-   display: flex; justify(center); align-items: center; gap: clamp(8px, 2vw, 20px);
-   z-index: 100; box-shadow: 0 0 20px rgba(34, 211, 238, 0.3);
+   position: fixed; 
+   top: 105px; 
+   left: 50%; 
+   transform: translateX(-50%);
+   background: ${TEMA.vidroEscuro}; 
+   padding: clamp(5px, 1.2vh, 10px) clamp(10px, 2vw, 25px);
+   border-radius: 20px; 
+   border: 2px solid ${TEMA.azulIon}; 
+   display: flex; 
+   justify-content: center; 
+   align-items: center; 
+   gap: clamp(8px, 2vw, 20px);
+   z-index: 90;
+   box-shadow: 0 0 20px rgba(34, 211, 238, 0.2);
+   @media (max-width: 600px) {
+      top: 85px; 
+      padding: 5px 10px;
+   }
 `;
 
 export const HudPlanetaImagem = styled.img<{ $coletado: boolean }>`
