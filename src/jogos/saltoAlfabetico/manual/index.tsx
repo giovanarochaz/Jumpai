@@ -1,6 +1,6 @@
 import React, { useState, useEffect, useRef, useMemo, useCallback } from 'react';
 import * as S from './styles';
-import { BookOpen, Gamepad2, AlertTriangle, Zap, Music, ShieldOff, ChevronRight, ChevronLeft } from 'lucide-react';
+import { BookOpen, Gamepad2, AlertTriangle, Zap, Music, ShieldOff, ChevronRight, ChevronLeft, Rocket } from 'lucide-react';
 import { useStore } from 'zustand';
 import { lojaOlho } from '../../../lojas/lojaOlho';
 import { useLeitorOcular } from '../../../hooks/useLeitorOcular';
@@ -12,24 +12,26 @@ const DIFICULDADES = ['facil', 'medio', 'dificil'];
 const slidesEducativos = [
   {
     titulo: 'Bem-vindo à Lagoa!',
-    icone: <img src="/assets/saltoAlfabetico/sapo_parado.png" alt="Sapo" />,
+    icone: <img src="/assets/saltoAlfabetico/sapo_parado.png" alt="Sapo" style={{ width: '80px' }} />,
     texto: "Ajude o sapinho a atravessar a lagoa! Ele precisa pular nas vitórias-régias certas para formar palavras.",
+    textoParaNarrar: "Ajude o sapinho a atravessar a lagoa! Ele precisa pular nas vitórias-régias certas para formar palavras.",
     destaque: "Mas cuidado para não cair na água!"
   },
-   {
-   titulo: 'O que são Sílabas?',
-   icone: <BookOpen />,
-   texto: "Sílabas são os pedacinhos de som das palavras. Quando você fala 'SA-PO', você fala dois pedacinhos.",
-   textoParaNarrar: "Sílabas são os pedacinhos de som das palavras. Quando você fala SÁ... PU... Você fala dois pedacinhos.",
-   destaque: "SA + PO = SAPO"
-   }
-
+  {
+    titulo: 'O que são Sílabas?',
+    icone: <BookOpen />,
+    texto: "Sílabas são os pedacinhos de som das palavras. Quando você fala 'SA-PO', você fala dois pedacinhos.",
+    textoParaNarrar: "Sílabas são os pedacinhos de som das palavras. Quando você fala SÁ... PU... Você fala dois pedacinhos.",
+    destaque: "SA + PO = SAPO"
+  }
 ];
 
 const ManualSaltoAlfabetico: React.FC<BaseManualProps<ConfiguracoesJogo>> = ({ aoIniciar }) => {
   const { mostrarCameraFlutuante: modoOcular, estaPiscando, leitorAtivo } = useStore(lojaOlho);
 
-  const [tela, setTela] = useState<'educativo' | 'comoJogar' | 'configuracoes'>('educativo');
+  // tela inicial agora é 'introducao'
+  const [tela, setTela] = useState<'introducao' | 'educativo' | 'comoJogar' | 'configuracoes'>('introducao');
+  const [focoTutorial, setFocoTutorial] = useState<'treinar' | 'pular'>('treinar');
   const [slideIndex, setSlideIndex] = useState(0);
   const [config, setConfig] = useState<ConfiguracoesJogo>({ dificuldade: 'facil', penalidade: true, sons: true });
   
@@ -47,31 +49,44 @@ const ManualSaltoAlfabetico: React.FC<BaseManualProps<ConfiguracoesJogo>> = ({ a
     if (!leitorAtivo) {
       timerDebounceRef.current = setTimeout(() => setPodeInteragirOcular(true), 1200);
     }
-  }, [tela, slideIndex, focoConfig, modoOcular, leitorAtivo]);
+  }, [tela, slideIndex, focoConfig, focoTutorial, modoOcular, leitorAtivo]);
 
   useEffect(() => {
-    if (modoOcular && podeInteragirOcular && tela === 'configuracoes') {
+    if (modoOcular && podeInteragirOcular) {
       timerScanRef.current = setInterval(() => {
-        if (focoConfig === 'dificuldade') {
-           const nextDif = DIFICULDADES[(DIFICULDADES.indexOf(config.dificuldade) + 1) % 3];
-           setConfig(prev => ({ ...prev, dificuldade: nextDif as any }));
-        } else if (focoConfig === 'penalidade') {
-          setConfig(prev => ({ ...prev, penalidade: !prev.penalidade }));
-        } else if (focoConfig === 'sons') {
-          setConfig(prev => ({ ...prev, sons: !prev.sons }));
+        if (tela === 'introducao') {
+          setFocoTutorial(prev => prev === 'treinar' ? 'pular' : 'treinar');
+        } else if (tela === 'configuracoes') {
+          if (focoConfig === 'dificuldade') {
+             const nextDif = DIFICULDADES[(DIFICULDADES.indexOf(config.dificuldade) + 1) % 3];
+             setConfig(prev => ({ ...prev, dificuldade: nextDif as any }));
+          } else if (focoConfig === 'penalidade') {
+            setConfig(prev => ({ ...prev, penalidade: !prev.penalidade }));
+          } else if (focoConfig === 'sons') {
+            setConfig(prev => ({ ...prev, sons: !prev.sons }));
+          }
         }
-      }, 2500);
+      }, tela === 'introducao' ? 4000 : 2500);
     }
     return () => { if (timerScanRef.current) clearInterval(timerScanRef.current); };
-  }, [tela, focoConfig, podeInteragirOcular, modoOcular, config.dificuldade]);
+  }, [tela, focoConfig, focoTutorial, podeInteragirOcular, modoOcular, config.dificuldade]);
+
   // --- NARRAÇÃO ---
 
   const textoParaLeitura = useMemo(() => {
     if (!leitorAtivo) return null;
+
+    if (tela === 'introducao') {
+        if (!podeInteragirOcular) return "Bem-vindo à Lagoa! Você quer aprender a jogar ou prefere pular para o início?";
+        return focoTutorial === 'treinar' 
+          ? "Aprender a missão. Pisque agora!" 
+          : "Pular tutorial. Pisque agora!";
+    }
+
     if (tela === 'educativo') {
       const s = slidesEducativos[slideIndex];
       return `${s.titulo}. ${s.textoParaNarrar}. Pisque agora para avançar.`;
-      }    
+    }    
     if (tela === 'comoJogar') {
       return "Como jogar. Pule na vitória-régia com a sílaba correta. Se errar, o sapo cai na água. Pisque para ajustar o jogo.";
     }
@@ -89,7 +104,7 @@ const ManualSaltoAlfabetico: React.FC<BaseManualProps<ConfiguracoesJogo>> = ({ a
       }
     }
     return "";
-  }, [tela, slideIndex, focoConfig, config, leitorAtivo, podeInteragirOcular]);
+  }, [tela, slideIndex, focoConfig, focoTutorial, config, leitorAtivo, podeInteragirOcular]);
 
   useLeitorOcular(textoParaLeitura, [textoParaLeitura], () => {
     if (modoOcular && leitorAtivo) setPodeInteragirOcular(true);
@@ -98,7 +113,15 @@ const ManualSaltoAlfabetico: React.FC<BaseManualProps<ConfiguracoesJogo>> = ({ a
   // --- AÇÕES ---
 
   const confirmarAcao = useCallback(() => {
-    if (tela === 'educativo') {
+    if (tela === 'introducao') {
+        if (modoOcular) {
+            if (focoTutorial === 'treinar') setTela('educativo');
+            else setTela('configuracoes');
+        } else {
+            setTela('educativo');
+        }
+    }
+    else if (tela === 'educativo') {
       if (slideIndex < slidesEducativos.length - 1) setSlideIndex(s => s + 1);
       else setTela('comoJogar');
     } else if (tela === 'comoJogar') {
@@ -113,7 +136,7 @@ const ManualSaltoAlfabetico: React.FC<BaseManualProps<ConfiguracoesJogo>> = ({ a
         aoIniciar(config);
       }
     }
-  }, [tela, slideIndex, focoConfig, config, modoOcular, aoIniciar]);
+  }, [tela, slideIndex, focoConfig, focoTutorial, config, modoOcular, aoIniciar]);
 
   useEffect(() => {
     if (!estaPiscando) { piscadaProcessadaRef.current = false; return; }
@@ -130,6 +153,32 @@ const ManualSaltoAlfabetico: React.FC<BaseManualProps<ConfiguracoesJogo>> = ({ a
   return (
     <S.FundoModal>
       <S.ConteudoModal>
+
+        {tela === 'introducao' && (
+           <S.ContainerInfo>
+           <S.TituloSlide>Salto Alfabético</S.TituloSlide>
+           <S.CaixaIcone><Rocket size={50}/></S.CaixaIcone>
+           <S.TextoExplicativo>
+             Ajude o sapinho na sua jornada pelas letras! Você quer aprender as regras da lagoa ou já está pronto para saltar?
+           </S.TextoExplicativo>
+           <S.BarraNavegacao>
+             <S.BotaoNav 
+                onClick={() => { pararNarracao(); setTela('configuracoes'); }} 
+                $destaque={modoOcular && focoTutorial === 'pular' && podeInteragirOcular}
+                style={{ backgroundColor: 'transparent', border: '1px solid rgba(255,255,255,0.3)' }}
+             >
+               PULAR TUTORIAL
+             </S.BotaoNav>
+             <S.BotaoNav 
+                onClick={confirmarAcao} 
+                $destaque={modoOcular && focoTutorial === 'treinar' && podeInteragirOcular}
+             >
+               {leitorAtivo && !podeInteragirOcular && modoOcular ? 'OUVINDO...' : 'APRENDER'} <ChevronRight />
+             </S.BotaoNav>
+           </S.BarraNavegacao>
+         </S.ContainerInfo>
+        )}
+
         {tela === 'educativo' && (
           <S.ContainerInfo>
             <S.TituloSlide>{slidesEducativos[slideIndex].titulo}</S.TituloSlide>
@@ -140,7 +189,7 @@ const ManualSaltoAlfabetico: React.FC<BaseManualProps<ConfiguracoesJogo>> = ({ a
               <strong>{slidesEducativos[slideIndex].destaque}</strong>
             </S.TextoExplicativo>
             <S.BarraNavegacao>
-              <S.BotaoNav onClick={() => setSlideIndex(0)} disabled={slideIndex === 0}>
+              <S.BotaoNav onClick={() => { pararNarracao(); slideIndex === 0 ? setTela('introducao') : setSlideIndex(s => s - 1); }}>
                 <ChevronLeft /> Voltar
               </S.BotaoNav>
               <S.BotaoNav onClick={confirmarAcao} $destaque={feedbackVisual}>
