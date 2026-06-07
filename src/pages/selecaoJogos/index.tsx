@@ -17,6 +17,8 @@ const DADOS_JOGOS = [
 ];
 
 const SelecaoJogos: React.FC = () => {
+  const [bloqueioInicial, setBloqueioInicial] = useState(true); 
+
   const navegar = useNavigate();
   const totalJogos = DADOS_JOGOS.length;
   const MULTIPLICADOR = 20; 
@@ -49,6 +51,12 @@ const SelecaoJogos: React.FC = () => {
       setIndiceAtual(Math.floor(listaInfinita.length / 2) + (indiceAtual % totalJogos));
     }
   }, [indiceAtual, totalJogos, listaInfinita.length]);
+
+  useEffect(() => {
+    const timer = setTimeout(() => setBloqueioInicial(false), 2000);
+    return () => clearTimeout(timer);
+  }, []);
+
 
   const estimarTempoDeLeitura = (texto: string) => {
     const tempoCalculado = texto.length * 95; 
@@ -95,10 +103,11 @@ const SelecaoJogos: React.FC = () => {
 
   // Seleção por piscada (Sempre ativo se estiver piscando)
   useEffect(() => {
-    if (estaPiscando && mostrarCameraFlutuante) {
+    // Adicionado !bloqueioInicial na checagem
+    if (estaPiscando && mostrarCameraFlutuante && !bloqueioInicial && podeInteragir) {
       realizarNavegacao(jogoAtivo.rota);
     }
-  }, [estaPiscando, mostrarCameraFlutuante, jogoAtivo.rota, realizarNavegacao]);
+  }, [estaPiscando, mostrarCameraFlutuante, jogoAtivo.rota, realizarNavegacao, bloqueioInicial, podeInteragir]);
 
   return (
     <S.ContainerPrincipal>
