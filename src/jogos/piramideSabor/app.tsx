@@ -3,7 +3,9 @@ import ManualPiramideSabor from './manual';
 import JogoPiramideSabor from './jogo';
 import TelaVitoriaPiramideSabor from './vitoria';
 import TelaDerrotaPiramideSabor from './derrota';
+import Menu from '../../componentes/Menu'; 
 import type { ConfiguracoesJogo, EstadoJogo } from '../../interface/types';
+import * as S from './styles'; 
 
 const CONFIG_INICIAL: ConfiguracoesJogo = {
   dificuldade: 'facil',
@@ -29,34 +31,28 @@ function PiramideDoSabor() {
   }, []);
 
   const Telas = useMemo(() => ({
-    manual: (
-      <ManualPiramideSabor aoIniciar={iniciarMissao} />
-    ),
+    manual: <ManualPiramideSabor aoIniciar={iniciarMissao} />,
     jogando: (
-      <JogoPiramideSabor 
-        configuracoes={configuracoes} 
-        aoVencer={() => finalizarJogo('vitoria')} 
-        aoPerder={() => finalizarJogo('derrota')} 
-      />
+      <S.WrapperJogoAtivo>
+        <JogoPiramideSabor 
+          aoVencer={() => finalizarJogo('vitoria')} 
+          aoPerder={() => finalizarJogo('derrota')} 
+          configuracoes={configuracoes} 
+        />
+      </S.WrapperJogoAtivo>
     ),
-    vitoria: (
-      <TelaVitoriaPiramideSabor 
-        aoReiniciar={voltarAoManual} 
-        configuracoes={configuracoes} 
-      />
-    ),
-    derrota: (
-      <TelaDerrotaPiramideSabor 
-        aoReiniciar={voltarAoManual} 
-        configuracoes={configuracoes} 
-      />
-    ),
+    vitoria: <TelaVitoriaPiramideSabor aoReiniciar={voltarAoManual} configuracoes={configuracoes}  />,
+    derrota: <TelaDerrotaPiramideSabor aoReiniciar={voltarAoManual} configuracoes={configuracoes}  />,
   }), [iniciarMissao, finalizarJogo, voltarAoManual, configuracoes]);
 
   return (
-    <main className="game-container">
-      {Telas[estado] || Telas.manual}
-    </main>
+    <S.ContainerDoJogo> 
+      <Menu />
+
+      <S.ConteudoEstado>
+         {Telas[estado] || Telas.manual}
+      </S.ConteudoEstado>
+    </S.ContainerDoJogo>
   );
 }
 
